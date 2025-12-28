@@ -29,15 +29,15 @@
 
 import axios from 'axios';
 
-// 👇 כתיבה קשיחה של הכתובת כדי לעקוף כל בעיה של משתנים
-const PRODUCTION_URL = 'https://escapevr-server.onrender.com';
-
 // Debug: Verify this file loaded (check browser console)
-console.log('🚀 Axios initialized with baseURL:', PRODUCTION_URL, '| Build:', Date.now());
+console.log('🚀 Axios Build Check:', Date.now());
 
 const api = axios.create({
-  baseURL: PRODUCTION_URL,
+  baseURL: 'https://escapevr-server.onrender.com',
 });
+
+// Log the actual baseURL after creation
+console.log('📡 Axios baseURL is:', api.defaults.baseURL);
 
 // Interceptor להוספת הטוקן
 api.interceptors.request.use(
