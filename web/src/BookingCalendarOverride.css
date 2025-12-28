@@ -1,0 +1,65 @@
+/* client/src/BookingCalendarOverride.css */
+
+/* רקע כללי של הלוח שנה */
+.react-calendar {
+    background-color: #2e1065 !important; /* סגול כהה */
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 0.75rem; /* rounded-xl */
+    font-family: inherit;
+    width: 100% !important;
+    line-height: 1.125em;
+}
+
+/* כותרת החודש */
+.react-calendar__navigation button {
+    color: white !important;
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.react-calendar__navigation button:enabled:hover,
+.react-calendar__navigation button:enabled:focus {
+    background-color: rgba(255,255,255,0.1) !important;
+    border-radius: 0.5rem;
+}
+
+/* שמות ימי השבוע */
+.react-calendar__month-view__weekdays {
+    text-transform: uppercase;
+    font-size: 0.75em;
+    font-weight: bold;
+    color: #a855f7; /* סגול ניאון */
+}
+
+/* סופי שבוע */
+.react-calendar__month-view__days__day--weekend {
+    color: #f87171 !important; /* אדום בהיר */
+}
+
+/* הימים עצמם */
+.react-calendar__tile {
+    padding: 10px 6px !important;
+    font-size: 0.9rem;
+}
+
+.react-calendar__tile:enabled:hover,
+.react-calendar__tile:enabled:focus {
+    background-color: rgba(168, 85, 247, 0.3) !important; /* סגול שקוף */
+    border-radius: 0.5rem;
+    color: white;
+}
+
+/* היום הנוכחי */
+.react-calendar__tile--now {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-radius: 0.5rem;
+}
+
+/* היום שנבחר (Active) */
+.react-calendar__tile--active {
+    background: #a855f7 !important; /* סגול ניאון חזק */
+    color: white !important;
+    border-radius: 0.5rem;
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+}

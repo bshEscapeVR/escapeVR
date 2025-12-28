@@ -1,0 +1,125 @@
+
+{
+    "navbar": {
+        "home": "בית",
+        "rooms": "חדרי בריחה",
+        "pricing": "מחירון",
+        "contact": "צור קשר",
+        "book_btn": "הזמן הרפתקה"
+    },
+   "hero": {
+    "book_btn": "הזמן את ההרפתקה שלך",
+    "trailer_btn": "צפה בטריילר",
+    "stats_players": "שחקנים",
+    "stats_minutes": "דקות",
+    "stats_worlds": "עולמות ייחודיים"
+  },
+    "booking": {
+        "back_btn": "חזרה לכל החדרים",
+        "book_room_btn": "הזמינו חדר זה",
+        "vr_experience": "חווית VR",
+        "reviews_title": "ביקורות",
+        "no_reviews": "אין עדיין ביקורות לחדר זה"
+    },
+     "contact": {
+    "title": "צור קשר וביקורות",
+    "subtitle": "צרו איתנו קשר או שתפו את חווית חדר הבריחה שלכם",
+    "tab_contact": "צור קשר",
+    "tab_review": "השאר ביקורת",
+    "talk_to_us": "דברו איתנו",
+    "talk_desc": "נשמח לענות על כל שאלה",
+    "share_exp": "שתפו חוויה",
+    "share_desc": "עזרו להרפתקנים אחרים",
+    "label_name": "השם שלכם *",
+    "holder_name": "ישראל ישראלי",
+    "label_email": "אימייל",
+    "label_phone": "טלפון",
+    "label_msg": "ההודעה שלכם *",
+    "holder_msg": "...איך נוכל לעזור לכם?",
+    "label_room": "איזה חדר שיחקתם? *",
+    "holder_room": "בחרו מהרשימה...",
+    "label_rating": "הדירוג שלכם *",
+    "label_review": "הביקורת שלכם *",
+    "holder_review": "...ספרו לנו איך הייתה החוויה",
+    "btn_send": "שלח הודעה",
+    "btn_post": "פרסם ביקורת",
+    "success": "נשלח בהצלחה!",
+    "error": "שגיאה בשליחה",
+    "details_title": "פרטי התקשרות",
+    "whatsapp_btn": "שלחו הודעת WhatsApp",
+    "shabbat_title": "שמירת שבת",
+    "shabbat_desc": "אין מענה טלפוני/אינטרנטי בשבת. נשמח לעמוד לשירותכם במוצאי שבת.",
+    "book_now": "הזמינו מקום",
+    "book_click": "לחצו כאן לניווט להזמנה"
+  },
+  "booking_page": {
+    "loading": "טוען...",
+    "not_found": "החדר לא נמצא",
+    "back_btn": "חזרה לכל החדרים",
+    "book_now": "הזמן עכשיו",
+    "difficulty": "רמת קושי",
+    "duration": "זמן משחק",
+    "min_suffix": "דק'",
+    "players": "מספר שחקנים",
+    "tech": "טכנולוגיה",
+    "full_vr": "VR מלא",
+    "standard": "רגיל"
+  },
+  "location": {
+    "title": "מיקום, ניווט ודרכי הגעה",
+    "inner_title": "מיקום, ניווט ודרכי הגעה",
+    "label_address": "כתובת",
+    "value_address": "בית שמש, נחל ניצנים 8 (בכניסה מתחת יש חסד)",
+    "label_transport": "תחבורה ציבורית",
+    "value_transport": "קווים פנימיים המגיעים בסמוך למקום: 2, 3, 4, 22, 23",
+    "label_parking": "חניה",
+    "value_parking": "חניה זמינה במקום (כחול לבן / חניון תת קרקעי)"
+  },
+  "rooms_grid": {
+    "loading": "טוען הרפתקאות...",
+    "title": "בחרו את ההרפתקה שלכם",
+    "subtitle": "שלושה עולמות ייחודיים, שלושה אתגרים בלתי נשכחים",
+    "duration_unit": "דק'",
+    "difficulty_hard": "קשה!",
+    "book_btn": "למידע נוסף והזמנה"
+  },
+  "testimonials": {
+    "title": "מה אומרים ההרפתקנים שלנו",
+    "subtitle": "חוויות אמיתיות מהרפתקנים שבחרו להתנתק מהמציאות"
+  },
+  "footer": {
+    "about": "מרכז המציאות המדומה המתקדם בישראל. בואו לחוות עולמות חדשים, לפתור חידות ולהילחם במפלצות בחוויה שלא תשכחו.",
+    "quick_links": "ניווט מהיר",
+    "link_home": "עמוד הבית",
+    "link_rooms": "החדרים שלנו",
+    "link_book": "הזמנת מקום",
+    "link_contact": "צור קשר",
+    "rooms_title": "החדרים",
+    "room_1": "הוסטל המשוגעים",
+    "room_2": "תעלומת הפירמידה",
+    "room_3": "קפטן נמו",
+    "contact_title": "צור קשר",
+    "address": "נחל ניצנים 8, בית שמש",
+    "rights": "כל הזכויות שמורות."
+  },
+  "booking_modal": {
+    "success_title": "ההזמנה נקלטה!",
+    "success_desc": "פרטים נשלחו למייל שלך.",
+    "btn_close": "סגור",
+    "details_title": "פרטי הזמנה",
+    "label_room": "חדר:",
+    "label_participants": "משתתפים:",
+    "label_date": "תאריך:",
+    "label_time": "שעה:",
+    "label_total":" סהכ:",
+    "title_when": "מתי מגיעים?",
+    "no_slots": "אין תורים פנויים לתאריך זה",
+    "title_how_many": "כמה משתתפים?",
+    "placeholder_name": "שם מלא",
+    "placeholder_phone": "טלפון",
+    "placeholder_email": "אימייל",
+    "btn_sending": "שולח...",
+    "btn_confirm": "אשר הזמנה",
+    "error_create": "שגיאה ביצירת ההזמנה"
+  }
+}
