@@ -36,21 +36,38 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
-// CORS: Accept requests only from allowed origins
+// CORS: Dynamic origin validation
 const allowedOrigins = process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim())
     : ['http://localhost:3000', 'http://localhost:5173'];
+
+// Regex patterns for dynamic origins
+const vercelPattern = /\.vercel\.app$/;
 
 console.log('Allowed CORS origins:', allowedOrigins);
 
 app.use(cors({
     origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps, curl, or Postman)
+        // Allow requests with no origin (like server-to-server, Postman, curl)
         if (!origin) return callback(null, true);
-        // Check if origin is in allowed list
-        if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+
+        // Allow wildcard
+        if (allowedOrigins.includes('*')) {
             return callback(null, true);
         }
+
+        // Allow if in static list
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+
+        // Allow any Vercel subdomain (preview deployments, production)
+        if (vercelPattern.test(origin)) {
+            console.log('CORS allowed Vercel origin:', origin);
+            return callback(null, true);
+        }
+
+        // Block everything else
         console.warn('CORS blocked origin:', origin);
         return callback(new Error('Not allowed by CORS'));
     },
