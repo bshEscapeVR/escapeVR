@@ -10,7 +10,7 @@ const errorMiddleware = require('./middleware/errorMiddleware');
 const uploadRouter = require('./routes/upload');
 
 const app = express();
-
+app.set('trust proxy', 1);
 // Security: Helmet for HTTP headers
 // app.use(helmet());
 app.use(
