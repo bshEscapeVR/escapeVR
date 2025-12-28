@@ -7,14 +7,14 @@ import { settingsService, authService } from '../../../../services';
 import NeonButton from '../../../../components/ui/NeonButton';
 
 // Import tabs
-import TabSEO from '../../../../pages/admin/tabs/TabSEO';
-import TabImages from '../../../../pages/admin/tabs/TabImages';
-import TabContent from '../../../../pages/admin/tabs/TabContent';
-import TabBookings from '../../../../pages/admin/tabs/TabBookings';
-import TabTrailer from '../../../../pages/admin/tabs/TabTrailer';
-import TabReviews from '../../../../pages/admin/tabs/TabReviews';
-import TabLeads from '../../../../pages/admin/tabs/TabLeads';
-import TabRooms from '../../../../pages/admin/tabs/TabRooms';
+import TabSEO from '../../../../components/admin/tabs/TabSEO';
+import TabImages from '../../../../components/admin/tabs/TabImages';
+import TabContent from '../../../../components/admin/tabs/TabContent';
+import TabBookings from '../../../../components/admin/tabs/TabBookings';
+import TabTrailer from '../../../../components/admin/tabs/TabTrailer';
+import TabReviews from '../../../../components/admin/tabs/TabReviews';
+import TabLeads from '../../../../components/admin/tabs/TabLeads';
+import TabRooms from '../../../../components/admin/tabs/TabRooms';
 
 export default function DashboardPage() {
     const router = useRouter();
