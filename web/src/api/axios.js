@@ -32,6 +32,9 @@ import axios from 'axios';
 // 👇 כתיבה קשיחה של הכתובת כדי לעקוף כל בעיה של משתנים
 const PRODUCTION_URL = 'https://escapevr-server.onrender.com';
 
+// Debug: Verify this file loaded (check browser console)
+console.log('🚀 Axios initialized with baseURL:', PRODUCTION_URL, '| Build:', Date.now());
+
 const api = axios.create({
   baseURL: PRODUCTION_URL,
 });
