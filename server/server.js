@@ -38,16 +38,20 @@ app.use(limiter);
 
 // CORS: Accept requests only from allowed origins
 const allowedOrigins = process.env.CORS_ORIGINS
-    ? process.env.CORS_ORIGINS.split(',')
-    : ['http://localhost:3000'];
+    ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim())
+    : ['http://localhost:3000', 'http://localhost:5173'];
+
+console.log('Allowed CORS origins:', allowedOrigins);
 
 app.use(cors({
     origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps or curl)
+        // Allow requests with no origin (like mobile apps, curl, or Postman)
         if (!origin) return callback(null, true);
-        if (allowedOrigins.includes(origin)) {
+        // Check if origin is in allowed list
+        if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
             return callback(null, true);
         }
+        console.warn('CORS blocked origin:', origin);
         return callback(new Error('Not allowed by CORS'));
     },
     credentials: true
