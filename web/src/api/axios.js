@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Debug: Log API URL on load
 console.log('Current API URL:', process.env.NEXT_PUBLIC_API_URL);
-
+console.log('REBUILD CHECK - API URL:', process.env.NEXT_PUBLIC_API_URL);
 const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 const api = axios.create({ baseURL });
 
