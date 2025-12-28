@@ -29,25 +29,28 @@
 
 import axios from 'axios';
 
-// Debug: Verify this file loaded (check browser console)
-console.log('🚀 Axios Build Check:', Date.now());
+// Create axios instance without baseURL
+const api = axios.create();
 
-const api = axios.create({
-  baseURL: 'https://escapevr-server.onrender.com',
-});
-
-// Log the actual baseURL after creation
-console.log('📡 Axios baseURL is:', api.defaults.baseURL);
-
-// Interceptor להוספת הטוקן
+// Interceptor to prepend API URL to every request
 api.interceptors.request.use(
   (config) => {
-    if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('token');
-        if (token) {
-            config.headers['x-auth-token'] = token;
-        }
+    // Force the full URL for every request
+    const API_SERVER = ['https:', '', 'escapevr-server.onrender.com'].join('/');
+
+    if (config.url && !config.url.startsWith('http')) {
+      config.url = API_SERVER + config.url;
     }
+
+    // Add auth token if exists
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('token');
+      if (token) {
+        config.headers['x-auth-token'] = token;
+      }
+    }
+
+    console.log('📡 Request URL:', config.url);
     return config;
   },
   (error) => {
