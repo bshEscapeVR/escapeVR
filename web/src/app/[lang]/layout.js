@@ -8,6 +8,9 @@ import Providers from "./providers";
 import Navbar from "../../components/Navbar";
 import BookingModal from "../../components/BookingModal";
 
+// Force dynamic rendering (required for fetch with no-store)
+export const dynamic = 'force-dynamic';
+
 // API URL from environment variable
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 

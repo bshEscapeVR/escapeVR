@@ -1,8 +1,10 @@
 import axios from 'axios';
 
-const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000',
-});
+// Debug: Log API URL on load
+console.log('Current API URL:', process.env.NEXT_PUBLIC_API_URL);
+
+const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const api = axios.create({ baseURL });
 
 // --- הוספת Interceptor (מיירט) ---
 // כל בקשה שיוצאת מהאתר תעבור דרך הפונקציה הזו קודם
