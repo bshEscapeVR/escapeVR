@@ -1,4 +1,4 @@
-//server/server.js
+// server/server.js
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
@@ -10,88 +10,81 @@ const errorMiddleware = require('./middleware/errorMiddleware');
 const uploadRouter = require('./routes/upload');
 
 const app = express();
+
+// 1. חובה עבור Render (כדי לזהות כתובות IP נכון מאחורי הפרוקסי)
 app.set('trust proxy', 1);
-// Security: Helmet for HTTP headers
-// app.use(helmet());
+
+// 2. אבטחה (Helmet)
+// מאפשר טעינת תמונות ממקורות אחרים (כדי שהאתר יוכל להציג תמונות מהשרת/Cloudinary)
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
   })
 );
 
-// Rate Limiter: 100 requests per 15 minutes
-// const limiter = rateLimit({
-//     windowMs: 15 * 60 * 1000, // 15 minutes
-//     max: 100, // limit each IP to 100 requests per windowMs
-//     message: 'Too many requests from this IP, please try again after 15 minutes'
-// });
-
-// Rate Limiting
+// 3. הגבלת בקשות (Rate Limiting)
+// מונע הצפה של השרת. כרגע מוגדר ל-1000 בקשות ב-15 דקות (נדיב לפיתוח)
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 דקות
-    max: 1000, // 👇 הגדלנו מ-100 ל-1000 כדי שלא ייחסם בפיתוח
+    windowMs: 15 * 60 * 1000, 
+    max: 1000, 
     standardHeaders: true,
     legacyHeaders: false,
 });
-
 app.use(limiter);
 
-// CORS: Dynamic origin validation
-const allowedOrigins = process.env.CORS_ORIGINS
-    ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim())
-    : ['http://localhost:3000', 'http://localhost:5173'];
-
-// Regex patterns for dynamic origins
-const vercelPattern = /\.vercel\.app$/;
-
-console.log('Allowed CORS origins:', allowedOrigins);
-
-app.use(cors({
+// 4. הגדרות CORS חכמות (התיקון הקריטי)
+const corsOptions = {
     origin: (origin, callback) => {
-        // Allow requests with no origin (like server-to-server, Postman, curl)
+        // א. אפשר בקשות ללא origin (כמו Postman, שרת-לשרת, או גלישה ישירה ל-API)
         if (!origin) return callback(null, true);
 
-        // Allow wildcard
-        if (allowedOrigins.includes('*')) {
-            return callback(null, true);
-        }
+        // ב. טעינת רשימת הכתובות המאושרות מקובץ ה-.env
+        const allowedOrigins = process.env.CORS_ORIGINS
+            ? process.env.CORS_ORIGINS.split(',').map(url => url.trim())
+            : ['http://localhost:3000', 'http://localhost:5173']; // ברירת מחדל לפיתוח
 
-        // Allow if in static list
+        // ג. בדיקה: האם הכתובת נמצאת ברשימה הקבועה?
         if (allowedOrigins.includes(origin)) {
             return callback(null, true);
         }
 
-        // Allow any Vercel subdomain (preview deployments, production)
-        if (vercelPattern.test(origin)) {
-            console.log('CORS allowed Vercel origin:', origin);
+        // ד. בדיקה: האם הכתובת היא דומיין של Vercel? (כולל כתובות Preview זמניות)
+        if (origin.endsWith('.vercel.app')) {
+            // לוג שיעזור לנו לראות ב-Render שזה עובד
+            console.log(`✅ CORS allowed Dynamic Vercel origin: ${origin}`);
             return callback(null, true);
         }
 
-        // Block everything else
-        console.warn('CORS blocked origin:', origin);
+        // ה. אם שום דבר לא מתאים - חסום
+        console.error(`❌ CORS Blocked origin: ${origin}`);
         return callback(new Error('Not allowed by CORS'));
     },
-    credentials: true
-}));
+    credentials: true // חובה כדי לאפשר עוגיות/טוקנים
+};
 
+app.use(cors(corsOptions));
 app.use(express.json());
 
-// Database Connection
+// 5. חיבור למסד הנתונים
 mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/vr_escape')
     .then(() => console.log('MongoDB Connected'))
-    .catch(err => console.error(err));
+    .catch(err => console.error('MongoDB Connection Error:', err));
 
-// Legacy: Keep static uploads route as backup for old local files
+// 6. נתיבים (Routes)
+// גיבוי: הגשת קבצים מקומיים (אם נשארו כאלה לפני המעבר ל-Cloudinary)
 app.use('/uploads', express.static('uploads'));
+
+// נתיבי API
 app.use('/api/upload', uploadRouter);
 app.use('/api', mainRouter);
 
-// 👇 התיקון כאן: שימוש ב- /(.*)/ במקום '*'
+// 7. טיפול בשגיאות 404 (נתיב לא קיים)
 app.all(/(.*)/, (req, res, next) => {
     const AppError = require('./utils/AppError');
     next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 
+// 8. טיפול בשגיאות כלליות
 app.use(errorMiddleware);
 
 const PORT = process.env.PORT || 5000;
