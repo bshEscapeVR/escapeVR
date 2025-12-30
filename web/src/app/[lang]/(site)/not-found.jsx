@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Home } from 'lucide-react';
-import { useSettings } from '../../context/SettingsContext';
+import { useSettings } from '../../../context/SettingsContext';
 
 export default function NotFound() {
   const { language } = useSettings();

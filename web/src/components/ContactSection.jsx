@@ -81,7 +81,7 @@ const ContactCard = ({ icon: Icon, title, content, subContent, action, colorClas
 
 const ContactSection = () => {
     const { t } = useTranslation();
-    const { t: tDB, settings } = useSettings(); // שליפת הגדרות מה-DB
+    const { t: tDB, settings, loading } = useSettings(); // שליפת הגדרות מה-DB
 
     const [activeTab, setActiveTab] = useState('contact');
     const [status, setStatus] = useState('idle');
@@ -179,10 +179,17 @@ const ContactSection = () => {
             <div className="absolute top-0 right-0 w-96 h-96 bg-brand-primary/5 rounded-full blur-3xl pointer-events-none"></div>
 
             <div className="relative z-10 px-4 mb-10">
-                <SectionTitle
-                    title={tDB(settings?.content?.contact?.title) || t('contact.title')}
-                    subtitle={tDB(settings?.content?.contact?.subtitle) || t('contact.subtitle')}
-                />
+                {loading ? (
+                    <div className="text-center mb-12">
+                        <div className="h-10 w-64 mx-auto bg-white/10 animate-pulse rounded-lg mb-4" />
+                        <div className="h-5 w-96 max-w-full mx-auto bg-white/5 animate-pulse rounded-lg" />
+                    </div>
+                ) : (
+                    <SectionTitle
+                        title={tDB(settings?.content?.contact?.title) || t('contact.title')}
+                        subtitle={tDB(settings?.content?.contact?.subtitle) || t('contact.subtitle')}
+                    />
+                )}
             </div>
 
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">

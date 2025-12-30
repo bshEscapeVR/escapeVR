@@ -1,12 +1,5 @@
-// 1. ה-CSS נמצא תיקייה אחת למעלה (בתוך app)
 import "../globals.css";
-
-// 2. ה-providers נמצא באותה תיקייה בדיוק (לפי התמונה ששלחת)
 import Providers from "./providers";
-
-// 3. הקומפוננטות נמצאות שתי תיקיות למעלה (בתוך src/components)
-import Navbar from "../../components/Navbar";
-import BookingModal from "../../components/BookingModal";
 
 // Force dynamic rendering (required for fetch with no-store)
 export const dynamic = 'force-dynamic';
@@ -88,8 +81,6 @@ export default async function RootLayout({ children, params }) {
     <html lang={lang} dir={dir}>
       <body className="antialiased">
         <Providers lang={lang}>
-          <Navbar />
-          <BookingModal />
           {children}
         </Providers>
       </body>

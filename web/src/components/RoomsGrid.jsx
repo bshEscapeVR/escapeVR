@@ -19,7 +19,7 @@ const RoomsGrid = () => {
     const { t } = useTranslation();
     
     // tDB = תרגום דינמי מהמסד נתונים (שיניתי את השם כדי לא להתנגש)
-    const { t: tDB, getImg, language } = useSettings();
+    const { t: tDB, getImg, language, settings, loading: settingsLoading } = useSettings();
 
     useEffect(() => {
         const fetchRooms = async () => {
@@ -37,15 +37,23 @@ const RoomsGrid = () => {
         fetchRooms();
     }, []);
 
-    if (loading) {
+    // Combined loading state: rooms or settings
+    const isLoading = loading || settingsLoading;
+
+    // Get title/subtitle from DB with JSON fallback
+    const sectionTitle = tDB(settings?.content?.rooms?.title) || t('rooms_grid.title');
+    const sectionSubtitle = tDB(settings?.content?.rooms?.subtitle) || t('rooms_grid.subtitle');
+
+    if (isLoading) {
         return (
             <section id="rooms" className="py-20 bg-brand-dark relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-full bg-[url('/hex-pattern.svg')] opacity-5 pointer-events-none"></div>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                    <SectionTitle
-                        title={t('rooms_grid.title')}
-                        subtitle={t('rooms_grid.subtitle')}
-                    />
+                    {/* Skeleton for section title */}
+                    <div className="text-center mb-12">
+                        <div className="h-10 w-64 mx-auto bg-white/10 animate-pulse rounded-lg mb-4" />
+                        <div className="h-5 w-96 max-w-full mx-auto bg-white/5 animate-pulse rounded-lg" />
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         <RoomSkeleton />
                         <RoomSkeleton />
@@ -64,8 +72,8 @@ const RoomsGrid = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 
                 <SectionTitle
-                    title={t('rooms_grid.title')}
-                    subtitle={t('rooms_grid.subtitle')}
+                    title={sectionTitle}
+                    subtitle={sectionSubtitle}
                 />
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

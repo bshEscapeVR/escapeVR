@@ -44,16 +44,11 @@ const Hero = () => {
                 ) : (
                     <>
                         <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight drop-shadow-2xl">
-                            {settings?.content?.hero?.title ? (
-                                <span>{tDB(settings.content.hero.title)}</span>
-                            ) : (
-                                <>BEYOND <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-neon to-blue-400">REALITY</span></>
-                            )}
+                            {tDB(settings?.content?.hero?.title) || t('hero.title')}
                         </h1>
 
-                        {/* תת כותרת מהדאטה-בייס */}
                         <p className="text-gray-300 text-lg md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
-                            {tDB(settings?.content?.hero?.subtitle) || "Forget locked cabinets! In Virtual Reality, there are no limits."}
+                            {tDB(settings?.content?.hero?.subtitle) || t('hero.subtitle')}
                         </p>
                     </>
                 )}

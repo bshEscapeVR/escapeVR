@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Calendar, Users, MessageSquare, DoorOpen, TrendingUp, LogOut, ExternalLink, Home } from 'lucide-react';
-import { statsService, authService } from '../../../../../services';
+import { statsService, authService } from '../../../../../../services';
 
 export default function AdminHomePage() {
     const router = useRouter();

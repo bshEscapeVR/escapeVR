@@ -3,19 +3,19 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Settings, Save, Image, FileText, Youtube, BarChart, LogOut, Calendar, MessageSquare, TrendingUp, ExternalLink, Layout } from 'lucide-react';
-import { settingsService, authService } from '../../../../services';
-import NeonButton from '../../../../components/ui/NeonButton';
-import Spinner from '../../../../components/ui/Spinner';
+import { settingsService, authService } from '../../../../../services';
+import NeonButton from '../../../../../components/ui/NeonButton';
+import Spinner from '../../../../../components/ui/Spinner';
 
 // Import tabs
-import TabSEO from '../../../../components/admin/tabs/TabSEO';
-import TabImages from '../../../../components/admin/tabs/TabImages';
-import TabContent from '../../../../components/admin/tabs/TabContent';
-import TabBookings from '../../../../components/admin/tabs/TabBookings';
-import TabTrailer from '../../../../components/admin/tabs/TabTrailer';
-import TabReviews from '../../../../components/admin/tabs/TabReviews';
-import TabLeads from '../../../../components/admin/tabs/TabLeads';
-import TabRooms from '../../../../components/admin/tabs/TabRooms';
+import TabSEO from '../../../../../components/admin/tabs/TabSEO';
+import TabImages from '../../../../../components/admin/tabs/TabImages';
+import TabContent from '../../../../../components/admin/tabs/TabContent';
+import TabBookings from '../../../../../components/admin/tabs/TabBookings';
+import TabTrailer from '../../../../../components/admin/tabs/TabTrailer';
+import TabReviews from '../../../../../components/admin/tabs/TabReviews';
+import TabLeads from '../../../../../components/admin/tabs/TabLeads';
+import TabRooms from '../../../../../components/admin/tabs/TabRooms';
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -94,7 +94,7 @@ export default function DashboardPage() {
 
             {/* Header Area - תיקון רספונסיבי למובייל */}
             <header className="relative pt-6 pb-8 px-4 md:px-6 text-center z-10 border-b border-white/5 bg-[#1a0b2e]/50">
-                
+
                 <div className="flex flex-col md:block items-center justify-center relative">
                     {/* כותרת */}
                     <div className="inline-flex items-center gap-3 mb-4 md:mb-2 animate-fade-in">

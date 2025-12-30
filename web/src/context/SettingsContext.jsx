@@ -1,30 +1,19 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { settingsService } from '../services';
-import { useRouter } from 'next/navigation'; 
+import { useRouter } from 'next/navigation';
 
 const SettingsContext = createContext();
 
 export const SettingsProvider = ({ children, lang }) => {
-    const { i18n } = useTranslation();
     const router = useRouter();
     const [settings, setSettings] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // --- התיקון: שינוי שפה בטוח בתוך useEffect ---
-    // זה קורה מיד אחרי שהדף עולה, ומונע את הקריסה.
+    // Set document direction (RTL/LTR) based on language
     useEffect(() => {
-        if (i18n.language !== lang) {
-            i18n.changeLanguage(lang);
-        }
-    }, [lang, i18n]);
-
-    // ניהול כיוון (RTL/LTR)
-    useEffect(() => {
-        const dir = lang === 'he' ? 'rtl' : 'ltr';
-        document.documentElement.dir = dir;
+        document.documentElement.dir = lang === 'he' ? 'rtl' : 'ltr';
         document.documentElement.lang = lang;
     }, [lang]);
 
@@ -56,8 +45,13 @@ export const SettingsProvider = ({ children, lang }) => {
 
     const t = (obj) => {
         if (!obj) return '';
-        if (typeof obj === 'object' && (obj.he || obj.en)) {
-            return obj[lang] || obj['he'] || '';
+        // Check if it's a bilingual object (has 'he' or 'en' keys)
+        if (typeof obj === 'object' && ('he' in obj || 'en' in obj)) {
+            return obj[lang] || obj['he'] || obj['en'] || '';
+        }
+        // If it's any other object, return empty string to prevent React crash
+        if (typeof obj === 'object') {
+            return '';
         }
         return obj;
     };
@@ -90,11 +84,7 @@ export const SettingsProvider = ({ children, lang }) => {
         <SettingsContext.Provider value={{
             settings, loading, language: lang, toggleLanguage, t, getImg
         }}>
-            {/* 
-                הוספת key שמבוסס על השפה מבטיחה שכל הילדים יתרעננו 
-                אם יש חוסר התאמה בשפה, ומונעת בעיות תצוגה
-            */}
-            <div key={lang}>
+            <div key={lang} className="contents">
                 {children}
             </div>
         </SettingsContext.Provider>

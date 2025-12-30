@@ -8,14 +8,15 @@ import { useSettings } from '../context/SettingsContext';
 
 const Footer = () => {
     const { t } = useTranslation();
-    const { settings, getImg, t: tDB } = useSettings();
+    const { settings, getImg, t: tDB, loading } = useSettings();
     const currentYear = new Date().getFullYear();
 
-    // שליפת נתונים דינמיים
-    const contactPhone = settings?.general?.contactPhone || "054-8530162";
-    const contactEmail = settings?.general?.contactEmail || "escapevr.bsh@gmail.com";
+    // שליפת נתונים דינמיים עם פולבק ל-JSON
+    const contactPhone = settings?.general?.contactPhone || t('footer.phone_default') || "054-8530162";
+    const contactEmail = settings?.general?.contactEmail || t('footer.email_default') || "escapevr.bsh@gmail.com";
     const address = tDB(settings?.general?.contactAddress) || t('footer.address');
-    
+    const siteName = tDB(settings?.general?.siteName) || t('footer.site_name') || "VR Escape Reality";
+
     const social = settings?.general?.socialLinks || {};
 
     return (
@@ -27,16 +28,22 @@ const Footer = () => {
                     {/* עמודה 1 */}
                     <div>
                         <div className="flex items-center gap-2 mb-6">
-                            {settings?.general?.logoUrl ? (
-                                <img src={getImg(settings.general.logoUrl)} alt="Logo" className="h-8 w-auto object-contain" />
+                            {loading ? (
+                                <div className="h-8 w-32 bg-white/10 animate-pulse rounded" />
                             ) : (
-                                <div className="w-8 h-8 rounded-full bg-brand-neon flex items-center justify-center">
-                                    <span className="font-bold text-white text-xs">VR</span>
-                                </div>
+                                <>
+                                    {settings?.general?.logoUrl ? (
+                                        <img src={getImg(settings.general.logoUrl)} alt="Logo" className="h-8 w-auto object-contain" />
+                                    ) : (
+                                        <div className="w-8 h-8 rounded-full bg-brand-neon flex items-center justify-center">
+                                            <span className="font-bold text-white text-xs">VR</span>
+                                        </div>
+                                    )}
+                                    <span className="text-white font-bold text-lg tracking-wider">
+                                        {siteName}
+                                    </span>
+                                </>
                             )}
-                            <span className="text-white font-bold text-lg tracking-wider">
-                                {tDB(settings?.general?.siteName) || "Escape Reality"}
-                            </span>
                         </div>
                         
                         <p className="text-sm leading-relaxed mb-6">
@@ -100,7 +107,7 @@ const Footer = () => {
                 </div>
 
                 <div className="border-t border-white/5 pt-8 text-center text-xs">
-                    <p>&copy; {currentYear} {tDB(settings?.general?.siteName) || "VR Escape Reality"}. {t('footer.rights')}</p>
+                    <p>&copy; {currentYear} {siteName}. {t('footer.rights')}</p>
                 </div>
             </div>
         </footer>

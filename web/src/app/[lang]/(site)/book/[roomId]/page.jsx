@@ -5,13 +5,13 @@ import { useParams, useRouter } from 'next/navigation';
 import { Clock, Users, Zap, ArrowRight, CalendarCheck, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { useBooking } from '../../../../context/BookingContext';
-import { useSettings } from '../../../../context/SettingsContext';
-import NeonButton from '../../../../components/ui/NeonButton';
-import BookingPageSkeleton from '../../../../components/ui/BookingPageSkeleton';
+import { useBooking } from '../../../../../context/BookingContext';
+import { useSettings } from '../../../../../context/SettingsContext';
+import NeonButton from '../../../../../components/ui/NeonButton';
+import BookingPageSkeleton from '../../../../../components/ui/BookingPageSkeleton';
 
-import Footer from '../../../../components/Footer';
-import { roomService } from '../../../../services';
+import Footer from '../../../../../components/Footer';
+import { roomService } from '../../../../../services';
 
 const InfoCard = ({ icon, title, subtitle }) => (
     <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 flex flex-col items-center justify-center text-center hover:bg-white/10 transition-all duration-300 group hover:border-brand-primary/30">

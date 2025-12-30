@@ -7,7 +7,7 @@ import { useSettings } from '../context/SettingsContext'; // לטקסטים הד
 
 const AboutSection = () => {
     const { t } = useTranslation();
-    const { t: tDB, settings, getImg } = useSettings();
+    const { t: tDB, settings, getImg, loading } = useSettings();
 
     // המאפיינים (אייקונים) נשארים ב-JSON כי הם חלק מהעיצוב הקבוע
     const features = [
@@ -47,24 +47,42 @@ const AboutSection = () => {
                     {/* תמונה מהניהול */}
                     <div className="relative group">
                         <div className="absolute -inset-1 bg-gradient-to-r from-brand-neon to-blue-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-                        <img
-                            src={getImg(settings?.media?.aboutImage)}
-                            alt="VR Experience"
-                            className="relative rounded-2xl shadow-2xl w-full object-cover h-[400px] border border-white/10"
-                        />
+                        {loading ? (
+                            <div className="relative rounded-2xl w-full h-[400px] bg-white/5 animate-pulse border border-white/10" />
+                        ) : (
+                            <img
+                                src={getImg(settings?.media?.aboutImage)}
+                                alt="VR Experience"
+                                className="relative rounded-2xl shadow-2xl w-full object-cover h-[400px] border border-white/10"
+                            />
+                        )}
                     </div>
 
                     {/* טקסט דינמי מהניהול */}
                     <div className="text-start">
-                        <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
-                            {/* 👇 כותרת מהדאטה-בייס */}
-                            {tDB(settings?.content?.about?.title) || "עתיד חדרי הבריחה"}
-                        </h2>
-                        
-                        {/* 👇 תיאור מהדאטה-בייס (מאפשר ירידת שורה) */}
-                        <div className="text-gray-300 text-lg leading-relaxed whitespace-pre-line">
-                            {tDB(settings?.content?.about?.description) || "תיאור ברירת מחדל..."}
-                        </div>
+                        {loading ? (
+                            <>
+                                {/* Skeleton for title */}
+                                <div className="h-12 w-3/4 bg-white/10 animate-pulse rounded-lg mb-6" />
+                                {/* Skeleton for description */}
+                                <div className="space-y-3">
+                                    <div className="h-5 w-full bg-white/5 animate-pulse rounded" />
+                                    <div className="h-5 w-full bg-white/5 animate-pulse rounded" />
+                                    <div className="h-5 w-4/5 bg-white/5 animate-pulse rounded" />
+                                    <div className="h-5 w-3/4 bg-white/5 animate-pulse rounded" />
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
+                                    {tDB(settings?.content?.about?.title) || t('about.title')}
+                                </h2>
+
+                                <div className="text-gray-300 text-lg leading-relaxed whitespace-pre-line">
+                                    {tDB(settings?.content?.about?.description) || t('about.description')}
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
 

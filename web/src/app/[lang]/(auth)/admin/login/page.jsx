@@ -3,8 +3,8 @@
 import React, { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Lock, User, ShieldCheck, AlertCircle } from 'lucide-react';
-import { authService } from '../../../../services';
-import NeonButton from '../../../../components/ui/NeonButton';
+import { authService } from '../../../../../services';
+import NeonButton from '../../../../../components/ui/NeonButton';
 
 export default function LoginPage() {
     const [formData, setFormData] = useState({ username: '', password: '' });
@@ -26,7 +26,7 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen pt-24 flex items-center justify-center bg-brand-dark relative overflow-hidden">
+        <div className="min-h-screen flex items-center justify-center bg-brand-dark relative overflow-hidden">
             {/* Background */}
             <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-brand-primary/20 rounded-full blur-[100px]"></div>
             <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-brand-secondary/20 rounded-full blur-[100px]"></div>
