@@ -31,23 +31,27 @@ const storage = new CloudinaryStorage({
             };
         }
 
-        // Image files: explicit resource_type
+        // Image files: optimize and convert to JPG
         console.log('Processing as IMAGE upload');
         return {
             folder: 'vr_escape',
             resource_type: 'image',
-            allowed_formats: ['jpg', 'png', 'jpeg'],
+            format: 'jpg',
+            allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
+            transformation: [{ width: 1920, height: 1920, crop: 'limit' }],
             public_id: uniqueId
         };
     }
 });
 
+const allowedImageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+
 const fileFilter = (req, file, cb) => {
     console.log('File filter check:', file.originalname, file.mimetype);
-    if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) {
+    if (allowedImageTypes.includes(file.mimetype) || file.mimetype.startsWith('video/')) {
         cb(null, true);
     } else {
-        cb(new Error('Format not supported! Only Images and Videos are allowed.'), false);
+        cb(new Error('Format not supported! Only Images (JPEG, PNG, WebP) and Videos are allowed.'), false);
     }
 };
 

@@ -64,10 +64,21 @@ export const SettingsProvider = ({ children, lang }) => {
 
     const getImg = (path) => {
         if (!path) return '/placeholder.jpg';
-        // Absolute URLs (Cloudinary, CDN, etc.) - return as-is
+
+        // Handle Cloudinary URLs - inject f_auto,q_auto for optimization
+        if (path.includes('cloudinary.com')) {
+            // Only add transformations if not already present
+            if (!path.includes('f_auto') && !path.includes('q_auto')) {
+                return path.replace('/upload/', '/upload/f_auto,q_auto/');
+            }
+            return path;
+        }
+
+        // Other external URLs - return as-is
         if (path.startsWith('http://') || path.startsWith('https://')) {
             return path;
         }
+
         // Legacy local paths - prepend API URL
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
         let cleanPath = path.replace(/\.\.\//g, '').replace('public/', '').replace('/public/', '/');
