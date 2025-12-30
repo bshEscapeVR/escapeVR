@@ -2,7 +2,7 @@
 
 import React from 'react';
 import BilingualInput from '../../../components/admin/ui/BilingualInput';
-import { Layout, Info, Phone, MapPin } from 'lucide-react';
+import { Layout, Info, Phone, MapPin, Grid3X3 } from 'lucide-react';
 
 // רכיב Input פשוט לשדות שאינם דו-לשוניים (כמו טלפון/מייל)
 const SimpleInput = ({ label, value, onChange, dir = "ltr" }) => (
@@ -73,16 +73,16 @@ const TabContent = ({ settings, update }) => {
                     <Info className="text-green-400" size={24} />
                     אודות החוויה
                 </h3>
-                
+
                 <div className="space-y-4">
-                    <BilingualInput 
+                    <BilingualInput
                         label="כותרת אזור אודות"
                         value={settings.content?.about?.title}
                         onChange={(val) => handleContentChange('about', 'title', val)}
                         placeholder="עתיד חדרי הבריחה"
                     />
-                    
-                    <BilingualInput 
+
+                    <BilingualInput
                         label="תוכן האודות (פסקה מלאה)"
                         value={settings.content?.about?.description}
                         onChange={(val) => handleContentChange('about', 'description', val)}
@@ -92,7 +92,31 @@ const TabContent = ({ settings, update }) => {
                 </div>
             </div>
 
-            {/* --- 3. CONTACT INFO --- */}
+            {/* --- 3. ROOMS SECTION --- */}
+            <div className="bg-[#1a0b2e]/50 border border-white/10 p-4 md:p-6 rounded-2xl">
+                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2 pb-4 border-b border-white/5">
+                    <Grid3X3 className="text-brand-primary" size={24} />
+                    אזור החדרים (Rooms)
+                </h3>
+
+                <div className="space-y-4">
+                    <BilingualInput
+                        label="כותרת אזור החדרים"
+                        value={settings.content?.rooms?.title}
+                        onChange={(val) => handleContentChange('rooms', 'title', val)}
+                        placeholder="בחרו את ההרפתקה שלכם"
+                    />
+
+                    <BilingualInput
+                        label="תת כותרת"
+                        value={settings.content?.rooms?.subtitle}
+                        onChange={(val) => handleContentChange('rooms', 'subtitle', val)}
+                        placeholder="שלושה עולמות ייחודיים, שלושה אתגרים בלתי נשכחים"
+                    />
+                </div>
+            </div>
+
+            {/* --- 4. CONTACT INFO --- */}
             <div className="bg-[#1a0b2e]/50 border border-white/10 p-4 md:p-6 rounded-2xl">
                 <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2 pb-4 border-b border-white/5">
                     <Phone className="text-brand-primary" size={24} />

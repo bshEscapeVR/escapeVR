@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Star, Quote, Loader } from 'lucide-react';
+import { Star, Quote } from 'lucide-react';
 import { useTranslation } from 'react-i18next'; // 👈 ייבוא עבור ה-JSON
 import { useSettings } from '../context/SettingsContext'; // עבור זיהוי השפה הנוכחית לתאריך
 import api from '../api/axios';
 import SectionTitle from './ui/SectionTitle';
+import ReviewSkeleton from './ui/ReviewSkeleton';
 
 const TestimonialsSection = () => {
     // t = תרגום סטטי מה-JSON
@@ -50,8 +51,10 @@ const TestimonialsSection = () => {
                 />
 
                 {loading ? (
-                    <div className="flex justify-center text-white">
-                        <Loader className="animate-spin" size={32} />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <ReviewSkeleton />
+                        <ReviewSkeleton />
+                        <ReviewSkeleton />
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

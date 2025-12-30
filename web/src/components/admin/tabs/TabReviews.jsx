@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Star, Check, X, Trash2, Quote, Calendar } from 'lucide-react';
 import { reviewService } from '../../../services';
+import Spinner from '../../../components/ui/Spinner';
 import { format } from 'date-fns';
 
 const TabReviews = () => {
@@ -48,7 +49,11 @@ const TabReviews = () => {
         }
     };
 
-    if (loading) return <div className="text-white text-center py-10 animate-pulse">טוען ביקורות...</div>;
+    if (loading) return (
+        <div className="flex items-center justify-center py-20">
+            <Spinner size="md" />
+        </div>
+    );
 
     return (
         <div className="animate-fade-in">

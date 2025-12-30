@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Phone, Mail, CheckCircle, Clock, Trash2, MessageSquare, Calendar } from 'lucide-react';
 import { leadService } from '../../../services';
+import Spinner from '../../../components/ui/Spinner';
 import { format } from 'date-fns';
 
 const TabLeads = () => {
@@ -46,7 +47,11 @@ const TabLeads = () => {
         }
     };
 
-    if (loading) return <div className="text-white text-center py-10 animate-pulse">טוען לידים...</div>;
+    if (loading) return (
+        <div className="flex items-center justify-center py-20">
+            <Spinner size="md" />
+        </div>
+    );
 
     return (
         <div className="animate-fade-in">

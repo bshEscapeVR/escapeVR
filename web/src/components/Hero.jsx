@@ -9,7 +9,7 @@ import TrailerModal from './TrailerModal';
 
 const Hero = () => {
     const { t } = useTranslation(); // תרגום סטטי (JSON)
-    const { t: tDB, settings, getImg } = useSettings(); // תרגום דינמי (DB)
+    const { t: tDB, settings, getImg, loading } = useSettings(); // תרגום דינמי (DB)
     const { openBooking } = useBooking();
     const [isTrailerOpen, setIsTrailerOpen] = useState(false);
 
@@ -29,22 +29,34 @@ const Hero = () => {
             {/* Content */}
             <div className="relative z-10 text-center px-4 max-w-4xl mx-auto mt-16">
 
-                {/* 
+                {/*
                    כותרת ראשית: מגיעה מהדאטה-בייס (ניתנת לעריכה באדמין).
-                   אם אין עדיין הגדרה, מציג ברירת מחדל יפה.
+                   אם טוען - מציג skeleton, אחרת מציג את התוכן האמיתי.
                 */}
-                <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight drop-shadow-2xl">
-                    {settings?.content?.hero?.title ? (
-                        <span>{tDB(settings.content.hero.title)}</span>
-                    ) : (
-                        <>BEYOND <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-neon to-blue-400">REALITY</span></>
-                    )}
-                </h1>
+                {loading ? (
+                    <>
+                        {/* Skeleton for title */}
+                        <div className="h-16 md:h-20 w-3/4 mx-auto bg-white/10 animate-pulse rounded-lg mb-6" />
+                        {/* Skeleton for subtitle */}
+                        <div className="h-6 w-2/3 mx-auto bg-white/10 animate-pulse rounded-lg mb-3" />
+                        <div className="h-6 w-1/2 mx-auto bg-white/10 animate-pulse rounded-lg mb-10" />
+                    </>
+                ) : (
+                    <>
+                        <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight drop-shadow-2xl">
+                            {settings?.content?.hero?.title ? (
+                                <span>{tDB(settings.content.hero.title)}</span>
+                            ) : (
+                                <>BEYOND <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-neon to-blue-400">REALITY</span></>
+                            )}
+                        </h1>
 
-                {/* תת כותרת מהדאטה-בייס */}
-                <p className="text-gray-300 text-lg md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
-                    {tDB(settings?.content?.hero?.subtitle) || "Forget locked cabinets! In Virtual Reality, there are no limits."}
-                </p>
+                        {/* תת כותרת מהדאטה-בייס */}
+                        <p className="text-gray-300 text-lg md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
+                            {tDB(settings?.content?.hero?.subtitle) || "Forget locked cabinets! In Virtual Reality, there are no limits."}
+                        </p>
+                    </>
+                )}
 
                 {/* כפתורים */}
                 <div className="flex flex-col md:flex-row gap-4 justify-center items-center mb-16">

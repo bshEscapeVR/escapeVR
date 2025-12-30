@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { Settings, Save, Image, FileText, Youtube, BarChart, LogOut, Calendar, MessageSquare, TrendingUp, ExternalLink, Layout } from 'lucide-react';
 import { settingsService, authService } from '../../../../services';
 import NeonButton from '../../../../components/ui/NeonButton';
+import Spinner from '../../../../components/ui/Spinner';
 
 // Import tabs
 import TabSEO from '../../../../components/admin/tabs/TabSEO';
@@ -83,8 +84,8 @@ export default function DashboardPage() {
     };
 
     if (loading || !settings) return (
-        <div className="min-h-screen bg-brand-dark flex items-center justify-center text-white animate-pulse">
-            טוען מערכת ניהול...
+        <div className="min-h-screen bg-brand-dark flex items-center justify-center">
+            <Spinner size="md" />
         </div>
     );
 

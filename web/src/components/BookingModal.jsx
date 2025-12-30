@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { useBooking } from '../context/BookingContext';
 import { useSettings } from '../context/SettingsContext';
 import NeonButton from './ui/NeonButton';
+import BookingModalSkeleton from './ui/BookingModalSkeleton';
 import { bookingService, roomService } from '../services';
 import 'react-calendar/dist/Calendar.css';
 import '../BookingCalendarOverride.css';
@@ -180,6 +181,8 @@ const BookingModal = () => {
                 <p className="text-gray-300 mb-6">{t('booking_modal.success_desc')}</p>
                 <NeonButton onClick={handleClose}>{t('booking_modal.btn_close')}</NeonButton>
              </div>
+        ) : rooms.length === 0 ? (
+            <BookingModalSkeleton />
         ) : (
         <>
             {/* צד ימין/שמאל - פרטי ההזמנה */}

@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next'; // 👈 עבור ה-JSON
 import { useSettings } from '../context/SettingsContext'; // 👈 עבור ה-DB
 import NeonButton from './ui/NeonButton';
 import SectionTitle from './ui/SectionTitle';
+import RoomSkeleton from './ui/RoomSkeleton';
 import roomService from '../services/room.service';
 
 const RoomsGrid = () => {
@@ -36,7 +37,24 @@ const RoomsGrid = () => {
         fetchRooms();
     }, []);
 
-    if (loading) return <div className="text-white text-center py-20 animate-pulse">{t('rooms_grid.loading')}</div>;
+    if (loading) {
+        return (
+            <section id="rooms" className="py-20 bg-brand-dark relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-full bg-[url('/hex-pattern.svg')] opacity-5 pointer-events-none"></div>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                    <SectionTitle
+                        title={t('rooms_grid.title')}
+                        subtitle={t('rooms_grid.subtitle')}
+                    />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <RoomSkeleton />
+                        <RoomSkeleton />
+                        <RoomSkeleton />
+                    </div>
+                </div>
+            </section>
+        );
+    }
 
     return (
         <section id="rooms" className="py-20 bg-brand-dark relative overflow-hidden">
@@ -44,8 +62,8 @@ const RoomsGrid = () => {
             <div className="absolute top-0 left-0 w-full h-full bg-[url('/hex-pattern.svg')] opacity-5 pointer-events-none"></div>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                
-                <SectionTitle 
+
+                <SectionTitle
                     title={t('rooms_grid.title')}
                     subtitle={t('rooms_grid.subtitle')}
                 />

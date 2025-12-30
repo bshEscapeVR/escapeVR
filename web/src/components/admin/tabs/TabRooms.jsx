@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Plus, Edit, Trash2, Save, Layout, DollarSign, Clock, Users, Zap } from 'lucide-react';
 import { roomService } from '../../../services';
 import NeonButton from '../../../components/ui/NeonButton';
+import Spinner from '../../../components/ui/Spinner';
 import BilingualInput from '../../../components/admin/ui/BilingualInput';
 import ImageUploader from '../../../components/admin/ui/ImageUploader';
 import { useSettings } from '../../../context/SettingsContext';
@@ -94,7 +95,11 @@ const TabRooms = () => {
     const updateFeature = (key, val) => setFormData(prev => ({ ...prev, features: { ...prev.features, [key]: val } }));
     const updatePricing = (key, val) => setFormData(prev => ({ ...prev, pricing: { ...prev.pricing, [key]: val } }));
 
-    if (loading) return <div className="text-center py-10 text-white animate-pulse">טוען חדרים...</div>;
+    if (loading) return (
+        <div className="flex items-center justify-center py-20">
+            <Spinner size="md" />
+        </div>
+    );
 
     // --- מסך רשימה ---
     if (!isEditing) {

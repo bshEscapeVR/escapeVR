@@ -7,11 +7,17 @@
         "book_btn": "Book Your Adventure"
     },
     "hero": {
+        "title": "BEYOND REALITY",
+        "subtitle": "Forget locked cabinets! In Virtual Reality, there are no limits. Experience the future of escape rooms.",
         "book_btn": "Book Your Adventure",
         "trailer_btn": "Watch Trailer",
         "stats_players": "Players",
         "stats_minutes": "Minutes",
         "stats_worlds": "Unique Worlds"
+    },
+    "about": {
+        "title": "The Future of Escape Rooms",
+        "description": "Step into a world where reality and imagination collide. Our cutting-edge VR technology transports you to incredible worlds where you'll solve puzzles, battle monsters, and experience adventures beyond your wildest dreams."
     },
     "booking": {
         "back_btn": "Back to all rooms",

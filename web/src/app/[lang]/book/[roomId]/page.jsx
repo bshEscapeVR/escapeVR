@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { useBooking } from '../../../../context/BookingContext';
 import { useSettings } from '../../../../context/SettingsContext';
 import NeonButton from '../../../../components/ui/NeonButton';
+import BookingPageSkeleton from '../../../../components/ui/BookingPageSkeleton';
 
 import Footer from '../../../../components/Footer';
 import { roomService } from '../../../../services';
@@ -51,7 +52,7 @@ export default function BookingPage() {
 
     if (loading) return (
         <div className="min-h-screen bg-brand-dark">
-            <div className="text-white text-center pt-32 text-2xl animate-pulse">{t('booking_page.loading')}</div>
+            <BookingPageSkeleton />
         </div>
     );
 

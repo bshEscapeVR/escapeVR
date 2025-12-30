@@ -47,11 +47,17 @@ const SiteSettingsSchema = new mongoose.Schema({
             subtitle: BilingualSchema,
             ctaButton: BilingualSchema
         },
-        
+
         // --- 👇 About (חדש) ---
         about: {
             title: BilingualSchema,
             description: BilingualSchema, // טקסט ארוך
+        },
+
+        // --- 👇 Rooms Section ---
+        rooms: {
+            title: BilingualSchema,
+            subtitle: BilingualSchema
         },
 
         // --- 👇 Contact Texts (חדש) ---

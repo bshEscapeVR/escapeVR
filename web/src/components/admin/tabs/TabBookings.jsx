@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { Plus, X, Phone, User, Clock, Save, Calendar as CalendarIcon, RefreshCw, AlertTriangle, Trash2, AlertCircle } from 'lucide-react';
 import { bookingService, roomService } from '../../../services';
 import NeonButton from '../../../components/ui/NeonButton';
+import Spinner from '../../../components/ui/Spinner';
 import WeeklyScheduleEditor from '../../../components/admin/WeeklyScheduleEditor';
 import 'react-calendar/dist/Calendar.css';
 import '../../../BookingCalendarOverride.css';
@@ -160,7 +161,11 @@ const TabBookings = () => {
         }
     };
 
-    if (loading) return <div className="text-center py-10 text-white animate-pulse">טוען הזמנות...</div>;
+    if (loading) return (
+        <div className="flex items-center justify-center py-20">
+            <Spinner size="md" />
+        </div>
+    );
 
     return (
         <div className="animate-fade-in space-y-6">
