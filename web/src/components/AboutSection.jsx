@@ -93,9 +93,8 @@ const AboutSection = () => {
                             <div className={`${feature.color} p-4 rounded-full mb-4 shadow-lg group-hover:scale-110 transition-transform`}>
                                 <feature.icon size={32} className="text-white" />
                             </div>
-                            {/* הערה: אם לא הוספת את המפתחות ל-JSON, את יכולה להחזיר פה טקסט קבוע זמנית */}
-                            <h3 className="text-white font-bold text-lg mb-2">{feature.title || "כותרת"}</h3>
-                            <p className="text-gray-400 text-sm">{feature.desc || "תיאור קצר..."}</p>
+<h3 className="text-white font-bold text-lg mb-2">{feature.title}</h3>
+                            <p className="text-gray-400 text-sm">{feature.desc}</p>
                         </div>
                     ))}
                 </div>

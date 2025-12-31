@@ -84,9 +84,7 @@ export const SettingsProvider = ({ children, lang }) => {
         <SettingsContext.Provider value={{
             settings, loading, language: lang, toggleLanguage, t, getImg
         }}>
-            <div key={lang} className="contents">
-                {children}
-            </div>
+            {children}
         </SettingsContext.Provider>
     );
 };

@@ -12,10 +12,10 @@ const Footer = () => {
     const currentYear = new Date().getFullYear();
 
     // שליפת נתונים דינמיים עם פולבק ל-JSON
-    const contactPhone = settings?.general?.contactPhone || t('footer.phone_default') || "054-8530162";
-    const contactEmail = settings?.general?.contactEmail || t('footer.email_default') || "escapevr.bsh@gmail.com";
+    const contactPhone = settings?.general?.contactPhone || "054-8530162";
+    const contactEmail = settings?.general?.contactEmail || "escapevr.bsh@gmail.com";
     const address = tDB(settings?.general?.contactAddress) || t('footer.address');
-    const siteName = tDB(settings?.general?.siteName) || t('footer.site_name') || "VR Escape Reality";
+    const siteName = tDB(settings?.general?.siteName) || t('footer.site_name');
 
     const social = settings?.general?.socialLinks || {};
 
@@ -107,7 +107,7 @@ const Footer = () => {
                 </div>
 
                 <div className="border-t border-white/5 pt-8 text-center text-xs">
-                    <p>&copy; {currentYear} {siteName}. {t('footer.rights')}</p>
+                    <p>© {currentYear} {siteName}. {t('footer.rights')}</p>
                 </div>
             </div>
         </footer>

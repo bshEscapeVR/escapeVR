@@ -67,7 +67,7 @@ const Navbar = () => {
                 </div>
             )}
             <span className="text-white font-bold text-xl tracking-wider group-hover:text-brand-neon transition-colors hidden sm:block">
-              {tDB(settings?.general?.siteName) || "Escape Reality"}
+              {tDB(settings?.general?.siteName) || t('navbar.site_name')}
             </span>
           </Link>
 
@@ -94,18 +94,18 @@ const Navbar = () => {
                 <Link
                   href={`/${language}/admin/dashboard/home`}
                   className="flex items-center gap-2 text-yellow-400 hover:text-white text-sm font-medium transition-colors px-3 py-2 rounded-full hover:bg-white/5 border border-yellow-400/20 hover:border-white/20"
-                  title={language === 'he' ? 'לוח ניהול' : 'Dashboard'}
+                  title={t('navbar.dashboard')}
                 >
                     <LayoutDashboard size={16} />
                 </Link>
             )}
 
-            <button 
-              onClick={toggleLanguage} 
+            <button
+              onClick={toggleLanguage}
               className="flex items-center gap-2 text-gray-400 hover:text-white text-sm font-medium transition-colors px-3 py-2 rounded-full hover:bg-white/5"
             >
               <Globe size={16} />
-              <span>{language === 'he' ? 'English' : 'עברית'}</span>
+              <span>{t('navbar.lang_toggle')}</span>
             </button>
 
             <button 
@@ -119,7 +119,7 @@ const Navbar = () => {
           {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center gap-4 z-50 relative">
              <button onClick={toggleLanguage} className="text-gray-400 hover:text-white font-bold text-sm">
-               {language === 'he' ? 'EN' : 'עב'}
+               {t('navbar.lang_toggle_short')}
             </button>
             <button onClick={() => setIsOpen(!isOpen)} className="text-gray-400 hover:text-white p-2">
               {isOpen ? <X size={28} /> : <Menu size={28} />}
@@ -164,7 +164,7 @@ const Navbar = () => {
                     className="text-yellow-400 px-4 py-3 rounded-xl text-lg font-bold border-b border-white/5 flex items-center gap-2"
                 >
                     <LayoutDashboard size={20} />
-                    {language === 'he' ? 'לוח ניהול' : 'Dashboard'}
+                    {t('navbar.dashboard')}
                 </Link>
             )}
         </div>
@@ -179,7 +179,7 @@ const Navbar = () => {
         </div>
 
         <div className="mt-auto mb-8 text-center text-gray-500 text-sm">
-            <p>VR Escape Reality</p>
+            <p>{t('navbar.site_name')}</p>
         </div>
     </div>
     </>

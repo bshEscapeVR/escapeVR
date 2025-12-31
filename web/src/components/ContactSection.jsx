@@ -93,20 +93,20 @@ const ContactSection = () => {
     const whatsappNum = settings?.general?.contactWhatsapp || "972548530162";
 
     // 2. הגדרת הולידציות (Zod)
-    
+
     const contactSchema = z.object({
-        fullName: z.string().min(2, t('שם קצר מדי') || "שם קצר מדי"),
-        email: z.string().email(t('כתובת אימייל לא תקינה') || "אימייל לא תקין"), 
-        phone: z.string().regex(/^05\d-?\d{7}$/, t('מספר לא תקין') || "מספר לא תקין").or(z.literal('')), 
-        message: z.string().min(5, t('ההודעה קצרה מדי') || "ההודעה קצרה מדי")
+        fullName: z.string().min(2, t('validation.name_short')),
+        email: z.string().email(t('validation.email_invalid')),
+        phone: z.string().regex(/^05\d-?\d{7}$/, t('validation.phone_invalid')).or(z.literal('')),
+        message: z.string().min(5, t('validation.message_short'))
     });
 
     const reviewSchema = z.object({
-        fullName: z.string().min(2, "שם חובה"),
-        email: z.string().email(t('כתובת אימייל לא תקינה') || "אימייל לא תקין"),
-        roomId: z.string().min(1, "חובה לבחור חדר"),
+        fullName: z.string().min(2, t('validation.name_short')),
+        email: z.string().email(t('validation.email_invalid')),
+        roomId: z.string().min(1, t('validation.room_required')),
         rating: z.number().min(1).max(5),
-        content: z.string().min(10, "הביקורת קצרה מדי (מינימום 10 תווים)")
+        content: z.string().min(10, t('validation.review_short'))
     });
 
     const { 
