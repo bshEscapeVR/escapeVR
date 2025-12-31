@@ -16,7 +16,7 @@ export default function HomePage() {
       <main>
         <Hero />
         <h1 style={{ color: 'red', fontSize: '50px', zIndex: 9999, position: 'relative' }}>
-          בדיקת עדכון גרסה 123
+        
         </h1>
         <AboutSection />
         <RoomsGrid />
