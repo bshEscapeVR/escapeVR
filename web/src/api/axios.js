@@ -1,7 +1,12 @@
 import axios from 'axios';
 
-// 👇 אנחנו כותבים את הכתובת קשיח כדי למנוע את בעיית ה-Hydration
+// Hardcoded to prevent hydration issues with env variables
 const SERVER_URL = 'https://escapevr-server.onrender.com';
+
+// Debug: Log on client to verify baseURL is correct
+if (typeof window !== 'undefined') {
+  console.log('[Axios] baseURL:', SERVER_URL);
+}
 
 const api = axios.create({
   baseURL: SERVER_URL,
