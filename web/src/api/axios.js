@@ -1,20 +1,21 @@
 import axios from 'axios';
 
-const api = axios.create({
-  baseURL:'https://escapevr-server.onrender.com',
-});
-// const api = axios.create({
-//   baseURL: process.env.NEXT_PUBLIC_API_URL,
-// });
+// 👇 כתיבה קשיחה של הכתובת. זה עוקף את כל הבעיות של Vercel.
+const PRODUCTION_URL = 'https://escapevr-server.onrender.com';
 
-// Interceptor להוספת הטוקן
+const api = axios.create({
+  baseURL: PRODUCTION_URL,
+});
+
+// Interceptor להוספת הטוקן (נשאר אותו דבר)
 api.interceptors.request.use(
   (config) => {
+    // בדיקה שאנחנו בצד לקוח (דפדפן)
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token');
-      if (token) {
-        config.headers['x-auth-token'] = token;
-      }
+        const token = localStorage.getItem('token');
+        if (token) {
+            config.headers['x-auth-token'] = token;
+        }
     }
     return config;
   },
