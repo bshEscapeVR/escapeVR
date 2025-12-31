@@ -1,8 +1,5 @@
 import api from '../api/axios';
 
-// const API_URL = 'https://escapevr-server.onrender.com';
-
-// פונקציות עזר גנריות
 const httpService = {
   get: async (url, params = {}) => {
     try {

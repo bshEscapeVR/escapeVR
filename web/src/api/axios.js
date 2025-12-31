@@ -1,28 +1,20 @@
 import axios from 'axios';
-
-// Hardcoded to prevent hydration issues with env variables
-const SERVER_URL = 'https://escapevr-server.onrender.com';
-
-// Debug: Log on client to verify baseURL is correct
-if (typeof window !== 'undefined') {
-  console.log('[Axios] baseURL:', SERVER_URL);
-}
+import config from '../config';
 
 const api = axios.create({
-  baseURL: SERVER_URL,
+  baseURL: config.apiUrl,
 });
 
-// Interceptor - נשאר כרגיל כדי לנהל את הטוקן
+// Interceptor for auth token
 api.interceptors.request.use(
-  (config) => {
-    // בדיקה שאנחנו בצד לקוח לפני שנוגעים ב-localStorage
+  (reqConfig) => {
     if (typeof window !== 'undefined') {
-        const token = localStorage.getItem('token');
-        if (token) {
-            config.headers['x-auth-token'] = token;
-        }
+      const token = localStorage.getItem('token');
+      if (token) {
+        reqConfig.headers['x-auth-token'] = token;
+      }
     }
-    return config;
+    return reqConfig;
   },
   (error) => {
     return Promise.reject(error);
