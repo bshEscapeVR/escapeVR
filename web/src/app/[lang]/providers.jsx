@@ -7,9 +7,15 @@ import { SettingsProvider } from '../../context/SettingsContext';
 import { BookingProvider } from '../../context/BookingContext';
 
 export default function Providers({ children, lang }) {
-  // Sync i18n language AFTER render (safe, no side-effects during render)
-  // The key={lang} on I18nextProvider forces remount on language change,
-  // ensuring all children get fresh translations
+  // SYNCHRONOUS: Direct mutation before children render
+  // Sets i18n.language WITHOUT emitting events (no React state updates)
+  // This ensures t() returns correct translations on first render → Hydration matches
+  if (i18n.language !== lang) {
+    i18n.language = lang;
+    i18n.languages = [lang];
+  }
+
+  // SAFE FALLBACK: Proper sync after render for i18next plugins/internals
   useEffect(() => {
     if (i18n.language !== lang) {
       i18n.changeLanguage(lang);
