@@ -1,14 +1,10 @@
 import axios from 'axios';
 
-// משתמש במשתנה הסביבה, ואם אין - ברירת מחדל לשרת בענן
-const baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://escapevr-server.onrender.com';
-
-console.log('=== AXIOS DEBUG ===');
-console.log('NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL);
-console.log('baseURL:', baseURL);
+// כתובת השרת קבועה
+const API_URL = 'https://escapevr-server.onrender.com';
 
 const api = axios.create({
-  baseURL: baseURL,
+  baseURL: API_URL,
 });
 
 api.interceptors.request.use(
