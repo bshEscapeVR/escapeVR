@@ -15,6 +15,9 @@ export default function HomePage() {
     <div className="min-h-screen bg-brand-dark text-brand-text font-sans selection:bg-brand-neon selection:text-white">
       <main>
         <Hero />
+        <h1 style={{ color: 'red', fontSize: '50px', zIndex: 9999, position: 'relative' }}>
+          בדיקת עדכון גרסה 123
+        </h1>
         <AboutSection />
         <RoomsGrid />
         <TestimonialsSection />
