@@ -74,9 +74,9 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/vr_escape')
 // גיבוי: הגשת קבצים מקומיים (אם נשארו כאלה לפני המעבר ל-Cloudinary)
 app.use('/uploads', express.static('uploads'));
 
-// נתיבי API
-app.use('/api/upload', uploadRouter);
-app.use('/api', mainRouter);
+// API Routes (v1)
+app.use('/v1/upload', uploadRouter);
+app.use('/v1', mainRouter);
 
 // 7. טיפול בשגיאות 404 (נתיב לא קיים)
 app.all(/(.*)/, (req, res, next) => {

@@ -10,7 +10,7 @@ const API_URL = 'https://escapevr-server.onrender.com';
 // --- Server Side Data Fetching ---
 async function getSeoSettings() {
   try {
-    const res = await fetch(`${API_URL}/api/settings`, {
+    const res = await fetch(`${API_URL}/v1/settings`, {
       cache: 'no-store',
       next: { revalidate: 0 }
     });

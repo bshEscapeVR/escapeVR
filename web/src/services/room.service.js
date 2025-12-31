@@ -1,6 +1,6 @@
 import httpService from './http.service';
 
-const ENDPOINT = '/api/rooms';
+const ENDPOINT = '/v1/rooms';
 
 const roomService = {
   // קבלת כל החדרים

@@ -1,6 +1,6 @@
 import httpService from './http.service';
 
-const ENDPOINT = '/api/settings';
+const ENDPOINT = '/v1/settings';
 
 const settingsService = {
   // קבלת הגדרות

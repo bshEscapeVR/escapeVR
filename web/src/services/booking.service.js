@@ -1,6 +1,6 @@
 import httpService from './http.service';
 
-const ENDPOINT = '/api/bookings';
+const ENDPOINT = '/v1/bookings';
 
 const bookingService = {
   // קבלת כל ההזמנות (אדמין)

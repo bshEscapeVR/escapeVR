@@ -1,6 +1,6 @@
 import httpService from './http.service';
 
-const ENDPOINT = '/api/reviews';
+const ENDPOINT = '/v1/reviews';
 
 const reviewService = {
   // יצירת ביקורת חדשה

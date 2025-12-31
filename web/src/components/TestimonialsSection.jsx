@@ -22,7 +22,7 @@ const TestimonialsSection = () => {
         const fetchReviews = async () => {
             try {
                 // שליפה מהשרת: רק ביקורות מאושרות
-                const res = await api.get('/api/reviews?approved=true');
+                const res = await api.get('/v1/reviews?approved=true');
                 if (res.data.status === 'success') {
                     setReviews(res.data.data);
                 }
