@@ -1,21 +1,21 @@
 import axios from 'axios';
 
-// const api = axios.create({
-//   baseURL:'https://escapevr-server.onrender.com',
-// });
+// 👇 אנחנו כותבים את הכתובת קשיח כדי למנוע את בעיית ה-Hydration
+const SERVER_URL = 'https://escapevr-server.onrender.com';
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000',
+  baseURL: SERVER_URL,
 });
 
-// Interceptor להוספת הטוקן
+// Interceptor - נשאר כרגיל כדי לנהל את הטוקן
 api.interceptors.request.use(
   (config) => {
+    // בדיקה שאנחנו בצד לקוח לפני שנוגעים ב-localStorage
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token');
-      if (token) {
-        config.headers['x-auth-token'] = token;
-      }
+        const token = localStorage.getItem('token');
+        if (token) {
+            config.headers['x-auth-token'] = token;
+        }
     }
     return config;
   },
