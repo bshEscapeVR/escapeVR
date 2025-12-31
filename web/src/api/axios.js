@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// משתמש במשתנה הסביבה, ואם אין - ברירת מחדל למקומי
-const baseURL = process.env.NEXT_PUBLIC_API_URL;
+// משתמש במשתנה הסביבה, ואם אין - ברירת מחדל לשרת בענן
+const baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://escapevr-server.onrender.com';
 
 const api = axios.create({
   baseURL: baseURL,

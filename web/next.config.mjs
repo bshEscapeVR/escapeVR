@@ -3,22 +3,12 @@ const nextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '5000',
-        pathname: '/uploads/**',
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        pathname: '/dh1ickcoh/**',
       },
     ],
   },
-//   images: {
-//   remotePatterns: [
-//     {
-//       protocol: 'https',
-//       hostname: 'escapevr-server.onrender.com',
-//       pathname: '/uploads/**',
-//     },
-//   ],
-// },
 };
 
 export default nextConfig;
