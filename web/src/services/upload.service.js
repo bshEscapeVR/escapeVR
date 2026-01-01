@@ -1,6 +1,6 @@
 import api from '../api/axios'; // שימוש ישיר ב-axios לצורך הגדרות Header ספציפיות
 
-const ENDPOINT = '/v1/upload';
+const ENDPOINT = 'v1/upload';
 
 const uploadService = {
   uploadImage: async (file) => {

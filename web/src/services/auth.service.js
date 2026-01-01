@@ -1,6 +1,6 @@
 import httpService from './http.service';
 
-const ENDPOINT = '/v1/auth';
+const ENDPOINT = 'v1/auth';
 
 const authService = {
   // התחברות

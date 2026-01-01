@@ -1,6 +1,6 @@
 import httpService from './http.service';
 
-const ENDPOINT = '/v1/leads';
+const ENDPOINT = 'v1/leads';
 
 const leadService = {
   // יצירת ליד חדש (מטופס צור קשר)
