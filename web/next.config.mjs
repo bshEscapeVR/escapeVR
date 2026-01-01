@@ -1,16 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // 👇 הוספת משתני סביבה קשיחים לבנייה
+  // Force env var into client bundle (with fallback for safety)
   env: {
-    NEXT_PUBLIC_API_URL: 'https://escapevr-server.onrender.com',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://escapevr-server.onrender.com',
   },
-  
+
   images: {
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'res.cloudinary.com',
-        pathname: '/dh1lickcoh/**', // וודאי שזה ה-Cloud Name שלך
+        pathname: '/dh1lickcoh/**',
       },
     ],
   },

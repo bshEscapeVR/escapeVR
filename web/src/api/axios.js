@@ -1,5 +1,8 @@
 import axios from 'axios';
 
+// Debug: Log the API URL being used
+console.log('🔌 Client API URL:', process.env.NEXT_PUBLIC_API_URL);
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // CRITICAL: Throw error if missing during build/runtime to prevent silent failures
