@@ -7,7 +7,7 @@ export default function DebugPage() {
     const testConnection = async () => {
         try {
             // פניה ישירה לשרת (ללא axios)
-            const res = await fetch('https://escapevr-server.onrender.com/api/settings');
+            const res = await fetch('https://escapevr-server.onrender.com/v1/settings');
             const data = await res.json();
             setResult('SUCCESS: ' + JSON.stringify(data).slice(0, 100));
         } catch (err) {
