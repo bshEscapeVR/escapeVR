@@ -10,7 +10,7 @@ export const SettingsProvider = ({ children, lang, initialSettings }) => {
 
     // Initialize with server-fetched settings (no client fetch needed)
     const [settings, setSettings] = useState(initialSettings);
-    const [loading, setLoading] = useState(false); // No loading since data comes from server
+    const [loading, setLoading] = useState(false);
 
     // Set document direction (RTL/LTR) based on language
     useEffect(() => {
@@ -32,11 +32,9 @@ export const SettingsProvider = ({ children, lang, initialSettings }) => {
 
     const t = (obj) => {
         if (!obj) return '';
-        // Check if it's a bilingual object (has 'he' or 'en' keys)
         if (typeof obj === 'object' && ('he' in obj || 'en' in obj)) {
             return obj[lang] || obj['he'] || obj['en'] || '';
         }
-        // If it's any other object, return empty string to prevent React crash
         if (typeof obj === 'object') {
             return '';
         }
@@ -48,7 +46,6 @@ export const SettingsProvider = ({ children, lang, initialSettings }) => {
 
         // Handle Cloudinary URLs - inject f_auto,q_auto for optimization
         if (path.includes('cloudinary.com')) {
-            // Only add transformations if not already present
             if (!path.includes('f_auto') && !path.includes('q_auto')) {
                 return path.replace('/upload/', '/upload/f_auto,q_auto/');
             }
@@ -60,13 +57,8 @@ export const SettingsProvider = ({ children, lang, initialSettings }) => {
             return path;
         }
 
-        // Legacy local paths - prepend API URL from env var (no fallback)
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-        if (!apiUrl) {
-            console.error('CRITICAL: NEXT_PUBLIC_API_URL is missing in getImg');
-            return path;
-        }
-
+        // Legacy local paths - prepend API URL from env var
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
         let cleanPath = path.replace(/\.\.\//g, '').replace('public/', '').replace('/public/', '/');
         if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath;
         return `${apiUrl}${cleanPath}`;

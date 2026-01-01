@@ -4,13 +4,8 @@ import Providers from "./providers";
 // Force dynamic rendering (required for fetch with no-store)
 export const dynamic = 'force-dynamic';
 
-// API URL from environment variable (server-side)
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-// CRITICAL: Fail fast if env var is missing
-if (!API_URL) {
-  throw new Error('CRITICAL: NEXT_PUBLIC_API_URL is missing on server');
-}
+// API URL from environment variable
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 // --- Server Side Data Fetching ---
 async function getSettingsFromServer() {
