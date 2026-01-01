@@ -4,11 +4,16 @@ import Providers from "./providers";
 // Force dynamic rendering (required for fetch with no-store)
 export const dynamic = 'force-dynamic';
 
-// API URL from environment variable
-// const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-const API_URL = 'https://escapevr-server.onrender.com';
+// API URL from environment variable (server-side)
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 // --- Server Side Data Fetching ---
 async function getSeoSettings() {
+  if (!API_URL) {
+    console.error('CRITICAL: NEXT_PUBLIC_API_URL is not defined for SEO fetch!');
+    return null;
+  }
+
   try {
     const res = await fetch(`${API_URL}/v1/settings`, {
       cache: 'no-store',
@@ -36,7 +41,7 @@ export async function generateMetadata({ params }) {
   const keywords = settings?.seo?.home?.keywords?.[lang] || settings?.seo?.home?.keywords?.he || "חדר בריחה, מציאות מדומה, VR, אטרקציות";
 
   let heroImage = settings?.media?.heroImage || '/placeholder.jpg';
-  if (!heroImage.startsWith('http')) {
+  if (!heroImage.startsWith('http') && API_URL) {
     const cleanPath = heroImage.replace('../../public', '').replace('/public', '');
     heroImage = `${API_URL}${cleanPath.startsWith('/') ? '' : '/'}${cleanPath}`;
   }

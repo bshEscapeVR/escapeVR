@@ -2,14 +2,13 @@ import axios from 'axios';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-// Fail build if env var is missing (Safety Check)
+// CRITICAL: Throw error if missing during build/runtime to prevent silent failures
 if (!API_BASE_URL) {
-    console.error('CRITICAL: NEXT_PUBLIC_API_URL is not defined!');
-    // In production build, we might want to throw, but for now log error
+    throw new Error('CRITICAL CONFIG ERROR: NEXT_PUBLIC_API_URL is missing!');
 }
 
 const api = axios.create({
-    baseURL: API_BASE_URL || 'http://localhost:5000', // Fallback for local dev only
+    baseURL: API_BASE_URL,
 });
 
 api.interceptors.request.use((config) => {
