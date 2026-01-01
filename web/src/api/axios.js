@@ -25,19 +25,39 @@
 // export default api;
 import axios from 'axios';
 
-// Hardcoded URL to ensure client-side always hits the right server
+// 👇 כתובת השרת הקבועה שלנו
 const API_BASE_URL = 'https://escapevr-server.onrender.com';
-console.log(API_BASE_URL);
+
+// פונקציה שתבנה את ה-URL המלא לכל קריאה
+const buildUrl = (path) => {
+  // ודאי שה-path תמיד מתחיל ב־"/"
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  return `${API_BASE_URL}${normalizedPath}`;
+};
+
+// יצירת instance של axios
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_BASE_URL, // baseURL עדיין חשוב למקרים של relative paths
 });
 
-api.interceptors.request.use((config) => {
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('token');
-    if (token) config.headers['x-auth-token'] = token;
-  }
-  return config;
-}, (error) => Promise.reject(error));
+// Interceptor להוספת token אם קיים
+api.interceptors.request.use(
+  (config) => {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('token');
+      if (token) {
+        config.headers['x-auth-token'] = token;
+      }
+    }
+
+    // ודא שה-path הנשלח הוא מלא
+    if (config.url && !config.url.startsWith('http')) {
+      config.url = buildUrl(config.url);
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 export default api;
