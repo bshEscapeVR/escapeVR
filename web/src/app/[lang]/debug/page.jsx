@@ -1,38 +1,30 @@
 'use client';
+import React, { useState } from 'react';
 
 export default function DebugPage() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    const nodeEnv = process.env.NODE_ENV;
+    const [result, setResult] = useState('Waiting...');
+    
+    const testConnection = async () => {
+        try {
+            // פניה ישירה לשרת (ללא axios)
+            const res = await fetch('https://escapevr-server.onrender.com/api/settings');
+            const data = await res.json();
+            setResult('SUCCESS: ' + JSON.stringify(data).slice(0, 100));
+        } catch (err) {
+            setResult('ERROR: ' + err.message);
+        }
+    };
 
     return (
-        <div className="min-h-screen bg-gray-900 text-white p-8 pt-24">
-            <h1 className="text-3xl font-bold mb-8">Environment Check</h1>
-
-            <div className="space-y-4 font-mono text-sm">
-                <div className="bg-gray-800 p-4 rounded-lg">
-                    <span className="text-gray-400">NEXT_PUBLIC_API_URL:</span>
-                    <br />
-                    <span className={apiUrl ? 'text-green-400' : 'text-red-400'}>
-                        {apiUrl || '(undefined)'}
-                    </span>
-                </div>
-
-                <div className="bg-gray-800 p-4 rounded-lg">
-                    <span className="text-gray-400">NODE_ENV:</span>
-                    <br />
-                    <span className="text-blue-400">
-                        {nodeEnv || '(undefined)'}
-                    </span>
-                </div>
-
-                <div className="bg-gray-800 p-4 rounded-lg">
-                    <span className="text-gray-400">Timestamp:</span>
-                    <br />
-                    <span className="text-yellow-400">
-                        {new Date().toISOString()}
-                    </span>
-                </div>
-            </div>
+        <div className="p-10 text-white">
+            <h1>Direct Connection Test</h1>
+            <button 
+                onClick={testConnection}
+                className="bg-blue-500 p-2 rounded mt-4"
+            >
+                Test Fetch
+            </button>
+            <pre className="mt-4 bg-gray-800 p-4 rounded">{result}</pre>
         </div>
     );
 }
