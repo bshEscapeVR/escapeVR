@@ -6,7 +6,7 @@ import i18n from '../../i18n';
 import { SettingsProvider } from '../../context/SettingsContext';
 import { BookingProvider } from '../../context/BookingContext';
 
-export default function Providers({ children, lang }) {
+export default function Providers({ children, lang, initialSettings }) {
   // SYNCHRONOUS: Direct mutation before children render
   // Sets i18n.language WITHOUT emitting events (no React state updates)
   // This ensures t() returns correct translations on first render → Hydration matches
@@ -24,7 +24,7 @@ export default function Providers({ children, lang }) {
 
   return (
     <I18nextProvider i18n={i18n} key={lang}>
-      <SettingsProvider lang={lang}>
+      <SettingsProvider lang={lang} initialSettings={initialSettings}>
         <BookingProvider>
           {children}
         </BookingProvider>

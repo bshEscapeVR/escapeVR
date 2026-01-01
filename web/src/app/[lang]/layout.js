@@ -7,13 +7,13 @@ export const dynamic = 'force-dynamic';
 // API URL from environment variable (server-side)
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-// --- Server Side Data Fetching ---
-async function getSeoSettings() {
-  if (!API_URL) {
-    console.error('CRITICAL: NEXT_PUBLIC_API_URL is not defined for SEO fetch!');
-    return null;
-  }
+// CRITICAL: Fail fast if env var is missing
+if (!API_URL) {
+  throw new Error('CRITICAL: NEXT_PUBLIC_API_URL is missing on server');
+}
 
+// --- Server Side Data Fetching ---
+async function getSettingsFromServer() {
   try {
     const res = await fetch(`${API_URL}/v1/settings`, {
       cache: 'no-store',
@@ -25,7 +25,7 @@ async function getSeoSettings() {
     const json = await res.json();
     return json.data;
   } catch (error) {
-    console.error('SEO Fetch Error:', error);
+    console.error('Settings Fetch Error:', error);
     return null;
   }
 }
@@ -33,7 +33,7 @@ async function getSeoSettings() {
 // --- Dynamic Metadata Generation ---
 export async function generateMetadata({ params }) {
   const { lang } = await params;
-  const settings = await getSeoSettings();
+  const settings = await getSettingsFromServer();
 
   const siteName = settings?.general?.siteName?.[lang] || settings?.general?.siteName?.he || "VR Escape Reality";
   const title = settings?.seo?.home?.title?.[lang] || settings?.seo?.home?.title?.he || siteName;
@@ -41,7 +41,7 @@ export async function generateMetadata({ params }) {
   const keywords = settings?.seo?.home?.keywords?.[lang] || settings?.seo?.home?.keywords?.he || "חדר בריחה, מציאות מדומה, VR, אטרקציות";
 
   let heroImage = settings?.media?.heroImage || '/placeholder.jpg';
-  if (!heroImage.startsWith('http') && API_URL) {
+  if (!heroImage.startsWith('http')) {
     const cleanPath = heroImage.replace('../../public', '').replace('/public', '');
     heroImage = `${API_URL}${cleanPath.startsWith('/') ? '' : '/'}${cleanPath}`;
   }
@@ -82,10 +82,13 @@ export default async function RootLayout({ children, params }) {
   const { lang } = await params;
   const dir = lang === 'he' ? 'rtl' : 'ltr';
 
+  // Fetch settings on server and pass to client
+  const initialSettings = await getSettingsFromServer();
+
   return (
     <html lang={lang} dir={dir}>
       <body className="antialiased">
-        <Providers lang={lang}>
+        <Providers lang={lang} initialSettings={initialSettings}>
           {children}
         </Providers>
       </body>

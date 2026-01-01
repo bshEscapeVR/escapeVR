@@ -1,35 +1,22 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { settingsService } from '../services';
 import { useRouter } from 'next/navigation';
 
 const SettingsContext = createContext();
 
-export const SettingsProvider = ({ children, lang }) => {
+export const SettingsProvider = ({ children, lang, initialSettings }) => {
     const router = useRouter();
-    const [settings, setSettings] = useState(null);
-    const [loading, setLoading] = useState(true);
+
+    // Initialize with server-fetched settings (no client fetch needed)
+    const [settings, setSettings] = useState(initialSettings);
+    const [loading, setLoading] = useState(false); // No loading since data comes from server
 
     // Set document direction (RTL/LTR) based on language
     useEffect(() => {
         document.documentElement.dir = lang === 'he' ? 'rtl' : 'ltr';
         document.documentElement.lang = lang;
     }, [lang]);
-
-    useEffect(() => {
-        const fetchSettings = async () => {
-            try {
-                const data = await settingsService.get();
-                setSettings(data);
-            } catch (err) {
-                console.error("Failed to load settings", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchSettings();
-    }, []);
 
     const toggleLanguage = () => {
         const newLang = lang === 'he' ? 'en' : 'he';
@@ -73,8 +60,13 @@ export const SettingsProvider = ({ children, lang }) => {
             return path;
         }
 
-        // Legacy local paths - prepend API URL
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        // Legacy local paths - prepend API URL from env var (no fallback)
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+        if (!apiUrl) {
+            console.error('CRITICAL: NEXT_PUBLIC_API_URL is missing in getImg');
+            return path;
+        }
+
         let cleanPath = path.replace(/\.\.\//g, '').replace('public/', '').replace('/public/', '/');
         if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath;
         return `${apiUrl}${cleanPath}`;
@@ -82,7 +74,7 @@ export const SettingsProvider = ({ children, lang }) => {
 
     return (
         <SettingsContext.Provider value={{
-            settings, loading, language: lang, toggleLanguage, t, getImg
+            settings, setSettings, loading, language: lang, toggleLanguage, t, getImg
         }}>
             {children}
         </SettingsContext.Provider>
