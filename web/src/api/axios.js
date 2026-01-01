@@ -1,24 +1,23 @@
 import axios from 'axios';
-import config from '../config';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+// Fail build if env var is missing (Safety Check)
+if (!API_BASE_URL) {
+    console.error('CRITICAL: NEXT_PUBLIC_API_URL is not defined!');
+    // In production build, we might want to throw, but for now log error
+}
 
 const api = axios.create({
-  baseURL: config.apiUrl,
+    baseURL: API_BASE_URL || 'http://localhost:5000', // Fallback for local dev only
 });
 
-// Interceptor for auth token
-api.interceptors.request.use(
-  (reqConfig) => {
+api.interceptors.request.use((config) => {
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token');
-      if (token) {
-        reqConfig.headers['x-auth-token'] = token;
-      }
+        const token = localStorage.getItem('token');
+        if (token) config.headers['x-auth-token'] = token;
     }
-    return reqConfig;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+    return config;
+}, (error) => Promise.reject(error));
 
 export default api;
