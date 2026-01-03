@@ -1,4 +1,4 @@
-import api from '../api/axios'; // שימוש ישיר ב-axios לצורך הגדרות Header ספציפיות
+import getApi from '../api/axios';
 
 const ENDPOINT = 'v1/upload';
 
@@ -8,7 +8,7 @@ const uploadService = {
     formData.append('image', file);
 
     try {
-      const response = await api.post(ENDPOINT, formData, {
+      const response = await getApi().post(ENDPOINT, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }

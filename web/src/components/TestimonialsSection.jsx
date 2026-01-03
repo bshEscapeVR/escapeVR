@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Star, Quote } from 'lucide-react';
 import { useTranslation } from 'react-i18next'; // 👈 ייבוא עבור ה-JSON
 import { useSettings } from '../context/SettingsContext'; // עבור זיהוי השפה הנוכחית לתאריך
-import api from '../api/axios';
+import getApi from '../api/axios';
 import SectionTitle from './ui/SectionTitle';
 import ReviewSkeleton from './ui/ReviewSkeleton';
 
@@ -22,7 +22,7 @@ const TestimonialsSection = () => {
         const fetchReviews = async () => {
             try {
                 // שליפה מהשרת: רק ביקורות מאושרות
-                const res = await api.get('/v1/reviews?approved=true');
+                const res = await getApi().get('/v1/reviews?approved=true');
                 if (res.data.status === 'success') {
                     setReviews(res.data.data);
                 }

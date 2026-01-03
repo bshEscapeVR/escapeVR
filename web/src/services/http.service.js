@@ -1,9 +1,9 @@
-import api from '../api/axios';
+import getApi from '../api/axios';
 
 const httpService = {
   get: async (endpoint, params = {}) => {
     try {
-      const response = await api.get(endpoint, { params });
+      const response = await getApi().get(endpoint, { params });
       return response.data;
     } catch (error) {
       console.error(`GET request failed for ${endpoint}`, error);
@@ -13,7 +13,7 @@ const httpService = {
 
   post: async (endpoint, data) => {
     try {
-      const response = await api.post(endpoint, data);
+      const response = await getApi().post(endpoint, data);
       return response.data;
     } catch (error) {
       console.error(`POST request failed for ${endpoint}`, error);
@@ -23,7 +23,7 @@ const httpService = {
 
   put: async (endpoint, data) => {
     try {
-      const response = await api.put(endpoint, data);
+      const response = await getApi().put(endpoint, data);
       return response.data;
     } catch (error) {
       console.error(`PUT request failed for ${endpoint}`, error);
@@ -33,7 +33,7 @@ const httpService = {
 
   patch: async (endpoint, data) => {
     try {
-      const response = await api.patch(endpoint, data);
+      const response = await getApi().patch(endpoint, data);
       return response.data;
     } catch (error) {
       console.error(`PATCH request failed for ${endpoint}`, error);
@@ -43,7 +43,7 @@ const httpService = {
 
   delete: async (endpoint) => {
     try {
-      const response = await api.delete(endpoint);
+      const response = await getApi().delete(endpoint);
       return response.data;
     } catch (error) {
       console.error(`DELETE request failed for ${endpoint}`, error);

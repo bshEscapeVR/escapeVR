@@ -1,22 +1,31 @@
 import axios from 'axios';
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+let apiInstance = null;
 
-console.log('🔌 Axios Base URL:', process.env.NEXT_PUBLIC_API_URL);
+/**
+ * Lazy-initialized Axios instance.
+ * This ensures Axios is NEVER initialized during server-side rendering/build,
+ * preventing configuration mismatches between server and client.
+ */
+const getApi = () => {
+    // Hardcoded URL as ultimate fallback (prevents localhost fallback on Vercel)
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://escapevr-server.onrender.com';
 
-const api = axios.create({
-  baseURL,
-});
+    if (!apiInstance) {
+        apiInstance = axios.create({ baseURL: API_URL });
 
-api.interceptors.request.use(
-  (config) => {
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token');
-      if (token) config.headers['x-auth-token'] = token;
+        apiInstance.interceptors.request.use(
+            (config) => {
+                if (typeof window !== 'undefined') {
+                    const token = localStorage.getItem('token');
+                    if (token) config.headers['x-auth-token'] = token;
+                }
+                return config;
+            },
+            (error) => Promise.reject(error)
+        );
     }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+    return apiInstance;
+};
 
-export default api;
+export default getApi;
