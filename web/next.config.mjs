@@ -12,13 +12,13 @@
 // };
 
 // export default nextConfig;
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // 1. הוספת המיפוי הזה מכריחה את המשתנה להיכנס לתוך ה-Build
+  // 👇 התיקון: אנחנו כותבים את הכתובת במפורש. זה מחייב את האתר להכיר אותה.
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+    NEXT_PUBLIC_API_URL: 'https://escapevr-server.onrender.com',
   },
+  
   images: {
     remotePatterns: [
       {
@@ -26,7 +26,6 @@ const nextConfig = {
         hostname: 'res.cloudinary.com',
         pathname: '/dh1lickcoh/**',
       },
-      // הוספנו גם את השרת שלך ליתר ביטחון (למקרה שיש תמונות משם)
       {
         protocol: 'https',
         hostname: 'escapevr-server.onrender.com', 
