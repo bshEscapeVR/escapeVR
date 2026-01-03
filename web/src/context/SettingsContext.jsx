@@ -58,7 +58,7 @@ export const SettingsProvider = ({ children, lang, initialSettings }) => {
         }
 
         // Legacy local paths - prepend API URL from env var
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://escapevr-server.onrender.com';
         let cleanPath = path.replace(/\.\.\//g, '').replace('public/', '').replace('/public/', '/');
         if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath;
         return `${apiUrl}${cleanPath}`;
