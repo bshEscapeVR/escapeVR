@@ -23,6 +23,7 @@ const getApi = () => {
     // Debug log - remove after fixing
     if (typeof window !== 'undefined') {
         console.log('🔍 API_URL:', baseURL);
+
     }
 
     if (!apiInstance) {
