@@ -18,6 +18,22 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_API_URL: 'https://escapevr-server.onrender.com',
   },
+   async rewrites() {
+    return [
+      {
+        source: '/v1/:path*',
+        destination: 'https://escapevr-server.onrender.com/v1/:path*',
+      },
+      {
+        source: '/he/v1/:path*',
+        destination: 'https://escapevr-server.onrender.com/v1/:path*',
+      },
+      {
+        source: '/en/v1/:path*',
+        destination: 'https://escapevr-server.onrender.com/v1/:path*',
+      },
+    ];
+  },
   
   images: {
     remotePatterns: [
