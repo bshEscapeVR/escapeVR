@@ -5,8 +5,7 @@ import Providers from "./providers";
 export const dynamic = 'force-dynamic';
 
 // API URL from environment variable
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://escapevr-server.onrender.com';
-
+const API_URL = 'https://escapevr-server.onrender.com';
 // --- Server Side Data Fetching ---
 async function getSettingsFromServer() {
   try {
