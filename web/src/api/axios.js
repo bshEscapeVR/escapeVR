@@ -9,8 +9,7 @@ let apiInstance = null;
  */
 const getApi = () => {
     // Hardcoded URL as ultimate fallback (prevents localhost fallback on Vercel)
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://escapevr-server.onrender.com';
-
+const API_URL = 'https://escapevr-server.onrender.com';
     if (!apiInstance) {
         apiInstance = axios.create({ baseURL: API_URL });
 
