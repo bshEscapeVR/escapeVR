@@ -4,7 +4,7 @@ let apiInstance = null;
 
 // Prefer explicit URL, but guard against accidental whitespace/newlines in builds.
 // If it resolves to an empty/whitespace string, fall back to the Render API.
-const API_BASE_URL_RAW = 'https://escapevr-server.onrender.com';
+const API_BASE_URL_RAW = process.env.NEXT_PUBLIC_API_URL;
 const FALLBACK_API_BASE_URL = 'https://escapevr-server.onrender.com';
 
 const resolveApiBaseUrl = () => {
