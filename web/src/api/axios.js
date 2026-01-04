@@ -4,7 +4,6 @@ let apiInstance = null;
 
 // Hardcoded URL - ensures it's always correct regardless of environment variables
 const API_BASE_URL = 'https://escapevr-server.onrender.com';
-
 /**
  * Lazy-initialized Axios instance.
  * This ensures Axios is NEVER initialized during server-side rendering/build,
