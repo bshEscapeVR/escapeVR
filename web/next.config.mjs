@@ -16,7 +16,7 @@
 const nextConfig = {
   // 👇 התיקון: אנחנו כותבים את הכתובת במפורש. זה מחייב את האתר להכיר אותה.
   env: {
-    NEXT_PUBLIC_API_URL: 'https://escapevr-server.onrender.com',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://escapevr-server.onrender.com',
   },
    async rewrites() {
     return [
