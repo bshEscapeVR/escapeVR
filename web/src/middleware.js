@@ -26,6 +26,6 @@ export function middleware(request) {
 export const config = {
   // Only run middleware on page routes, exclude static files and internals
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.[\\w]+$).*)',
+    '/((?!api|v1|_next/static|_next/image|favicon.ico|.*\\.[\\w]+$).*)',
   ],
 };
