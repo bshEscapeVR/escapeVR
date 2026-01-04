@@ -2,15 +2,32 @@ import axios from 'axios';
 
 let apiInstance = null;
 
-const API_BASE_URL = 'https://escapevr-server.onrender.com';
+// Prefer explicit URL, but guard against accidental whitespace/newlines in builds.
+// If it resolves to an empty/whitespace string, fall back to the Render API.
+const API_BASE_URL_RAW = 'https://escapevr-server.onrender.com';
+const FALLBACK_API_BASE_URL = 'https://escapevr-server.onrender.com';
 
+const resolveApiBaseUrl = () => {
+    const candidate = typeof API_BASE_URL_RAW === 'string' ? API_BASE_URL_RAW.trim() : '';
+    return candidate ? candidate : FALLBACK_API_BASE_URL;
+};
+
+/**
+ * Lazy-initialized Axios instance.
+ * This ensures Axios is NEVER initialized during server-side rendering/build,
+ * preventing configuration mismatches between server and client.
+ */
 const getApi = () => {
+    const baseURL = resolveApiBaseUrl();
+
+    // Debug log - remove after fixing
     if (typeof window !== 'undefined') {
-        console.log('API_URL:', API_BASE_URL);
+        console.log('🔍 API_URL:', baseURL);
+
     }
 
     if (!apiInstance) {
-        apiInstance = axios.create({ baseURL: API_BASE_URL });
+        apiInstance = axios.create({ baseURL });
 
         apiInstance.interceptors.request.use(
             (config) => {
