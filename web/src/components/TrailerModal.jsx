@@ -39,7 +39,7 @@ const TrailerModal = ({ isOpen, onClose, videoUrl }) => {
             return url;
         }
         // Legacy local paths - prepend server URL
-        const apiUrl = 'https://escapevr-server.onrender.com';
+        const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://escapevr-server.onrender.com').trim();
         let cleanPath = url.replace(/\.\.\//g, '').replace('public/', '').replace('/public/', '/');
         if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath;
         return `${apiUrl}${cleanPath}`;
