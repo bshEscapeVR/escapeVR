@@ -45,6 +45,7 @@ const SiteSettingsSchema = new mongoose.Schema({
         hero: {
             title: BilingualSchema,
             subtitle: BilingualSchema,
+            description: BilingualSchema, // טקסט ארוך (אופציונלי)
             ctaButton: BilingualSchema
         },
 

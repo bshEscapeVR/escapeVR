@@ -46,7 +46,7 @@ const RoomsGrid = () => {
 
     if (isLoading) {
         return (
-            <section id="rooms" className="py-20 bg-brand-dark relative overflow-hidden">
+            <section id="rooms" className="py-20 relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-full bg-[url('/hex-pattern.svg')] opacity-5 pointer-events-none"></div>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                     {/* Skeleton for section title */}
@@ -65,7 +65,7 @@ const RoomsGrid = () => {
     }
 
     return (
-        <section id="rooms" className="py-20 bg-brand-dark relative overflow-hidden">
+        <section id="rooms" className="py-20 relative overflow-hidden">
             {/* רקע דקורטיבי עדין */}
             <div className="absolute top-0 left-0 w-full h-full bg-[url('/hex-pattern.svg')] opacity-5 pointer-events-none"></div>
 

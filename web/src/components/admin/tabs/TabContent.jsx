@@ -52,14 +52,21 @@ const TabContent = ({ settings, update }) => {
                         placeholder="BEYOND REALITY"
                     />
                     
-                    <BilingualInput 
-                        label="כותרת משנה (תיאור קצר)"
+                    <BilingualInput
+                        label="כותרת משנה"
                         value={settings.content?.hero?.subtitle}
                         onChange={(val) => handleContentChange('hero', 'subtitle', val)}
-                        isTextArea
                     />
 
-                    <BilingualInput 
+                    <BilingualInput
+                        label="תיאור ארוך (אופציונלי - מוצג מתחת לכותרות)"
+                        value={settings.content?.hero?.description}
+                        onChange={(val) => handleContentChange('hero', 'description', val)}
+                        isTextArea
+                        placeholder="השאר ריק אם לא רוצה להציג תיאור ארוך..."
+                    />
+
+                    <BilingualInput
                         label="טקסט כפתור (הנעה לפעולה)"
                         value={settings.content?.hero?.ctaButton}
                         onChange={(val) => handleContentChange('hero', 'ctaButton', val)}

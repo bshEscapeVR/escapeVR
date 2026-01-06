@@ -92,9 +92,9 @@ const Hero = () => {
                 <img
                     src={getImg(settings?.media?.heroImage)}
                     alt="VR Background"
-                    className="w-full h-full object-cover opacity-60"
+                    className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-b from-brand-dark/80 via-brand-dark/60 to-brand-dark"></div>
+                <div className="absolute inset-0 bg-gradient-to-b from-brand-dark/60 via-brand-dark/40 to-brand-dark/80"></div>
             </div>
 
             {/* Animated Decorations - Lock, Key, Hourglass, Puzzle */}
@@ -142,20 +142,31 @@ const Hero = () => {
                 {loading ? (
                     <>
                         {/* Skeleton for title */}
-                        <div className="h-16 md:h-20 w-3/4 mx-auto bg-white/10 animate-pulse rounded-lg mb-6" />
+                        <div className="h-16 md:h-20 w-3/4 mx-auto bg-white/10 animate-pulse rounded-lg mb-4" />
                         {/* Skeleton for subtitle */}
-                        <div className="h-6 w-2/3 mx-auto bg-white/10 animate-pulse rounded-lg mb-3" />
-                        <div className="h-6 w-1/2 mx-auto bg-white/10 animate-pulse rounded-lg mb-10" />
+                        <div className="h-8 w-2/3 mx-auto bg-white/10 animate-pulse rounded-lg mb-6" />
+                        {/* Skeleton for description */}
+                        <div className="h-5 w-full mx-auto bg-white/5 animate-pulse rounded-lg mb-2" />
+                        <div className="h-5 w-4/5 mx-auto bg-white/5 animate-pulse rounded-lg mb-10" />
                     </>
                 ) : (
                     <>
-                        <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight drop-shadow-2xl">
+                        {/* כותרת ראשית */}
+                        <h1 className="text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight drop-shadow-2xl">
                             {tDB(settings?.content?.hero?.title) || t('hero.title')}
                         </h1>
 
-                        <p className="text-gray-300 text-lg md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
+                        {/* כותרת משנה - בצבע סגול/מגנטה */}
+                        <h2 className="text-2xl md:text-4xl font-bold text-brand-primary mb-6 tracking-wide">
                             {tDB(settings?.content?.hero?.subtitle) || t('hero.subtitle')}
-                        </p>
+                        </h2>
+
+                        {/* תיאור ארוך - רק אם קיים בדאטהבייס */}
+                        {tDB(settings?.content?.hero?.description) && (
+                            <p className="text-gray-300 text-base md:text-lg mb-8 max-w-3xl mx-auto leading-relaxed whitespace-pre-line">
+                                {tDB(settings?.content?.hero?.description)}
+                            </p>
+                        )}
                     </>
                 )}
 
