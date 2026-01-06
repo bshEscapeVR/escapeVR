@@ -6,7 +6,6 @@ import AboutSection from '../../../components/AboutSection';
 import RoomsGrid from '../../../components/RoomsGrid';
 import TestimonialsSection from '../../../components/TestimonialsSection';
 import LocationSection from '../../../components/LocationSection';
-import ContactSection from '../../../components/ContactSection';
 import Footer from '../../../components/Footer';
 
 
@@ -18,11 +17,10 @@ export default function HomePage() {
         <h1 style={{ color: 'red', fontSize: '50px', zIndex: 9999, position: 'relative' }}>
         
         </h1>
-        <AboutSection />
         <RoomsGrid />
+        <AboutSection />
         <TestimonialsSection />
         <LocationSection />
-        <ContactSection />
       </main>
 
       <Footer />

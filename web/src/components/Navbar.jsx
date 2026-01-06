@@ -27,7 +27,7 @@ const Navbar = () => {
   const navLinks = [
     { name: t('navbar.home'), href: `/${language}` },
     { name: t('navbar.rooms'), href: `/${language}#rooms` }, // מפנה ל-ID של החדרים
-    { name: t('navbar.contact'), href: `/${language}#contact` }, // מפנה ל-ID של צור קשר
+    { name: t('navbar.contact'), href: `/${language}/contact` }, // מפנה לעמוד צור קשר
   ];
 
   // 👇 הפונקציה החכמה לגלילה

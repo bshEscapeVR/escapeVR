@@ -20,10 +20,11 @@ const LocationSection = () => {
         ? (tDB(settings?.general?.siteName) || "חדר בריחה VR") 
         : "VR Escape Reality";
 
-    const lat = "31.745486";
-    const long = "34.986872";
+    // חיפוש לפי כתובת מדויקת
+    const address = "נחל ניצנים 8, בית שמש";
+    const encodedAddress = encodeURIComponent(address);
 
-    const mapSrc = `https://maps.google.com/maps?q=${lat},${long}+(${placeName})&t=&z=17&ie=UTF8&iwloc=B&hl=${mapLang}&output=embed`;
+    const mapSrc = `https://maps.google.com/maps?q=${encodedAddress}&t=&z=17&ie=UTF8&iwloc=B&hl=${mapLang}&output=embed`;
 
     const wazeLink = "https://waze.com/ul?q=Nahal+Nitzanim+8+Beit+Shemesh&navigate=yes";
     const googleMapsLink = "https://www.google.com/maps/dir/?api=1&destination=Nahal+Nitzanim+8+Beit+Shemesh";
@@ -47,15 +48,15 @@ const LocationSection = () => {
                             </div>
                         </div>
 
-                        <div className="h-[400px] w-full bg-gray-800 relative group">
-                             <iframe 
+                        <div className="h-[400px] w-full bg-gray-200 relative group">
+                             <iframe
                                 key={language} // יגרום לרענון כשהשפה הבטוחה משתנה
-                                src={mapSrc} 
-                                width="100%" 
-                                height="100%" 
-                                style={{border:0, filter: 'invert(90%) hue-rotate(180deg) contrast(90%)'}} 
-                                allowFullScreen="" 
-                                loading="lazy" 
+                                src={mapSrc}
+                                width="100%"
+                                height="100%"
+                                style={{border:0}}
+                                allowFullScreen=""
+                                loading="lazy"
                                 referrerPolicy="no-referrer-when-downgrade"
                                 title="Google Maps Location"
                             ></iframe>
