@@ -5,7 +5,7 @@ import React from 'react';
 const SectionTitle = ({ title, subtitle, center = true }) => {
     return (
         <div className={`mb-12 ${center ? 'text-center' : ''}`}>
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 drop-shadow-[0_0_15px_rgba(168,85,247,0.5)]">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 [text-shadow:_0_0_20px_rgba(168,85,247,0.9),_0_0_40px_rgba(168,85,247,0.6),_0_0_60px_rgba(168,85,247,0.4)]">
                 {title}
             </h2>
             {subtitle && (

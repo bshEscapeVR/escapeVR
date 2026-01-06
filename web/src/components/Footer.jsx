@@ -5,10 +5,12 @@ import Link from 'next/link';
 import { Facebook, Instagram, Phone, Mail, MapPin } from 'lucide-react'; // הוספתי אייקונים של טיקטוק/וואטסאפ אם צריך
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../context/SettingsContext';
+import { useBooking } from '../context/BookingContext';
 
 const Footer = () => {
     const { t } = useTranslation();
-    const { settings, getImg, t: tDB, loading } = useSettings();
+    const { settings, getImg, t: tDB, loading, language } = useSettings();
+    const { openBooking } = useBooking();
     const currentYear = new Date().getFullYear();
 
     // שליפת נתונים דינמיים עם פולבק ל-JSON
@@ -62,14 +64,14 @@ const Footer = () => {
                         </div>
                     </div>
 
-                    {/* עמודה 2 - נשארת אותו דבר (קישורים קבועים) */}
+                    {/* עמודה 2 - קישורים מהירים */}
                     <div>
                         <h3 className="text-white font-bold mb-6">{t('footer.quick_links')}</h3>
                         <ul className="space-y-3 text-sm">
-                            <li><Link href="/" className="hover:text-brand-primary transition-colors">{t('footer.link_home')}</Link></li>
+                            <li><Link href={`/${language}`} className="hover:text-brand-primary transition-colors">{t('footer.link_home')}</Link></li>
                             <li><a href="#rooms" className="hover:text-brand-primary transition-colors">{t('footer.link_rooms')}</a></li>
-                            <li><Link href="/book/general" className="hover:text-brand-primary transition-colors">{t('footer.link_book')}</Link></li>
-                            <li><a href="#contact" className="hover:text-brand-primary transition-colors">{t('footer.link_contact')}</a></li>
+                            <li><button onClick={() => openBooking()} className="hover:text-brand-primary transition-colors">{t('footer.link_book')}</button></li>
+                            <li><Link href={`/${language}/contact`} className="hover:text-brand-primary transition-colors">{t('footer.link_contact')}</Link></li>
                         </ul>
                     </div>
 

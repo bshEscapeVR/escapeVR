@@ -90,9 +90,9 @@ const AboutSection = () => {
                             </>
                         ) : (
                             <>
-                                <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
+                                <h3 className="text-2xl md:text-3xl font-bold text-white mb-6">
                                     {tDB(settings?.content?.about?.title) || t('about.title')}
-                                </h2>
+                                </h3>
 
                                 <div className="text-gray-300 text-lg leading-relaxed whitespace-pre-line">
                                     {tDB(settings?.content?.about?.description) || t('about.description')}
