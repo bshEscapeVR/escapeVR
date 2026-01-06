@@ -30,7 +30,7 @@ const LocationSection = () => {
     const googleMapsLink = "https://www.google.com/maps/dir/?api=1&destination=Nahal+Nitzanim+8+Beit+Shemesh";
 
     return (
-        <section className="py-20 bg-brand-dark relative">
+        <section className="py-20  relative">
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
                 <SectionTitle title={t('location.title')} subtitle="" />
 

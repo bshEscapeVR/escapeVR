@@ -39,7 +39,7 @@ const AboutSection = () => {
 
     return (
         <section className="py-20 relative overflow-hidden">
-            <div className="absolute inset-0 bg-[#160a25] z-0"></div>
+            {/* רקע שקוף - הגרדיאנט הגלובלי יראה */}
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 
