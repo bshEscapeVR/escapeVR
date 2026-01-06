@@ -94,7 +94,7 @@ const Hero = () => {
                     alt="VR Background"
                     className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-b from-brand-dark/60 via-brand-dark/40 to-brand-dark/80"></div>
+                <div className="absolute inset-0 bg-brand-dark/70"></div>
             </div>
 
             {/* Animated Decorations - Lock, Key, Hourglass, Puzzle */}
@@ -151,19 +151,19 @@ const Hero = () => {
                     </>
                 ) : (
                     <>
-                        {/* כותרת ראשית */}
-                        <h1 className="text-5xl md:text-7xl font-bold text-white mb-2 tracking-tight drop-shadow-2xl">
+                        {/* כותרת ראשית - עם זוהר סגול */}
+                        <h1 className="text-5xl md:text-7xl font-bold text-white mb-3 tracking-tight [text-shadow:_0_0_20px_rgba(168,85,247,0.9),_0_0_50px_rgba(168,85,247,0.7),_0_0_100px_rgba(168,85,247,0.5)]">
                             {tDB(settings?.content?.hero?.title) || t('hero.title')}
                         </h1>
 
-                        {/* כותרת משנה - בצבע סגול/מגנטה */}
-                        <h2 className="text-2xl md:text-4xl font-bold text-brand-primary mb-6 tracking-wide">
+                        {/* כותרת משנה - עם זוהר סגול חזק */}
+                        <h2 className="text-2xl md:text-[2.75rem] font-bold text-brand-primary mb-8 tracking-wide [text-shadow:_0_0_15px_rgba(168,85,247,0.9),_0_0_40px_rgba(168,85,247,0.7),_0_0_80px_rgba(168,85,247,0.5)]">
                             {tDB(settings?.content?.hero?.subtitle) || t('hero.subtitle')}
                         </h2>
 
                         {/* תיאור ארוך - רק אם קיים בדאטהבייס */}
                         {tDB(settings?.content?.hero?.description) && (
-                            <p className="text-gray-300 text-base md:text-lg mb-8 max-w-3xl mx-auto leading-relaxed whitespace-pre-line">
+                            <p className="text-gray-200 text-base md:text-lg mb-10 max-w-3xl mx-auto leading-relaxed whitespace-pre-line drop-shadow-[0_0_10px_rgba(0,0,0,0.5)]">
                                 {tDB(settings?.content?.hero?.description)}
                             </p>
                         )}
