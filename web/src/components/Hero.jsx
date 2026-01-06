@@ -174,7 +174,7 @@ const Hero = () => {
                 <div className="flex flex-col md:flex-row gap-4 justify-center items-center mb-16">
                     <button
                         onClick={() => openBooking()} // פתיחת המודל
-                        className="bg-brand-neon hover:bg-purple-600 text-white px-8 py-4 rounded-full font-bold text-lg shadow-lg shadow-brand-neon/40 transition-all hover:scale-105 w-full md:w-auto"
+                        className="btn-wave-shimmer text-white px-8 py-4 rounded-full font-bold text-lg transition-all hover:scale-105 w-full md:w-auto"
                     >
                         📅 {t('hero.book_btn')}
                     </button>
@@ -199,17 +199,17 @@ const Hero = () => {
 
                 {/* Stats Grid - טקסטים מה-JSON */}
                 <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto">
-                    <div className="bg-brand-purple/30 backdrop-blur-sm p-4 rounded-2xl border border-white/10 flex flex-col items-center">
+                    <div className="bg-brand-dark/60 backdrop-blur-sm p-4 rounded-2xl border border-white/10 flex flex-col items-center">
                         <Users className="text-brand-neon mb-2" size={28} />
                         <span className="text-white font-bold text-xl">2-6</span>
                         <span className="text-gray-400 text-xs uppercase tracking-wide">{t('hero.stats_players')}</span>
                     </div>
-                    <div className="bg-brand-purple/30 backdrop-blur-sm p-4 rounded-2xl border border-white/10 flex flex-col items-center">
+                    <div className="bg-brand-dark/60 backdrop-blur-sm p-4 rounded-2xl border border-white/10 flex flex-col items-center">
                         <Clock className="text-blue-400 mb-2" size={28} />
                         <span className="text-white font-bold text-xl">60</span>
                         <span className="text-gray-400 text-xs uppercase tracking-wide">{t('hero.stats_minutes')}</span>
                     </div>
-                    <div className="bg-brand-purple/30 backdrop-blur-sm p-4 rounded-2xl border border-white/10 flex flex-col items-center">
+                    <div className="bg-brand-dark/60 backdrop-blur-sm p-4 rounded-2xl border border-white/10 flex flex-col items-center">
                         <Zap className="text-yellow-400 mb-2" size={28} />
                         <span className="text-white font-bold text-xl">3</span>
                         <span className="text-gray-400 text-xs uppercase tracking-wide">{t('hero.stats_worlds')}</span>

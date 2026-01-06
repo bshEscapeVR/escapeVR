@@ -55,6 +55,28 @@
   50% { transform: rotate(8deg); }
 }
 
+/* Wave float effect for buttons - תנועה גלית לצדדים */
+@keyframes wave-float {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes shimmer-pass {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
 /* Global styles */
 body {
   background: linear-gradient(135deg, #1a0533 0%, #2d1052 25%, #3e096b 50%, #2d1052 75%, #1a0533 100%);
@@ -101,5 +123,38 @@ body::before {
 
   .glass-card-hover {
     @apply transition-all duration-300 hover:border-brand-primary/50 hover:shadow-[0_0_30px_rgba(168,85,247,0.15)] hover:-translate-y-1;
+  }
+
+  /* Wave shimmer button - כפתור שקוף עם תנועה גלית */
+  .btn-wave-shimmer {
+    position: relative;
+    overflow: hidden;
+    background: rgba(168, 85, 247, 0.25);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(168, 85, 247, 0.4);
+    box-shadow: 0 4px 20px rgba(168, 85, 247, 0.3);
+    animation: wave-float 3s ease-in-out infinite;
+  }
+
+  .btn-wave-shimmer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.15) 50%,
+      transparent 100%
+    );
+    animation: shimmer-pass 4s ease-in-out infinite;
+  }
+
+  .btn-wave-shimmer:hover {
+    background: rgba(168, 85, 247, 0.35);
+    border-color: rgba(168, 85, 247, 0.6);
+    box-shadow: 0 6px 25px rgba(168, 85, 247, 0.4);
   }
 }

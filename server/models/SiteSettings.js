@@ -51,8 +51,10 @@ const SiteSettingsSchema = new mongoose.Schema({
 
         // --- 👇 About (חדש) ---
         about: {
-            title: BilingualSchema,
-            description: BilingualSchema, // טקסט ארוך
+            sectionTitle: BilingualSchema,       // כותרת ראשית מעל הכל (אופציונלי)
+            sectionDescription: BilingualSchema, // טקסט ארוך מתחת לכותרת (אופציונלי)
+            title: BilingualSchema,              // כותרת ליד התמונה
+            description: BilingualSchema,        // טקסט ארוך ליד התמונה
         },
 
         // --- 👇 Rooms Section ---

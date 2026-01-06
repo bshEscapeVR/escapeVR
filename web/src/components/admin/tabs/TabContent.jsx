@@ -82,20 +82,40 @@ const TabContent = ({ settings, update }) => {
                 </h3>
 
                 <div className="space-y-4">
+                    {/* כותרת ראשית מעל הכל (אופציונלי) */}
                     <BilingualInput
-                        label="כותרת אזור אודות"
-                        value={settings.content?.about?.title}
-                        onChange={(val) => handleContentChange('about', 'title', val)}
-                        placeholder="עתיד חדרי הבריחה"
+                        label="כותרת ראשית לסקשן (אופציונלי - מוצג מעל הכל)"
+                        value={settings.content?.about?.sectionTitle}
+                        onChange={(val) => handleContentChange('about', 'sectionTitle', val)}
+                        placeholder="השאר ריק אם לא רוצה להציג..."
                     />
 
                     <BilingualInput
-                        label="תוכן האודות (פסקה מלאה)"
-                        value={settings.content?.about?.description}
-                        onChange={(val) => handleContentChange('about', 'description', val)}
+                        label="תיאור מתחת לכותרת הראשית (אופציונלי)"
+                        value={settings.content?.about?.sectionDescription}
+                        onChange={(val) => handleContentChange('about', 'sectionDescription', val)}
                         isTextArea
-                        placeholder="הסבר על החוויה..."
+                        placeholder="השאר ריק אם לא רוצה להציג..."
                     />
+
+                    <div className="border-t border-white/5 pt-4 mt-4">
+                        <p className="text-gray-500 text-xs mb-4">התוכן הבא מופיע ליד התמונה:</p>
+
+                        <BilingualInput
+                            label="כותרת ליד התמונה"
+                            value={settings.content?.about?.title}
+                            onChange={(val) => handleContentChange('about', 'title', val)}
+                            placeholder="עתיד חדרי הבריחה"
+                        />
+
+                        <BilingualInput
+                            label="תוכן ליד התמונה (פסקה מלאה)"
+                            value={settings.content?.about?.description}
+                            onChange={(val) => handleContentChange('about', 'description', val)}
+                            isTextArea
+                            placeholder="הסבר על החוויה..."
+                        />
+                    </div>
                 </div>
             </div>
 

@@ -43,6 +43,22 @@ const AboutSection = () => {
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 
+                {/* כותרת ראשית וטקסט מעל הכל (אופציונלי - רק אם קיים בדאטהבייס) */}
+                {(tDB(settings?.content?.about?.sectionTitle) || tDB(settings?.content?.about?.sectionDescription)) && (
+                    <div className="text-center mb-16">
+                        {tDB(settings?.content?.about?.sectionTitle) && (
+                            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 [text-shadow:_0_0_20px_rgba(168,85,247,0.7),_0_0_40px_rgba(168,85,247,0.5)]">
+                                {tDB(settings?.content?.about?.sectionTitle)}
+                            </h2>
+                        )}
+                        {tDB(settings?.content?.about?.sectionDescription) && (
+                            <p className="text-gray-300 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed whitespace-pre-line">
+                                {tDB(settings?.content?.about?.sectionDescription)}
+                            </p>
+                        )}
+                    </div>
+                )}
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-16">
                     {/* תמונה מהניהול */}
                     <div className="relative group">
