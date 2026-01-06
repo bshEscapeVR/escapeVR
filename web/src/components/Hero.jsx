@@ -47,18 +47,18 @@ const Hero = () => {
                 ) : (
                     <>
                         {/* כותרת ראשית - עם זוהר סגול */}
-                        <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-white mb-4 tracking-tight [text-shadow:_0_0_20px_rgba(168,85,247,0.9),_0_0_50px_rgba(168,85,247,0.7),_0_0_100px_rgba(168,85,247,0.5)]">
+                        <h1 className="text-5xl md:text-7xl font-bold text-white mb-3 tracking-tight [text-shadow:_0_0_20px_rgba(168,85,247,0.9),_0_0_50px_rgba(168,85,247,0.7),_0_0_100px_rgba(168,85,247,0.5)]">
                             {tDB(settings?.content?.hero?.title) || t('hero.title')}
                         </h1>
 
                         {/* כותרת משנה - עם זוהר סגול חזק */}
-                        <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold text-brand-primary mb-8 tracking-wide [text-shadow:_0_0_15px_rgba(168,85,247,0.9),_0_0_40px_rgba(168,85,247,0.7),_0_0_80px_rgba(168,85,247,0.5)]">
+                        <h2 className="text-3xl md:text-5xl font-bold text-brand-primary mb-8 tracking-wide [text-shadow:_0_0_15px_rgba(168,85,247,0.9),_0_0_40px_rgba(168,85,247,0.7),_0_0_80px_rgba(168,85,247,0.5)]">
                             {tDB(settings?.content?.hero?.subtitle) || t('hero.subtitle')}
                         </h2>
 
                         {/* תיאור ארוך - רק אם קיים בדאטהבייס */}
                         {tDB(settings?.content?.hero?.description) && (
-                            <p className="text-gray-200 text-lg md:text-xl mb-10 max-w-3xl mx-auto leading-relaxed whitespace-pre-line drop-shadow-[0_0_10px_rgba(0,0,0,0.5)]">
+                            <p className="text-gray-200 text-base md:text-lg mb-10 max-w-3xl mx-auto leading-relaxed whitespace-pre-line drop-shadow-[0_0_10px_rgba(0,0,0,0.5)]">
                                 {tDB(settings?.content?.hero?.description)}
                             </p>
                         )}
