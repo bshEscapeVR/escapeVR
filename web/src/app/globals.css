@@ -77,6 +77,16 @@
   }
 }
 
+/* Shimmer button animation - פלאש שעובר על הכפתור */
+@keyframes shimmer-slide {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
 /* Global styles */
 body {
   background: linear-gradient(135deg, #1a0533 0%, #2d1052 25%, #3e096b 50%, #2d1052 75%, #1a0533 100%);
@@ -156,5 +166,45 @@ body::before {
     background: rgba(168, 85, 247, 0.35);
     border-color: rgba(168, 85, 247, 0.6);
     box-shadow: 0 6px 25px rgba(168, 85, 247, 0.4);
+  }
+
+  /* כפתור הזמנה עם shimmer - מסגרת סגולה זוהרת ופלאש שעובר */
+  .btn-book-shimmer {
+    position: relative;
+    overflow: hidden;
+    background: rgba(168, 85, 247, 0.05);
+    backdrop-filter: blur(8px);
+    border: 0.5px solid rgba(168, 85, 247, 0.4);
+    border-radius: 9999px;
+    box-shadow:
+      0 0 12px rgba(168, 85, 247, 0.4),
+      0 0 25px rgba(168, 85, 247, 0.2);
+  }
+
+  .btn-book-shimmer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 9999px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.15) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer-slide 2s infinite linear;
+  }
+
+  .btn-book-shimmer:hover {
+    background: rgba(0, 0, 0, 0.2);
+    border-color: rgba(168, 85, 247, 0.5);
+    box-shadow:
+      0 0 15px rgba(168, 85, 247, 0.5),
+      0 0 30px rgba(168, 85, 247, 0.3);
+    transform: scale(1.02);
   }
 }

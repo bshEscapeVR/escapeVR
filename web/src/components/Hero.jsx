@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Clock, Users, Zap, Play } from 'lucide-react';
+import { Clock, Users, Zap, Play, CalendarDays } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../context/SettingsContext';
 import { useBooking } from '../context/BookingContext';
@@ -69,9 +69,10 @@ const Hero = () => {
                 <div className="flex flex-col md:flex-row gap-4 justify-center items-center mb-16">
                     <button
                         onClick={() => openBooking()}
-                        className="bg-white/10 hover:bg-white/20 backdrop-blur-md text-white px-8 py-4 rounded-full font-bold text-lg border border-white/30 transition-all hover:scale-105 flex items-center gap-2 w-full md:w-auto justify-center"
+                        className="btn-book-shimmer text-white px-8 py-4 rounded-full font-bold text-lg transition-all flex items-center gap-2 w-full md:w-auto justify-center"
                     >
-                        📅 {t('hero.book_btn')}
+                        <CalendarDays size={20} className="relative z-10" />
+                        <span className="relative z-10">{t('hero.book_btn')}</span>
                     </button>
 
                     {/* כפתור טריילר (אם יש לינק בהגדרות - יפתח אותו, אחרת כפתור דמי) */}
