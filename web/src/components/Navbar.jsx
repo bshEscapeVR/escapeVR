@@ -58,9 +58,9 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           
           {/* Logo */}
-          <Link href={`/${language}`} className="flex-shrink-0 flex items-center cursor-pointer group z-50 relative">
+          <Link href={`/${language}`} className="flex-shrink-0 flex items-center cursor-pointer group z-50 relative py-1">
             {settings?.general?.logoUrl ? (
-                <img src={getImg(settings.general.logoUrl)} alt="Logo" className="h-12 w-auto object-contain" />
+                <img src={getImg(settings.general.logoUrl)} alt="Logo" className="h-14 max-h-full w-auto object-contain" />
             ) : (
                 <div className="w-12 h-12 rounded-full bg-brand-neon flex items-center justify-center shadow-[0_0_15px_rgba(168,85,247,0.5)] group-hover:scale-110 transition-transform duration-300">
                    <span className="font-bold text-white text-base">VR</span>

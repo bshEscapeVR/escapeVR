@@ -109,18 +109,27 @@ const ContactSection = () => {
         content: z.string().min(10, t('validation.review_short'))
     });
 
-    const { 
-        register, 
-        handleSubmit, 
-        formState: { errors }, 
-        reset, 
-        setValue, 
-        watch 
+    // ערכי ברירת מחדל לטפסים - מוגדרים כקבוע לשימוש חוזר
+    const defaultFormValues = {
+        fullName: '',
+        email: '',
+        phone: '',
+        message: '',
+        content: '',
+        roomId: '',
+        rating: 5
+    };
+
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+        reset,
+        setValue,
+        watch
     } = useForm({
         resolver: zodResolver(activeTab === 'contact' ? contactSchema : reviewSchema),
-        defaultValues: {
-            fullName: '', email: '', phone: '', message: '', content: '', roomId: '', rating: 5
-        }
+        defaultValues: defaultFormValues
     });
 
     const currentRating = watch('rating');
@@ -137,8 +146,9 @@ const ContactSection = () => {
         fetchRooms();
     }, []);
 
+    // איפוס הטופס בעת מעבר בין טאבים
     useEffect(() => {
-        reset();
+        reset(defaultFormValues);
         setStatus('idle');
     }, [activeTab, reset]);
 
@@ -164,7 +174,8 @@ const ContactSection = () => {
             }
 
             setStatus('success');
-            reset({ rating: 5 }); 
+            // איפוס מלא של כל שדות הטופס לערכי ברירת המחדל
+            reset(defaultFormValues);
             setTimeout(() => setStatus('idle'), 4000);
 
         } catch (err) {
