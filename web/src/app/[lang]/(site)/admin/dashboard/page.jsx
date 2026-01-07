@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Settings, Save, Image, FileText, Youtube, BarChart, LogOut, Calendar, MessageSquare, TrendingUp, ExternalLink, Layout } from 'lucide-react';
+import { Settings, Save, Image, FileText, Youtube, BarChart, LogOut, Calendar, MessageSquare, TrendingUp, ExternalLink, Layout, DollarSign } from 'lucide-react';
 import { settingsService, authService } from '../../../../../services';
 import NeonButton from '../../../../../components/ui/NeonButton';
 import Spinner from '../../../../../components/ui/Spinner';
@@ -16,6 +16,7 @@ import TabTrailer from '../../../../../components/admin/tabs/TabTrailer';
 import TabReviews from '../../../../../components/admin/tabs/TabReviews';
 import TabLeads from '../../../../../components/admin/tabs/TabLeads';
 import TabRooms from '../../../../../components/admin/tabs/TabRooms';
+import TabPricing from '../../../../../components/admin/tabs/TabPricing';
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -30,6 +31,7 @@ export default function DashboardPage() {
     const tabs = [
         { id: 'bookings', label: 'הזמנות', icon: <Calendar size={15} /> },
         { id: 'rooms', label: 'חדרים', icon: <Layout size={15} /> },
+        { id: 'pricing', label: 'מחירון', icon: <DollarSign size={15} /> },
         { id: 'leads', label: 'לידים', icon: <TrendingUp size={15} /> },
         { id: 'reviews', label: 'ביקורות', icon: <MessageSquare size={15} /> },
         { id: 'seo', label: 'SEO', icon: <BarChart size={15} /> },
@@ -145,6 +147,7 @@ export default function DashboardPage() {
                     {/* Management tabs */}
                     {activeTab === 'bookings' && <TabBookings />}
                     {activeTab === 'rooms' && <TabRooms />}
+                    {activeTab === 'pricing' && <TabPricing />}
                     {activeTab === 'leads' && <TabLeads />}
                     {activeTab === 'reviews' && <TabReviews />}
 

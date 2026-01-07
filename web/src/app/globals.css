@@ -172,13 +172,13 @@ body::before {
   .btn-book-shimmer {
     position: relative;
     overflow: hidden;
-    background: rgba(168, 85, 247, 0.05);
+    background: rgba(168, 85, 247, 0.02);
     backdrop-filter: blur(8px);
-    border: 0.5px solid rgba(168, 85, 247, 0.4);
+    border: 0.3px solid rgba(168, 85, 247, 0.35);
     border-radius: 9999px;
     box-shadow:
-      0 0 12px rgba(168, 85, 247, 0.4),
-      0 0 25px rgba(168, 85, 247, 0.2);
+      0 0 10px rgba(168, 85, 247, 0.35),
+      0 0 20px rgba(168, 85, 247, 0.15);
   }
 
   .btn-book-shimmer::before {

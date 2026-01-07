@@ -9,11 +9,7 @@ const authRouter = require('./auth');
 const leadsRouter = require('./leads');
 const reviewsRouter = require('./reviews');
 const statsRouter = require('./stats');
-
-// הגדרת הראוטרים החדשים ללידים וביקורות
-
-
-const Lead = require('../models/Lead');
+const pricingRouter = require('./pricing');
 
 // Routes
 router.use('/rooms', roomsRouter);
@@ -23,5 +19,6 @@ router.use('/settings', settingsRouter);
 router.use('/leads', leadsRouter);
 router.use('/reviews', reviewsRouter);
 router.use('/stats', statsRouter);
+router.use('/pricing', pricingRouter);
 
 module.exports = router;

@@ -7,3 +7,4 @@ export { default as settingsService } from './settings.service';
 export { default as authService } from './auth.service';
 export { default as uploadService } from './upload.service';
 export { default as statsService } from './stats.service';
+export { default as pricingService } from './pricing.service';

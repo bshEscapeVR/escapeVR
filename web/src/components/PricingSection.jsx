@@ -1,10 +1,36 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Users, Tag, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useBooking } from '../context/BookingContext';
 import SectionTitle from './ui/SectionTitle';
+import getApi from '../api/axios';
+
+// Skeleton loader for pricing card
+const PricingCardSkeleton = () => (
+    <div className="bg-[#1a0b2e] border border-brand-primary/30 rounded-2xl p-8 flex flex-col h-full animate-pulse">
+        <div className="flex flex-col items-center mb-6">
+            <div className="bg-white/10 w-16 h-16 rounded-full mb-4" />
+            <div className="bg-white/10 h-8 w-32 rounded-lg" />
+        </div>
+        <div className="text-center mb-2">
+            <div className="bg-white/5 h-6 w-20 mx-auto rounded" />
+        </div>
+        <div className="flex justify-center mb-4">
+            <div className="bg-white/5 h-8 w-28 rounded-full" />
+        </div>
+        <div className="text-center mb-6">
+            <div className="bg-white/10 h-12 w-24 mx-auto rounded-lg" />
+        </div>
+        <div className="space-y-3 mb-8 flex-grow">
+            <div className="bg-white/5 h-5 w-full rounded" />
+            <div className="bg-white/5 h-5 w-4/5 rounded" />
+            <div className="bg-white/5 h-5 w-3/4 rounded" />
+        </div>
+        <div className="bg-white/10 h-14 w-full rounded-full" />
+    </div>
+);
 
 const PricingCard = ({ players, oldPrice, newPrice, totalPrice, discount, features, onBook, t }) => {
     return (
@@ -27,12 +53,14 @@ const PricingCard = ({ players, oldPrice, newPrice, totalPrice, discount, featur
             </div>
 
             {/* Discount Badge */}
-            <div className="flex justify-center mb-4">
-                <div className="bg-black/50 border border-emerald-500/50 rounded-full px-4 py-1.5 flex items-center gap-2">
-                    <Tag size={14} className="text-emerald-400" />
-                    <span className="text-emerald-400 text-sm font-bold">{discount}% {t('pricing.discount')}</span>
+            {discount > 0 && (
+                <div className="flex justify-center mb-4">
+                    <div className="bg-black/50 border border-emerald-500/50 rounded-full px-4 py-1.5 flex items-center gap-2">
+                        <Tag size={14} className="text-emerald-400" />
+                        <span className="text-emerald-400 text-sm font-bold">{discount}% {t('pricing.discount')}</span>
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* New Price */}
             <div className="text-center mb-2">
@@ -69,20 +97,49 @@ const PricingCard = ({ players, oldPrice, newPrice, totalPrice, discount, featur
 const PricingSection = () => {
     const { t } = useTranslation();
     const { openBooking } = useBooking();
+    const [pricingPlans, setPricingPlans] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const features = [
+    // פיצ'רים מה-JSON (ברירת מחדל)
+    const defaultFeatures = [
         t('pricing.feature_1'),
         t('pricing.feature_2'),
         t('pricing.feature_3')
     ];
 
-    const pricingPlans = [
-        { players: 2, oldPrice: 150, newPrice: 132, totalPrice: 264, discount: 12 },
-        { players: 3, oldPrice: 135, newPrice: 119, totalPrice: 357, discount: 12 },
-        { players: 4, oldPrice: 125, newPrice: 110, totalPrice: 440, discount: 12 },
-        { players: 5, oldPrice: 115, newPrice: 101, totalPrice: 505, discount: 12 },
-        { players: 6, oldPrice: 105, newPrice: 92, totalPrice: 552, discount: 12 }
-    ];
+    useEffect(() => {
+        const fetchPricing = async () => {
+            try {
+                const res = await getApi().get('/v1/pricing');
+                if (res.data.status === 'success' && res.data.data.length > 0) {
+                    setPricingPlans(res.data.data);
+                }
+            } catch (err) {
+                console.error("Error fetching pricing:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchPricing();
+    }, []);
+
+    // אם אין כרטיסי מחיר בכלל - לא מציגים את הסקשן
+    if (!loading && pricingPlans.length === 0) {
+        return null;
+    }
+
+    // חישוב הפריסה בהתאם למספר הכרטיסים
+    const getGridLayout = () => {
+        const count = pricingPlans.length;
+        if (count <= 3) {
+            return { firstRow: pricingPlans, secondRow: [] };
+        }
+        // אם יש יותר מ-3, שים 3 בשורה הראשונה והשאר בשורה השנייה
+        return { firstRow: pricingPlans.slice(0, 3), secondRow: pricingPlans.slice(3) };
+    };
+
+    const { firstRow, secondRow } = getGridLayout();
 
     return (
         <section className="py-20 relative">
@@ -93,39 +150,62 @@ const PricingSection = () => {
                     subtitle={t('pricing.subtitle')}
                 />
 
-                {/* Pricing Cards Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                    {pricingPlans.slice(0, 3).map((plan) => (
-                        <PricingCard
-                            key={plan.players}
-                            {...plan}
-                            features={features}
-                            onBook={() => openBooking()}
-                            t={t}
-                        />
-                    ))}
-                </div>
+                {loading ? (
+                    // Skeleton loading state
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                        <PricingCardSkeleton />
+                        <PricingCardSkeleton />
+                        <PricingCardSkeleton />
+                    </div>
+                ) : (
+                    <>
+                        {/* First Row - up to 3 cards */}
+                        <div className={`grid grid-cols-1 ${firstRow.length === 1 ? 'max-w-md mx-auto' : firstRow.length === 2 ? 'md:grid-cols-2 max-w-3xl mx-auto' : 'md:grid-cols-2 lg:grid-cols-3'} gap-6 mb-8`}>
+                            {firstRow.map((plan) => (
+                                <PricingCard
+                                    key={plan._id}
+                                    players={plan.players}
+                                    oldPrice={plan.oldPrice}
+                                    newPrice={plan.newPrice}
+                                    totalPrice={plan.totalPrice || plan.newPrice * plan.players}
+                                    discount={plan.discount || plan.calculatedDiscount || 0}
+                                    features={defaultFeatures}
+                                    onBook={() => openBooking()}
+                                    t={t}
+                                />
+                            ))}
+                        </div>
 
-                {/* Additional Plans Row */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-                    {pricingPlans.slice(3).map((plan) => (
-                        <PricingCard
-                            key={plan.players}
-                            {...plan}
-                            features={features}
-                            onBook={() => openBooking()}
-                            t={t}
-                        />
-                    ))}
-                </div>
+                        {/* Second Row - remaining cards */}
+                        {secondRow.length > 0 && (
+                            <div className={`grid grid-cols-1 ${secondRow.length === 1 ? 'max-w-md mx-auto' : 'md:grid-cols-2'} gap-6 max-w-3xl mx-auto`}>
+                                {secondRow.map((plan) => (
+                                    <PricingCard
+                                        key={plan._id}
+                                        players={plan.players}
+                                        oldPrice={plan.oldPrice}
+                                        newPrice={plan.newPrice}
+                                        totalPrice={plan.totalPrice || plan.newPrice * plan.players}
+                                        discount={plan.discount || plan.calculatedDiscount || 0}
+                                        features={defaultFeatures}
+                                        onBook={() => openBooking()}
+                                        t={t}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </>
+                )}
 
                 {/* Additional Info */}
-                <div className="mt-12 text-center">
-                    <div className="bg-[#1a0b2e] border border-white/10 rounded-2xl p-6 max-w-2xl mx-auto">
-                        <h4 className="text-white font-bold text-lg mb-2">{t('pricing.note_title')}</h4>
-                        <p className="text-gray-400 text-sm">{t('pricing.note_desc')}</p>
+                {!loading && pricingPlans.length > 0 && (
+                    <div className="mt-12 text-center">
+                        <div className="bg-[#1a0b2e] border border-white/10 rounded-2xl p-6 max-w-2xl mx-auto">
+                            <h4 className="text-white font-bold text-lg mb-2">{t('pricing.note_title')}</h4>
+                            <p className="text-gray-400 text-sm">{t('pricing.note_desc')}</p>
+                        </div>
                     </div>
-                </div>
+                )}
 
             </div>
         </section>
