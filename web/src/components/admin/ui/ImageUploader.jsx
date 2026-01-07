@@ -15,10 +15,15 @@ const ImageUploader = ({
     const [uploading, setUploading] = useState(false);
     const fileInputRef = useRef(null);
 
-    // הגדרת סוגי קבצים מותרים לפי הסוג שנבחר
-    const acceptTypes = mediaType === 'video' ? 'video/mp4,video/x-m4v,video/*' : 'image/*';
+    // הגדרת סוגי קבצים מותרים לפי הסוג שנבחר (כולל SVG)
+    const acceptTypes = mediaType === 'video'
+        ? 'video/mp4,video/x-m4v,video/*'
+        : 'image/jpeg,image/png,image/webp,image/gif,image/svg+xml,image/*';
     // בחירת האייקון המתאים
     const TypeIcon = mediaType === 'video' ? Film : ImageIcon;
+
+    // בדיקה אם הקובץ הוא SVG (לתצוגה מיוחדת)
+    const isSvg = imageUrl?.toLowerCase().endsWith('.svg');
 
     const handleClick = () => {
         fileInputRef.current.click();
@@ -88,21 +93,31 @@ const ImageUploader = ({
                         <span className="text-xs text-gray-400">מעלה לשרת... (זה עשוי לקחת זמן)</span>
                     </div>
                 ) : imageUrl ? (
-                    // 👈 תצוגה חכמה: וידאו או תמונה
+                    // 👈 תצוגה חכמה: וידאו, SVG או תמונה רגילה
                     mediaType === 'video' ? (
-                        <video 
-                            src={imageUrl} 
-                            className="relative z-10 w-full h-full object-cover" 
+                        <video
+                            src={imageUrl}
+                            className="relative z-10 w-full h-full object-cover"
                             muted // מושתק כדי לא להפריע
                             loop // לופ כדי לראות שזה עובד
                             onMouseOver={e => e.target.play()} // מנגן כשעוברים עם העכבר
-                            onMouseOut={e => e.target.pause()} 
+                            onMouseOut={e => e.target.pause()}
                         />
+                    ) : isSvg ? (
+                        // SVG נטען כ-object לתאימות מלאה
+                        <object
+                            data={imageUrl}
+                            type="image/svg+xml"
+                            className="relative z-10 w-full h-full object-contain transform group-hover:scale-105 transition-transform duration-700 ease-out"
+                            aria-label={title}
+                        >
+                            <img src={imageUrl} alt={title} className="w-full h-full object-contain" />
+                        </object>
                     ) : (
-                        <img 
-                            src={imageUrl} 
-                            alt={title} 
-                            className="relative z-10 w-full h-full object-contain transform group-hover:scale-105 transition-transform duration-700 ease-out" 
+                        <img
+                            src={imageUrl}
+                            alt={title}
+                            className="relative z-10 w-full h-full object-contain transform group-hover:scale-105 transition-transform duration-700 ease-out"
                         />
                     )
                 ) : (

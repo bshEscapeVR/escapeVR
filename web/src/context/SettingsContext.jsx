@@ -44,8 +44,19 @@ export const SettingsProvider = ({ children, lang, initialSettings }) => {
     const getImg = (path) => {
         if (!path) return '/placeholder.jpg';
 
-        // Handle Cloudinary URLs - inject f_auto,q_auto for optimization
+        // Handle Cloudinary URLs
         if (path.includes('cloudinary.com')) {
+            // SVG files (raw resource type) - return as-is, no transformations
+            if (path.includes('/raw/') || path.toLowerCase().endsWith('.svg')) {
+                return path;
+            }
+
+            // GIF files - return as-is to preserve animation
+            if (path.toLowerCase().endsWith('.gif')) {
+                return path;
+            }
+
+            // Regular images - inject f_auto,q_auto for optimization
             if (!path.includes('f_auto') && !path.includes('q_auto')) {
                 return path.replace('/upload/', '/upload/f_auto,q_auto/');
             }
