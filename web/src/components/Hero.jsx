@@ -51,8 +51,8 @@ const Hero = () => {
                             {tDB(settings?.content?.hero?.title) || t('hero.title')}
                         </h1>
 
-                        {/* כותרת משנה - גרדיאנט תכלת-סגול */}
-                        <h2 className="text-3xl md:text-5xl font-bold mb-8 tracking-wide bg-gradient-to-r from-cyan-400 via-purple-400 to-brand-primary bg-clip-text text-transparent drop-shadow-lg">
+                        {/* כותרת משנה - גרדיאנט תכלת-סגול עם הילה חזקה */}
+                        <h2 className="text-3xl md:text-5xl font-bold mb-8 tracking-wide bg-gradient-to-r from-cyan-400 via-purple-400 to-brand-primary bg-clip-text text-transparent [filter:_drop-shadow(0_0_20px_rgba(168,85,247,1))_drop-shadow(0_0_40px_rgba(168,85,247,0.9))_drop-shadow(0_0_60px_rgba(168,85,247,0.7))]">
                             {tDB(settings?.content?.hero?.subtitle) || t('hero.subtitle')}
                         </h2>
 
