@@ -35,8 +35,11 @@ const PricingCardSkeleton = () => (
 );
 
 const PricingCard = ({ players, oldPrice, newPrice, totalPrice, discount, features, onBook, t }) => {
+    // הצג מחיר ישן והנחה רק אם יש מחיר מקורי
+    const showDiscount = oldPrice > 0 && discount > 0;
+
     return (
-        <div className="bg-[#1a0b2e] border border-brand-primary/30 rounded-2xl p-8 flex flex-col h-full shadow-[0_0_15px_rgba(168,85,247,0.2)] hover:border-brand-primary/50 hover:shadow-[0_0_30px_rgba(168,85,247,0.4)] hover:-translate-y-2 transition-all duration-300 group">
+        <div className="bg-[#1a0b2e] border border-brand-primary/30 rounded-2xl p-8 flex flex-col h-full shadow-[0_0_15px_rgba(168,85,247,0.2)] hover:border-brand-primary/50 hover:shadow-[0_0_30px_rgba(168,85,247,0.4)] hover:scale-[1.02] transition-all duration-300 group">
 
             {/* Icon & Title */}
             <div className="flex flex-col items-center mb-6">
@@ -48,14 +51,16 @@ const PricingCard = ({ players, oldPrice, newPrice, totalPrice, discount, featur
                 </h3>
             </div>
 
-            {/* Old Price */}
-            <div className="text-center mb-2">
-                <span className="text-gray-500 line-through text-lg">₪{oldPrice}</span>
-                <span className="text-gray-500 text-sm block">{t('pricing.per_person')}</span>
-            </div>
+            {/* Old Price - only show if exists */}
+            {oldPrice > 0 && (
+                <div className="text-center mb-2">
+                    <span className="text-gray-400 line-through text-3xl font-semibold">₪{oldPrice}</span>
+                    <span className="text-gray-500 text-sm block">{t('pricing.per_person')}</span>
+                </div>
+            )}
 
-            {/* Discount Badge */}
-            {discount > 0 && (
+            {/* Discount Badge - only show if old price exists */}
+            {showDiscount && (
                 <div className="flex justify-center mb-4">
                     <div className="bg-black/50 border border-emerald-500/50 rounded-full px-4 py-1.5 flex items-center gap-2">
                         <Tag size={14} className="text-emerald-400" />
@@ -66,8 +71,8 @@ const PricingCard = ({ players, oldPrice, newPrice, totalPrice, discount, featur
 
             {/* New Price */}
             <div className="text-center mb-2">
-                <span className="text-5xl font-bold text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.5)]">₪{newPrice}</span>
-                <span className="text-cyan-400 text-sm block mt-1">{t('pricing.per_person')}</span>
+                <span className="text-4xl font-bold text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">₪{newPrice}</span>
+                <span className="text-gray-400 text-sm mr-1">{t('pricing.per_person')}</span>
             </div>
 
             {/* Total Price */}
@@ -88,7 +93,7 @@ const PricingCard = ({ players, oldPrice, newPrice, totalPrice, discount, featur
             {/* CTA Button */}
             <button
                 onClick={onBook}
-                className="w-full py-4 rounded-full font-bold text-white text-lg bg-gradient-to-r from-purple-600 to-cyan-500 hover:from-purple-500 hover:to-cyan-400 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all hover:scale-105"
+                className="w-full py-2 rounded-full font-bold text-white text-sm bg-brand-neon hover:bg-purple-600 shadow-lg shadow-purple-500/30 transition-all hover:scale-105 hover:shadow-purple-500/50"
             >
                 {t('pricing.book_now')}
             </button>
@@ -174,7 +179,7 @@ const PricingSection = () => {
 
                 {loading ? (
                     // Skeleton loading state
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
                         <PricingCardSkeleton />
                         <PricingCardSkeleton />
                         <PricingCardSkeleton />
@@ -182,7 +187,7 @@ const PricingSection = () => {
                 ) : (
                     <>
                         {/* First Row - up to 3 cards */}
-                        <div className={`grid grid-cols-1 ${firstRow.length === 1 ? 'max-w-md mx-auto' : firstRow.length === 2 ? 'md:grid-cols-2 max-w-3xl mx-auto' : 'md:grid-cols-2 lg:grid-cols-3'} gap-6 mb-8`}>
+                        <div className={`grid grid-cols-1 ${firstRow.length === 1 ? 'max-w-xs mx-auto' : firstRow.length === 2 ? 'md:grid-cols-2 max-w-2xl mx-auto' : 'md:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto'} gap-6 mb-8`}>
                             {firstRow.map((plan) => (
                                 <PricingCard
                                     key={plan._id}
@@ -200,7 +205,7 @@ const PricingSection = () => {
 
                         {/* Second Row - remaining cards */}
                         {secondRow.length > 0 && (
-                            <div className={`grid grid-cols-1 ${secondRow.length === 1 ? 'max-w-md mx-auto' : 'md:grid-cols-2'} gap-6 max-w-3xl mx-auto`}>
+                            <div className={`grid grid-cols-1 ${secondRow.length === 1 ? 'max-w-xs mx-auto' : 'md:grid-cols-2 max-w-2xl mx-auto'} gap-6`}>
                                 {secondRow.map((plan) => (
                                     <PricingCard
                                         key={plan._id}
@@ -217,16 +222,6 @@ const PricingSection = () => {
                             </div>
                         )}
                     </>
-                )}
-
-                {/* Additional Info */}
-                {!loading && pricingPlans.length > 0 && (
-                    <div className="mt-12 text-center">
-                        <div className="bg-[#1a0b2e] border border-white/10 rounded-2xl p-6 max-w-2xl mx-auto">
-                            <h4 className="text-white font-bold text-lg mb-2">{t('pricing.note_title')}</h4>
-                            <p className="text-gray-400 text-sm">{t('pricing.note_desc')}</p>
-                        </div>
-                    </div>
                 )}
 
             </div>

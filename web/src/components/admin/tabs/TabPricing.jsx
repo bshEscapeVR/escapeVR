@@ -67,13 +67,15 @@ const TabPricing = () => {
                 return;
             }
 
-            if (formData.oldPrice <= 0 || formData.newPrice <= 0) {
-                alert("יש להזין מחירים תקינים");
+            if (formData.newPrice <= 0) {
+                alert("יש להזין מחיר תקין");
                 return;
             }
 
-            // חישוב הנחה אוטומטי
-            const calculatedDiscount = Math.round((1 - formData.newPrice / formData.oldPrice) * 100);
+            // חישוב הנחה אוטומטי - רק אם יש מחיר מקורי
+            const calculatedDiscount = formData.oldPrice > 0
+                ? Math.round((1 - formData.newPrice / formData.oldPrice) * 100)
+                : 0;
             const dataToSave = { ...formData, discount: calculatedDiscount };
 
             if (formData._id) {
@@ -176,20 +178,24 @@ const TabPricing = () => {
 
                                 {/* Prices */}
                                 <div className="space-y-2 mb-4">
+                                    {plan.oldPrice > 0 && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-gray-400 text-sm">מחיר מקורי:</span>
+                                            <span className="text-gray-500 line-through">₪{plan.oldPrice}</span>
+                                        </div>
+                                    )}
                                     <div className="flex items-center justify-between">
-                                        <span className="text-gray-400 text-sm">מחיר מקורי:</span>
-                                        <span className="text-gray-500 line-through">₪{plan.oldPrice}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-gray-400 text-sm">מחיר חדש:</span>
+                                        <span className="text-gray-400 text-sm">מחיר לאדם:</span>
                                         <span className="text-cyan-400 font-bold text-lg">₪{plan.newPrice}</span>
                                     </div>
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-gray-400 text-sm">הנחה:</span>
-                                        <span className="text-emerald-400 font-bold flex items-center gap-1">
-                                            <Tag size={14} /> {plan.discount || plan.calculatedDiscount}%
-                                        </span>
-                                    </div>
+                                    {plan.oldPrice > 0 && (plan.discount > 0 || plan.calculatedDiscount > 0) && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-gray-400 text-sm">הנחה:</span>
+                                            <span className="text-emerald-400 font-bold flex items-center gap-1">
+                                                <Tag size={14} /> {plan.discount || plan.calculatedDiscount}%
+                                            </span>
+                                        </div>
+                                    )}
                                     <div className="flex items-center justify-between pt-2 border-t border-white/5">
                                         <span className="text-gray-400 text-sm">סה"כ:</span>
                                         <span className="text-white font-bold">₪{plan.totalPrice || plan.newPrice * plan.players}</span>
@@ -264,20 +270,7 @@ const TabPricing = () => {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label className="text-xs text-gray-400 block mb-2">מחיר מקורי (לפני הנחה)</label>
-                            <div className="relative">
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">₪</span>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 pr-8 text-white text-lg"
-                                    value={formData.oldPrice}
-                                    onChange={e => setFormData({ ...formData, oldPrice: Number(e.target.value) })}
-                                />
-                            </div>
-                        </div>
-                        <div>
-                            <label className="text-xs text-gray-400 block mb-2">מחיר חדש (אחרי הנחה)</label>
+                            <label className="text-xs text-gray-400 block mb-2">מחיר לאדם *</label>
                             <div className="relative">
                                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">₪</span>
                                 <input
@@ -289,15 +282,31 @@ const TabPricing = () => {
                                 />
                             </div>
                         </div>
+                        <div>
+                            <label className="text-xs text-gray-400 block mb-2">מחיר לפני הנחה (אופציונלי)</label>
+                            <div className="relative">
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">₪</span>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    placeholder="השאר ריק אם אין הנחה"
+                                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 pr-8 text-white text-lg placeholder:text-gray-600"
+                                    value={formData.oldPrice || ''}
+                                    onChange={e => setFormData({ ...formData, oldPrice: Number(e.target.value) || 0 })}
+                                />
+                            </div>
+                        </div>
                     </div>
 
                     {/* חישובים אוטומטיים */}
                     <div className="mt-6 p-4 bg-black/30 rounded-lg border border-white/5">
-                        <div className="grid grid-cols-2 gap-4 text-center">
-                            <div>
-                                <p className="text-gray-400 text-sm mb-1">אחוז הנחה</p>
-                                <p className="text-2xl font-bold text-emerald-400">{calculatedDiscount}%</p>
-                            </div>
+                        <div className={`grid ${formData.oldPrice > 0 ? 'grid-cols-2' : 'grid-cols-1'} gap-4 text-center`}>
+                            {formData.oldPrice > 0 && (
+                                <div>
+                                    <p className="text-gray-400 text-sm mb-1">אחוז הנחה</p>
+                                    <p className="text-2xl font-bold text-emerald-400">{calculatedDiscount}%</p>
+                                </div>
+                            )}
                             <div>
                                 <p className="text-gray-400 text-sm mb-1">סה"כ ל-{formData.players} שחקנים</p>
                                 <p className="text-2xl font-bold text-cyan-400">₪{totalPrice}</p>
