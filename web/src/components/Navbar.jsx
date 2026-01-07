@@ -77,7 +77,7 @@ const Navbar = () => {
                   key={link.href}
                   href={link.href}
                   onClick={(e) => handleScroll(e, link.href)}
-                  className="text-gray-300 hover:text-brand-neon hover:bg-white/5 transition-all px-4 py-2 rounded-md text-lg font-medium"
+                  className="text-gray-300 hover:text-brand-neon hover:bg-white/5 transition-all px-3 py-2 rounded-md text-[15px] font-medium"
                 >
                   {link.name}
                 </Link>
