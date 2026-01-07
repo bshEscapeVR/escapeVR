@@ -58,7 +58,7 @@ const Hero = () => {
 
                         {/* תיאור ארוך - רק אם קיים בדאטהבייס */}
                         {tDB(settings?.content?.hero?.description) && (
-                            <p className="text-gray-200 text-xl md:text-2xl mb-10 max-w-3xl mx-auto leading-relaxed whitespace-pre-line drop-shadow-[0_0_10px_rgba(0,0,0,0.5)]">
+                            <p className="text-gray-200 text-xl md:text-2xl mb-10 max-w-3xl mx-auto leading-snug whitespace-pre-line drop-shadow-[0_0_10px_rgba(0,0,0,0.5)]">
                                 {tDB(settings?.content?.hero?.description)}
                             </p>
                         )}
