@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Users, Tag, Check } from 'lucide-react';
+import Link from 'next/link';
+import { Users, Tag, Check, MessageCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useBooking } from '../context/BookingContext';
+import { useSettings } from '../context/SettingsContext';
 import SectionTitle from './ui/SectionTitle';
 import getApi from '../api/axios';
 
@@ -97,6 +99,7 @@ const PricingCard = ({ players, oldPrice, newPrice, totalPrice, discount, featur
 const PricingSection = () => {
     const { t } = useTranslation();
     const { openBooking } = useBooking();
+    const { language } = useSettings();
     const [pricingPlans, setPricingPlans] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -124,11 +127,6 @@ const PricingSection = () => {
         fetchPricing();
     }, []);
 
-    // אם אין כרטיסי מחיר בכלל - לא מציגים את הסקשן
-    if (!loading && pricingPlans.length === 0) {
-        return null;
-    }
-
     // חישוב הפריסה בהתאם למספר הכרטיסים
     const getGridLayout = () => {
         const count = pricingPlans.length;
@@ -142,13 +140,37 @@ const PricingSection = () => {
     const { firstRow, secondRow } = getGridLayout();
 
     return (
-        <section className="py-20 relative">
+        <section className="pt-8 pb-20 relative">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 
                 <SectionTitle
                     title={t('pricing.title')}
                     subtitle={t('pricing.subtitle')}
                 />
+
+                {/* הודעה כשאין כרטיסי מחיר */}
+                {!loading && pricingPlans.length === 0 && (
+                    <div className="max-w-2xl mx-auto text-center">
+                        <div className="bg-[#1a0b2e] border border-brand-primary/30 rounded-2xl p-10 shadow-[0_0_20px_rgba(168,85,247,0.15)]">
+                            <div className="bg-brand-primary/20 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <MessageCircle className="text-brand-neon" size={40} />
+                            </div>
+                            <h3 className="text-2xl font-bold text-white mb-4">
+                                {t('pricing.no_pricing_title')}
+                            </h3>
+                            <p className="text-gray-400 text-lg mb-8 leading-relaxed">
+                                {t('pricing.no_pricing_desc')}
+                            </p>
+                            <Link
+                                href={`/${language}/contact`}
+                                className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-cyan-500 hover:from-purple-500 hover:to-cyan-400 text-white px-8 py-4 rounded-full font-bold text-lg shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all hover:scale-105"
+                            >
+                                <MessageCircle size={20} />
+                                {t('pricing.contact_btn')}
+                            </Link>
+                        </div>
+                    </div>
+                )}
 
                 {loading ? (
                     // Skeleton loading state

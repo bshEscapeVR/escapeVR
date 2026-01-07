@@ -125,7 +125,10 @@
         "feature_2": "Unique and customized escape rooms",
         "feature_3": "Full guidance and close support",
         "note_title": "Please Note",
-        "note_desc": "Prices include all equipment and guidance. Experience duration is approximately 60 minutes. We recommend arriving 10 minutes before your scheduled time."
+        "note_desc": "Prices include all equipment and guidance. Experience duration is approximately 60 minutes. We recommend arriving 10 minutes before your scheduled time.",
+        "no_pricing_title": "Pricing Coming Soon",
+        "no_pricing_desc": "Our pricing is currently being updated. For information about prices and bookings, please contact us and we'll be happy to help!",
+        "contact_btn": "Contact Us"
     },
     "footer": {
         "about": "Israel's most advanced Virtual Reality center. Experience new worlds, solve puzzles, and fight monsters in an unforgettable adventure.",

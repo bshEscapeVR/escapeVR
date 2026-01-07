@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation'; // 👈 תוספת חשובה
+import { usePathname } from 'next/navigation';
 import { Menu, X, Globe, LayoutDashboard } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useBooking } from '../context/BookingContext';
@@ -13,8 +13,8 @@ const Navbar = () => {
   const { t, i18n } = useTranslation();
   const { openBooking } = useBooking();
   const { settings, getImg, t: tDB, language, toggleLanguage } = useSettings();
-  const pathname = usePathname(); // 👈 קבלת הנתיב הנוכחי
-  
+  const pathname = usePathname();
+
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -26,9 +26,9 @@ const Navbar = () => {
 
   const navLinks = [
     { name: t('navbar.home'), href: `/${language}` },
-    { name: t('navbar.rooms'), href: `/${language}#rooms` }, // מפנה ל-ID של החדרים
-    { name: t('navbar.pricing'), href: `/${language}/pricing` }, // מפנה לעמוד מחירים
-    { name: t('navbar.contact'), href: `/${language}/contact` }, // מפנה לעמוד צור קשר
+    { name: t('navbar.rooms'), href: `/${language}#rooms` },
+    { name: t('navbar.pricing'), href: `/${language}/pricing` },
+    { name: t('navbar.contact'), href: `/${language}/contact` },
   ];
 
   // 👇 הפונקציה החכמה לגלילה
