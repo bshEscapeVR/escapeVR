@@ -71,13 +71,13 @@ const Navbar = () => {
 
           {/* Desktop Menu */}
           <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-8 rtl:space-x-reverse">
+            <div className="flex items-center gap-6">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  onClick={(e) => handleScroll(e, link.href)} // 👈 חיבור לפונקציית הגלילה
-                  className="text-gray-300 hover:text-brand-neon hover:bg-white/5 transition-all px-3 py-2 rounded-md text-base font-medium"
+                  onClick={(e) => handleScroll(e, link.href)}
+                  className="text-gray-300 hover:text-brand-neon hover:bg-white/5 transition-all px-4 py-2 rounded-md text-lg font-medium"
                 >
                   {link.name}
                 </Link>
