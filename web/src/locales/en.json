@@ -112,6 +112,21 @@
         "title": "What Our Adventurers Say",
         "subtitle": "Real experiences from adventurers who chose to escape reality"
     },
+    "pricing": {
+        "title": "Pricing",
+        "subtitle": "Special prices for an unforgettable VR experience",
+        "players": "Players",
+        "per_person": "per person",
+        "discount": "Opening Discount",
+        "total": "Total",
+        "for": "for",
+        "book_now": "Book Now",
+        "feature_1": "Full VR experience in 4K quality",
+        "feature_2": "Unique and customized escape rooms",
+        "feature_3": "Full guidance and close support",
+        "note_title": "Please Note",
+        "note_desc": "Prices include all equipment and guidance. Experience duration is approximately 60 minutes. We recommend arriving 10 minutes before your scheduled time."
+    },
     "footer": {
         "about": "Israel's most advanced Virtual Reality center. Experience new worlds, solve puzzles, and fight monsters in an unforgettable adventure.",
         "quick_links": "Quick Links",
