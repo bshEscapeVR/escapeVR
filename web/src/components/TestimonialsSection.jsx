@@ -59,7 +59,7 @@ const TestimonialsSection = () => {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {reviews.map((review) => (
-                            <div key={review._id} className="bg-[#1a0b2e] border border-white/5 p-8 rounded-2xl relative hover:border-brand-primary/40 transition-all group text-start h-full flex flex-col">
+                            <div key={review._id} className="bg-[#1a0b2e] border border-brand-primary/30 p-8 rounded-2xl relative shadow-[0_0_15px_rgba(168,85,247,0.2)] hover:border-brand-primary/50 hover:shadow-[0_0_30px_rgba(168,85,247,0.4)] transition-all group text-start h-full flex flex-col">
                                 
                                 {/* אייקון ציטוט - מיקום דינמי לפי שפה */}
                                 <Quote className="absolute top-4 rtl:left-4 ltr:right-4 text-brand-primary/20 transform rotate-180" size={40} />

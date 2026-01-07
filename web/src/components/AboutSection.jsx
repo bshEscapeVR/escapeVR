@@ -105,7 +105,7 @@ const AboutSection = () => {
                 {/* גריד אייקונים (נשאר קבוע) */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     {features.map((feature, index) => (
-                        <div key={index} className="bg-[#1a0b2e] border border-white/5 p-6 rounded-2xl flex flex-col items-center text-center hover:border-brand-primary/30 transition-all hover:-translate-y-1 shadow-lg group">
+                        <div key={index} className="bg-[#1a0b2e] border border-brand-primary/30 p-6 rounded-2xl flex flex-col items-center text-center hover:border-brand-primary/50 hover:shadow-[0_0_25px_rgba(168,85,247,0.3)] transition-all hover:-translate-y-1 shadow-lg group">
                             <div className={`${feature.color} p-4 rounded-full mb-4 shadow-lg group-hover:scale-110 transition-transform`}>
                                 <feature.icon size={32} className="text-white" />
                             </div>

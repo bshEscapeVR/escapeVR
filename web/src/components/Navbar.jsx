@@ -53,22 +53,19 @@ const Navbar = () => {
 
   return (
     <>
-    <nav className="fixed w-full z-50 bg-[#1a0b2e]/90 backdrop-blur-md border-b border-white/10 shadow-lg">
+    <nav className="fixed w-full z-50 bg-[#2d1052]/50 backdrop-blur-md border-b border-white/10 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-16">
           
           {/* Logo */}
-          <Link href={`/${language}`} className="flex-shrink-0 flex items-center gap-2 cursor-pointer group z-50 relative">
+          <Link href={`/${language}`} className="flex-shrink-0 flex items-center cursor-pointer group z-50 relative">
             {settings?.general?.logoUrl ? (
-                <img src={getImg(settings.general.logoUrl)} alt="Logo" className="h-10 w-auto object-contain" />
+                <img src={getImg(settings.general.logoUrl)} alt="Logo" className="h-12 w-auto object-contain" />
             ) : (
-                <div className="w-10 h-10 rounded-full bg-brand-neon flex items-center justify-center shadow-[0_0_15px_rgba(168,85,247,0.5)] group-hover:scale-110 transition-transform duration-300">
-                   <span className="font-bold text-white text-sm">VR</span>
+                <div className="w-12 h-12 rounded-full bg-brand-neon flex items-center justify-center shadow-[0_0_15px_rgba(168,85,247,0.5)] group-hover:scale-110 transition-transform duration-300">
+                   <span className="font-bold text-white text-base">VR</span>
                 </div>
             )}
-            <span className="text-white font-bold text-xl tracking-wider group-hover:text-brand-neon transition-colors hidden sm:block">
-              {tDB(settings?.general?.siteName) || t('navbar.site_name')}
-            </span>
           </Link>
 
           {/* Desktop Menu */}

@@ -14,7 +14,7 @@ const Hero = () => {
     const [isTrailerOpen, setIsTrailerOpen] = useState(false);
 
     return (
-        <div className="relative min-h-[120vh] pt-24 pb-20 flex items-center justify-center">
+        <div className="relative min-h-[120vh] pt-20 pb-20 flex items-center justify-center">
 
             {/* Background Image */}
             <div className="absolute inset-0 z-0">
@@ -94,17 +94,17 @@ const Hero = () => {
 
                 {/* Stats Grid - טקסטים מה-JSON */}
                 <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto">
-                    <div className="bg-black/50 backdrop-blur-sm p-4 rounded-2xl border border-white/10 flex flex-col items-center">
+                    <div className="bg-black/50 backdrop-blur-sm p-4 rounded-2xl border border-brand-primary/30 flex flex-col items-center hover:border-brand-primary/50 hover:shadow-[0_0_25px_rgba(168,85,247,0.3)] transition-all">
                         <Users className="text-brand-neon mb-2" size={28} />
                         <span className="text-white font-bold text-xl">2-6</span>
                         <span className="text-gray-400 text-xs uppercase tracking-wide">{t('hero.stats_players')}</span>
                     </div>
-                    <div className="bg-black/50 backdrop-blur-sm p-4 rounded-2xl border border-white/10 flex flex-col items-center">
+                    <div className="bg-black/50 backdrop-blur-sm p-4 rounded-2xl border border-brand-primary/30 flex flex-col items-center hover:border-brand-primary/50 hover:shadow-[0_0_25px_rgba(168,85,247,0.3)] transition-all">
                         <Clock className="text-blue-400 mb-2" size={28} />
                         <span className="text-white font-bold text-xl">60</span>
                         <span className="text-gray-400 text-xs uppercase tracking-wide">{t('hero.stats_minutes')}</span>
                     </div>
-                    <div className="bg-black/50 backdrop-blur-sm p-4 rounded-2xl border border-white/10 flex flex-col items-center">
+                    <div className="bg-black/50 backdrop-blur-sm p-4 rounded-2xl border border-brand-primary/30 flex flex-col items-center hover:border-brand-primary/50 hover:shadow-[0_0_25px_rgba(168,85,247,0.3)] transition-all">
                         <Zap className="text-yellow-400 mb-2" size={28} />
                         <span className="text-white font-bold text-xl">3</span>
                         <span className="text-gray-400 text-xs uppercase tracking-wide">{t('hero.stats_worlds')}</span>
