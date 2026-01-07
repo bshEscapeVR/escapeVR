@@ -47,7 +47,7 @@ const Hero = () => {
                 ) : (
                     <>
                         {/* כותרת ראשית - עם זוהר סגול */}
-                        <h1 className="text-6xl md:text-8xl font-bold text-white mb-3 tracking-wide [text-shadow:_0_0_20px_rgba(168,85,247,0.9),_0_0_50px_rgba(168,85,247,0.7),_0_0_100px_rgba(168,85,247,0.5)]">
+                        <h1 className="text-[3.5rem] md:text-[5.5rem] font-bold text-white mb-3 tracking-normal [text-shadow:_0_0_20px_rgba(168,85,247,0.9),_0_0_50px_rgba(168,85,247,0.7),_0_0_100px_rgba(168,85,247,0.5)]">
                             {tDB(settings?.content?.hero?.title) || t('hero.title')}
                         </h1>
 
