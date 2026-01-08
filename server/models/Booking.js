@@ -30,13 +30,26 @@ const BookingSchema = new mongoose.Schema({
         type: String,
         enum: ['website', 'phone', 'walk-in', 'whatsapp'],
         default: 'website'
+    },
+
+    // Soft delete
+    isDeleted: {
+        type: Boolean,
+        default: false
+    },
+    deletedAt: {
+        type: Date,
+        default: null
     }
 }, { timestamps: true });
 
-// אינדקס למניעת הזמנות כפולות (אותו חדר, אותו תאריך, אותה שעה - אלא אם בוטל)
-BookingSchema.index({ roomId: 1, date: 1, timeSlot: 1 }, { 
-    unique: true, 
-    partialFilterExpression: { status: { $ne: "cancelled" } } 
+// אינדקס למניעת הזמנות כפולות (אותו חדר, אותו תאריך, אותה שעה - אלא אם בוטל או נמחק)
+BookingSchema.index({ roomId: 1, date: 1, timeSlot: 1 }, {
+    unique: true,
+    partialFilterExpression: {
+        status: { $ne: "cancelled" },
+        isDeleted: { $ne: true }
+    }
 });
 
 module.exports = mongoose.model('Booking', BookingSchema);

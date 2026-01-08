@@ -21,12 +21,37 @@ const bookingService = {
     return response.data;
   },
 
-  // מחיקת הזמנה
+  // מחיקה רכה (העברה לפח)
   remove: async (id) => {
     return await httpService.delete(`${ENDPOINT}/${id}`);
   },
 
-  // --- 👇 חדש: ניהול חסימות ---
+  // --- ניהול פח (Trash) ---
+
+  // קבלת הזמנות מחוקות
+  getTrash: async () => {
+    const response = await httpService.get(`${ENDPOINT}/trash`);
+    return response.data;
+  },
+
+  // שחזור הזמנה מהפח
+  restore: async (id) => {
+    const response = await httpService.patch(`${ENDPOINT}/trash/${id}/restore`);
+    return response.data;
+  },
+
+  // מחיקה לצמיתות
+  permanentDelete: async (id) => {
+    return await httpService.delete(`${ENDPOINT}/trash/${id}/permanent`);
+  },
+
+  // ריקון הפח
+  emptyTrash: async () => {
+    const response = await httpService.delete(`${ENDPOINT}/trash/empty`);
+    return response.data;
+  },
+
+  // --- ניהול חסימות ---
 
   // קבלת רשימת חסימות עתידיות
   getBlockedDates: async () => {

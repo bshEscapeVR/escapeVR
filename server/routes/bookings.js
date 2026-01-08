@@ -12,6 +12,12 @@ router.post('/', bookingController.createBooking);
 router.get('/all', auth, bookingController.getAllBookings);
 router.delete('/:id', auth, bookingController.deleteBooking);
 
+// Admin: Trash Management (must come before /:id routes)
+router.get('/trash', auth, bookingController.getDeletedBookings);
+router.patch('/trash/:id/restore', auth, bookingController.restoreBooking);
+router.delete('/trash/:id/permanent', auth, bookingController.permanentDeleteBooking);
+router.delete('/trash/empty', auth, bookingController.emptyTrash);
+
 // Admin: Blocked Dates Management
 router.post('/blocked-dates', auth, bookingController.blockDate);
 router.get('/blocked-dates', auth, bookingController.getBlockedDates);

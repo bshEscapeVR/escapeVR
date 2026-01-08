@@ -128,11 +128,12 @@ exports.getAvailableSlots = asyncHandler(async (req, res, next) => {
         availableSlots = availableSlots.filter(slot => !blockedDateRecord.blockedSlots.includes(slot));
     }
 
-    // ג. סינון הזמנות קיימות
-    const existingBookings = await Booking.find({ 
-        roomId, 
-        date: { $gte: startOfDay, $lte: endOfDay }, 
-        status: { $ne: 'cancelled' } 
+    // ג. סינון הזמנות קיימות (לא כולל מבוטלות או מחוקות)
+    const existingBookings = await Booking.find({
+        roomId,
+        date: { $gte: startOfDay, $lte: endOfDay },
+        status: { $ne: 'cancelled' },
+        isDeleted: { $ne: true }
     });
 
     const bookedSlots = existingBookings.map(b => b.timeSlot);
@@ -148,12 +149,13 @@ exports.getAvailableSlots = asyncHandler(async (req, res, next) => {
 exports.createBooking = asyncHandler(async (req, res, next) => {
     const { roomId, date, timeSlot, customer, participantsCount, source, totalPrice } = req.body;
 
-    // בדיקת כפילות
-    const existing = await Booking.findOne({ 
-        roomId, 
-        date: new Date(date), 
-        timeSlot, 
-        status: { $ne: 'cancelled' } 
+    // בדיקת כפילות (לא כולל מבוטלות או מחוקות)
+    const existing = await Booking.findOne({
+        roomId,
+        date: new Date(date),
+        timeSlot,
+        status: { $ne: 'cancelled' },
+        isDeleted: { $ne: true }
     });
 
     if (existing) {
@@ -188,19 +190,75 @@ exports.createBooking = asyncHandler(async (req, res, next) => {
     res.status(201).json({ status: 'success', data: newBooking });
 });
 
-// קבלת כל ההזמנות
+// קבלת כל ההזמנות (לא כולל מחוקות)
 exports.getAllBookings = asyncHandler(async (req, res, next) => {
-    const bookings = await Booking.find()
+    const bookings = await Booking.find({ isDeleted: { $ne: true } })
         .populate('roomId', 'title')
         .sort({ date: -1, timeSlot: 1 });
 
     res.status(200).json({ status: 'success', results: bookings.length, data: bookings });
 });
 
-// מחיקת הזמנה
+// מחיקה רכה (soft delete) - מעביר לפח
 exports.deleteBooking = asyncHandler(async (req, res, next) => {
-    await Booking.findByIdAndDelete(req.params.id);
+    const booking = await Booking.findByIdAndUpdate(
+        req.params.id,
+        { isDeleted: true, deletedAt: new Date() },
+        { new: true }
+    );
+
+    if (!booking) {
+        return next(new AppError('Booking not found', 404));
+    }
+
+    res.status(200).json({ status: 'success', data: null });
+});
+
+// --- ניהול פח (Trash) ---
+
+// קבלת הזמנות מחוקות (פח)
+exports.getDeletedBookings = asyncHandler(async (req, res, next) => {
+    const bookings = await Booking.find({ isDeleted: true })
+        .populate('roomId', 'title')
+        .sort({ deletedAt: -1 });
+
+    res.status(200).json({ status: 'success', results: bookings.length, data: bookings });
+});
+
+// שחזור הזמנה מהפח
+exports.restoreBooking = asyncHandler(async (req, res, next) => {
+    const booking = await Booking.findByIdAndUpdate(
+        req.params.id,
+        { isDeleted: false, deletedAt: null },
+        { new: true }
+    ).populate('roomId', 'title');
+
+    if (!booking) {
+        return next(new AppError('Booking not found', 404));
+    }
+
+    res.status(200).json({ status: 'success', data: booking });
+});
+
+// מחיקה לצמיתות (hard delete)
+exports.permanentDeleteBooking = asyncHandler(async (req, res, next) => {
+    const booking = await Booking.findByIdAndDelete(req.params.id);
+
+    if (!booking) {
+        return next(new AppError('Booking not found', 404));
+    }
+
     res.status(204).json({ status: 'success', data: null });
+});
+
+// ריקון הפח (מחיקת כל ההזמנות המחוקות לצמיתות)
+exports.emptyTrash = asyncHandler(async (req, res, next) => {
+    const result = await Booking.deleteMany({ isDeleted: true });
+
+    res.status(200).json({
+        status: 'success',
+        message: `${result.deletedCount} bookings permanently deleted`
+    });
 });
 
 // --- ניהול חסימות (Admin) ---

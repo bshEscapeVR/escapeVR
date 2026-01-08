@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Calendar from 'react-calendar';
 import { format } from 'date-fns';
-import { Plus, X, Phone, User, Clock, Save, Calendar as CalendarIcon, RefreshCw, AlertTriangle, Trash2, AlertCircle } from 'lucide-react';
+import { Plus, X, Phone, User, Clock, Save, Calendar as CalendarIcon, RefreshCw, AlertTriangle, Trash2, AlertCircle, RotateCcw, Trash } from 'lucide-react';
 import { bookingService, roomService } from '../../../services';
 import NeonButton from '../../../components/ui/NeonButton';
 import Spinner from '../../../components/ui/Spinner';
@@ -50,9 +50,11 @@ const AdminSelect = ({ label, options, placeholder, error, ...props }) => (
 
 const TabBookings = () => {
     const [bookings, setBookings] = useState([]);
+    const [trashedBookings, setTrashedBookings] = useState([]);
     const [rooms, setRooms] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showManualForm, setShowManualForm] = useState(false);
+    const [viewMode, setViewMode] = useState('active'); // 'active' | 'trash'
 
     const manualBookingSchema = z.object({
         roomId: z.string().min(1, "חובה לבחור חדר"),
@@ -99,12 +101,14 @@ const TabBookings = () => {
     const fetchAllData = async () => {
         setLoading(true);
         try {
-            const [roomsRes, bookingsRes] = await Promise.all([
+            const [roomsRes, bookingsRes, trashRes] = await Promise.all([
                 roomService.getAll(),
-                bookingService.getAll()
+                bookingService.getAll(),
+                bookingService.getTrash()
             ]);
             setRooms(roomsRes);
             setBookings(bookingsRes);
+            setTrashedBookings(trashRes);
         } catch (err) {
             console.error(err);
         } finally {
@@ -112,13 +116,51 @@ const TabBookings = () => {
         }
     };
 
+    // מחיקה רכה - העברה לפח
     const handleDelete = async (id) => {
-        if (!window.confirm("האם למחוק את ההזמנה לצמיתות?")) return;
+        if (!window.confirm("האם להעביר את ההזמנה לפח?")) return;
         try {
             await bookingService.remove(id);
+            const deletedBooking = bookings.find(b => b._id === id);
             setBookings(prev => prev.filter(b => b._id !== id));
+            if (deletedBooking) {
+                setTrashedBookings(prev => [{ ...deletedBooking, deletedAt: new Date() }, ...prev]);
+            }
         } catch (err) {
             alert("שגיאה במחיקת ההזמנה");
+        }
+    };
+
+    // שחזור מהפח
+    const handleRestore = async (id) => {
+        try {
+            const restored = await bookingService.restore(id);
+            setTrashedBookings(prev => prev.filter(b => b._id !== id));
+            setBookings(prev => [restored, ...prev]);
+        } catch (err) {
+            alert("שגיאה בשחזור ההזמנה");
+        }
+    };
+
+    // מחיקה לצמיתות
+    const handlePermanentDelete = async (id) => {
+        if (!window.confirm("האם למחוק את ההזמנה לצמיתות? פעולה זו בלתי הפיכה!")) return;
+        try {
+            await bookingService.permanentDelete(id);
+            setTrashedBookings(prev => prev.filter(b => b._id !== id));
+        } catch (err) {
+            alert("שגיאה במחיקה");
+        }
+    };
+
+    // ריקון הפח
+    const handleEmptyTrash = async () => {
+        if (!window.confirm(`האם לרוקן את הפח? ${trashedBookings.length} הזמנות יימחקו לצמיתות!`)) return;
+        try {
+            await bookingService.emptyTrash();
+            setTrashedBookings([]);
+        } catch (err) {
+            alert("שגיאה בריקון הפח");
         }
     };
 
@@ -175,25 +217,62 @@ const TabBookings = () => {
 
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 sm:gap-0">
                 <div>
-                    <h2 className="text-2xl font-bold text-white">ניהול הזמנות</h2>
-                    <p className="text-gray-400 text-sm">צפה בכל ההזמנות וצור הזמנות ידניות</p>
+                    <h2 className="text-2xl font-bold text-white">
+                        {viewMode === 'active' ? 'ניהול הזמנות' : 'פח הזמנות'}
+                    </h2>
+                    <p className="text-gray-400 text-sm">
+                        {viewMode === 'active'
+                            ? 'צפה בכל ההזמנות וצור הזמנות ידניות'
+                            : 'הזמנות שנמחקו - ניתן לשחזר או למחוק לצמיתות'}
+                    </p>
                 </div>
-                <div className="flex gap-3 w-full sm:w-auto">
+                <div className="flex gap-3 w-full sm:w-auto flex-wrap">
                     <button onClick={fetchAllData} className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors" title="רענן רשימה">
                         <RefreshCw size={20} />
                     </button>
-                    <NeonButton 
-                        onClick={() => setShowManualForm(!showManualForm)} 
-                        icon={showManualForm ? X : Plus} 
-                        variant={showManualForm ? "outline" : "primary"}
-                        className="py-2 px-4 text-sm w-full sm:w-auto"
+
+                    {/* כפתור מעבר בין תצוגות */}
+                    <button
+                        onClick={() => setViewMode(viewMode === 'active' ? 'trash' : 'active')}
+                        className={`p-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium ${
+                            viewMode === 'trash'
+                                ? 'bg-brand-primary/20 text-brand-primary border border-brand-primary/30'
+                                : 'bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white'
+                        }`}
+                        title={viewMode === 'active' ? 'צפה בפח' : 'חזור להזמנות'}
                     >
-                        {showManualForm ? 'סגור טופס' : 'הזמנה חדשה'}
-                    </NeonButton>
+                        <Trash size={18} />
+                        {trashedBookings.length > 0 && (
+                            <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                                {trashedBookings.length}
+                            </span>
+                        )}
+                    </button>
+
+                    {viewMode === 'active' && (
+                        <NeonButton
+                            onClick={() => setShowManualForm(!showManualForm)}
+                            icon={showManualForm ? X : Plus}
+                            variant={showManualForm ? "outline" : "primary"}
+                            className="py-2 px-4 text-sm w-full sm:w-auto"
+                        >
+                            {showManualForm ? 'סגור טופס' : 'הזמנה חדשה'}
+                        </NeonButton>
+                    )}
+
+                    {viewMode === 'trash' && trashedBookings.length > 0 && (
+                        <button
+                            onClick={handleEmptyTrash}
+                            className="p-2 px-4 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium border border-red-500/30"
+                        >
+                            <Trash2 size={18} />
+                            רוקן פח
+                        </button>
+                    )}
                 </div>
             </div>
 
-            {showManualForm && (
+            {showManualForm && viewMode === 'active' && (
                 <div className="bg-[#1a0b2e] border border-brand-primary/30 p-6 rounded-2xl shadow-2xl animate-fade-in mb-8 relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-2 h-full bg-brand-primary"></div>
                     <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
@@ -229,78 +308,168 @@ const TabBookings = () => {
                 </div>
             )}
 
-            <div className="bg-[#1a0b2e] rounded-xl border border-white/10 overflow-hidden">
-                {bookings.length === 0 ? (
-                    <div className="p-16 text-center flex flex-col items-center justify-center gap-4 text-gray-600">
-                        <div className="bg-white/5 p-6 rounded-full">
-                            <CalendarIcon size={48} className="opacity-40" />
+            {/* תצוגת הזמנות פעילות */}
+            {viewMode === 'active' && (
+                <div className="bg-[#1a0b2e] rounded-xl border border-white/10 overflow-hidden">
+                    {bookings.length === 0 ? (
+                        <div className="p-16 text-center flex flex-col items-center justify-center gap-4 text-gray-600">
+                            <div className="bg-white/5 p-6 rounded-full">
+                                <CalendarIcon size={48} className="opacity-40" />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-gray-400">אין הזמנות כרגע</h3>
+                                <p className="text-sm">הזמנות חדשות מהאתר או הזמנות ידניות יופיעו כאן</p>
+                            </div>
+                            <button onClick={() => setShowManualForm(true)} className="mt-2 text-brand-primary text-sm hover:underline">
+                                צור הזמנה ידנית
+                            </button>
                         </div>
-                        <div>
-                            <h3 className="text-xl font-bold text-gray-400">אין הזמנות כרגע</h3>
-                            <p className="text-sm">הזמנות חדשות מהאתר או הזמנות ידניות יופיעו כאן</p>
+                    ) : (
+                        <div className="overflow-x-auto custom-scrollbar">
+                            <table className="w-full text-right min-w-[800px]">
+                                <thead className="bg-[#25103a] text-gray-300 text-xs uppercase tracking-wider">
+                                    <tr>
+                                        <th className="p-4 font-bold">נוצר ב-</th>
+                                        <th className="p-4 font-bold">מועד המשחק</th>
+                                        <th className="p-4 font-bold">חדר</th>
+                                        <th className="p-4 font-bold">לקוח</th>
+                                        <th className="p-4 font-bold text-center">משתתפים</th>
+                                        <th className="p-4 font-bold">מחיר</th>
+                                        <th className="p-4 font-bold">סטטוס</th>
+                                        <th className="p-4 font-bold text-center">פעולות</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/5 text-sm">
+                                    {bookings.map((booking) => {
+                                        const roomName = booking.roomId?.title?.he || booking.roomId?.title?.en || "חדר לא ידוע";
+                                        return (
+                                            <tr key={booking._id} className="hover:bg-white/5 transition-colors group">
+                                                <td className="p-4 text-gray-400 text-xs">
+                                                    <div className="flex flex-col">
+                                                        <span className="font-bold text-white">{format(new Date(booking.createdAt), 'dd/MM/yyyy')}</span>
+                                                        <span>{format(new Date(booking.createdAt), 'HH:mm')}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="p-4 text-gray-300">
+                                                    <div className="flex flex-col">
+                                                        <span className="font-bold text-white text-lg">{booking.date ? format(new Date(booking.date), 'dd/MM/yyyy') : '---'}</span>
+                                                        <span className="text-brand-primary font-bold">{booking.timeSlot}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="p-4">
+                                                    <span className={`font-bold block ${!booking.roomId ? 'text-red-400 flex items-center gap-1' : 'text-white'}`}>
+                                                        {!booking.roomId && <AlertTriangle size={14}/>} {roomName}
+                                                    </span>
+                                                    <span className="text-xs text-gray-500 font-mono">{booking.bookingId}</span>
+                                                </td>
+                                                <td className="p-4">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-white font-medium">{booking.customer?.fullName}</span>
+                                                        <a href={`tel:${booking.customer?.phone}`} className="text-xs text-gray-500 hover:text-brand-primary transition-colors">{booking.customer?.phone}</a>
+                                                    </div>
+                                                </td>
+                                                <td className="p-4 text-center"><span className="bg-white/5 px-2 py-1 rounded-md">{booking.details?.participantsCount}</span></td>
+                                                <td className="p-4 text-green-400 font-bold font-mono">₪{booking.details?.totalPrice}</td>
+                                                <td className="p-4"><StatusBadge status={booking.status} /></td>
+                                                <td className="p-4 text-center">
+                                                    <button onClick={() => handleDelete(booking._id)} className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors" title="העבר לפח"><Trash2 size={18} /></button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
                         </div>
-                        <button onClick={() => setShowManualForm(true)} className="mt-2 text-brand-primary text-sm hover:underline">
-                            צור הזמנה ידנית
-                        </button>
-                    </div>
-                ) : (
-                    <div className="overflow-x-auto custom-scrollbar">
-                        <table className="w-full text-right min-w-[800px]">
-                            <thead className="bg-[#25103a] text-gray-300 text-xs uppercase tracking-wider">
-                                <tr>
-                                    <th className="p-4 font-bold">נוצר ב-</th>
-                                    <th className="p-4 font-bold">מועד המשחק</th>
-                                    <th className="p-4 font-bold">חדר</th>
-                                    <th className="p-4 font-bold">לקוח</th>
-                                    <th className="p-4 font-bold text-center">משתתפים</th>
-                                    <th className="p-4 font-bold">מחיר</th>
-                                    <th className="p-4 font-bold">סטטוס</th>
-                                    <th className="p-4 font-bold text-center">פעולות</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-white/5 text-sm">
-                                {bookings.map((booking) => {
-                                    const roomName = booking.roomId?.title?.he || booking.roomId?.title?.en || "חדר לא ידוע";
-                                    return (
-                                        <tr key={booking._id} className="hover:bg-white/5 transition-colors group">
-                                            <td className="p-4 text-gray-400 text-xs">
-                                                <div className="flex flex-col">
-                                                    <span className="font-bold text-white">{format(new Date(booking.createdAt), 'dd/MM/yyyy')}</span>
-                                                    <span>{format(new Date(booking.createdAt), 'HH:mm')}</span>
-                                                </div>
-                                            </td>
-                                            <td className="p-4 text-gray-300">
-                                                <div className="flex flex-col">
-                                                    <span className="font-bold text-white text-lg">{booking.date ? format(new Date(booking.date), 'dd/MM/yyyy') : '---'}</span>
-                                                    <span className="text-brand-primary font-bold">{booking.timeSlot}</span>
-                                                </div>
-                                            </td>
-                                            <td className="p-4">
-                                                <span className={`font-bold block ${!booking.roomId ? 'text-red-400 flex items-center gap-1' : 'text-white'}`}>
-                                                    {!booking.roomId && <AlertTriangle size={14}/>} {roomName}
-                                                </span>
-                                                <span className="text-xs text-gray-500 font-mono">{booking.bookingId}</span>
-                                            </td>
-                                            <td className="p-4">
-                                                <div className="flex flex-col">
-                                                    <span className="text-white font-medium">{booking.customer?.fullName}</span>
-                                                    <a href={`tel:${booking.customer?.phone}`} className="text-xs text-gray-500 hover:text-brand-primary transition-colors">{booking.customer?.phone}</a>
-                                                </div>
-                                            </td>
-                                            <td className="p-4 text-center"><span className="bg-white/5 px-2 py-1 rounded-md">{booking.details?.participantsCount}</span></td>
-                                            <td className="p-4 text-green-400 font-bold font-mono">₪{booking.details?.totalPrice}</td>
-                                            <td className="p-4"><StatusBadge status={booking.status} /></td>
-                                            <td className="p-4 text-center">
-                                                <button onClick={() => handleDelete(booking._id)} className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"><Trash2 size={18} /></button>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </div>
+                    )}
+                </div>
+            )}
+
+            {/* תצוגת פח */}
+            {viewMode === 'trash' && (
+                <div className="bg-[#1a0b2e] rounded-xl border border-red-500/20 overflow-hidden">
+                    {trashedBookings.length === 0 ? (
+                        <div className="p-16 text-center flex flex-col items-center justify-center gap-4 text-gray-600">
+                            <div className="bg-white/5 p-6 rounded-full">
+                                <Trash size={48} className="opacity-40" />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-gray-400">הפח ריק</h3>
+                                <p className="text-sm">הזמנות שתמחקו יופיעו כאן</p>
+                            </div>
+                            <button onClick={() => setViewMode('active')} className="mt-2 text-brand-primary text-sm hover:underline">
+                                חזור להזמנות
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto custom-scrollbar">
+                            <table className="w-full text-right min-w-[800px]">
+                                <thead className="bg-red-900/20 text-gray-300 text-xs uppercase tracking-wider">
+                                    <tr>
+                                        <th className="p-4 font-bold">נמחק ב-</th>
+                                        <th className="p-4 font-bold">מועד המשחק</th>
+                                        <th className="p-4 font-bold">חדר</th>
+                                        <th className="p-4 font-bold">לקוח</th>
+                                        <th className="p-4 font-bold text-center">משתתפים</th>
+                                        <th className="p-4 font-bold">מחיר</th>
+                                        <th className="p-4 font-bold text-center">פעולות</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/5 text-sm">
+                                    {trashedBookings.map((booking) => {
+                                        const roomName = booking.roomId?.title?.he || booking.roomId?.title?.en || "חדר לא ידוע";
+                                        return (
+                                            <tr key={booking._id} className="hover:bg-white/5 transition-colors group opacity-70 hover:opacity-100">
+                                                <td className="p-4 text-gray-400 text-xs">
+                                                    <div className="flex flex-col">
+                                                        <span className="font-bold text-red-400">{booking.deletedAt ? format(new Date(booking.deletedAt), 'dd/MM/yyyy') : '---'}</span>
+                                                        <span>{booking.deletedAt ? format(new Date(booking.deletedAt), 'HH:mm') : ''}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="p-4 text-gray-300">
+                                                    <div className="flex flex-col">
+                                                        <span className="font-bold text-white text-lg">{booking.date ? format(new Date(booking.date), 'dd/MM/yyyy') : '---'}</span>
+                                                        <span className="text-gray-500 font-bold">{booking.timeSlot}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="p-4">
+                                                    <span className="font-bold block text-gray-400">{roomName}</span>
+                                                    <span className="text-xs text-gray-500 font-mono">{booking.bookingId}</span>
+                                                </td>
+                                                <td className="p-4">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-gray-400 font-medium">{booking.customer?.fullName}</span>
+                                                        <span className="text-xs text-gray-500">{booking.customer?.phone}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="p-4 text-center"><span className="bg-white/5 px-2 py-1 rounded-md text-gray-400">{booking.details?.participantsCount}</span></td>
+                                                <td className="p-4 text-gray-500 font-bold font-mono">₪{booking.details?.totalPrice}</td>
+                                                <td className="p-4 text-center">
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        <button
+                                                            onClick={() => handleRestore(booking._id)}
+                                                            className="p-2 text-green-500 hover:text-green-400 hover:bg-green-500/10 rounded-lg transition-colors"
+                                                            title="שחזר הזמנה"
+                                                        >
+                                                            <RotateCcw size={18} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handlePermanentDelete(booking._id)}
+                                                            className="p-2 text-red-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                                                            title="מחק לצמיתות"
+                                                        >
+                                                            <Trash2 size={18} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };
