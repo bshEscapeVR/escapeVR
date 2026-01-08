@@ -52,7 +52,7 @@ const Hero = () => {
                         </h1>
 
                         {/* כותרת משנה - גרדיאנט תכלת-סגול עם הילה חזקה */}
-                        <h2 className="text-3xl md:text-5xl font-bold mb-8 tracking-wide bg-gradient-to-r from-cyan-400 via-purple-400 to-brand-primary bg-clip-text text-transparent [filter:_drop-shadow(0_0_20px_rgba(168,85,247,1))_drop-shadow(0_0_40px_rgba(168,85,247,0.9))_drop-shadow(0_0_60px_rgba(168,85,247,0.7))]">
+                        <h2 className="text-3xl md:text-5xl font-bold mb-8 tracking-wide bg-gradient-to-r from-purple-400 via-purple-300 to-cyan-300 bg-clip-text text-transparent [filter:_drop-shadow(0_0_10px_rgba(168,85,247,0.5))_drop-shadow(0_0_20px_rgba(168,85,247,0.3))_drop-shadow(0_0_40px_rgba(168,85,247,0.2))]">
                             {tDB(settings?.content?.hero?.subtitle) || t('hero.subtitle')}
                         </h2>
 
@@ -95,17 +95,17 @@ const Hero = () => {
 
                 {/* Stats Grid - טקסטים מה-JSON */}
                 <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto">
-                    <div className="bg-black/50 backdrop-blur-sm p-4 rounded-2xl border border-brand-primary/30 flex flex-col items-center hover:border-brand-primary/50 hover:shadow-[0_0_25px_rgba(168,85,247,0.3)] transition-all">
+                    <div className="bg-black/50 backdrop-blur-sm p-4 rounded-2xl border border-brand-primary/30 flex flex-col items-center">
                         <Users className="text-brand-neon mb-2" size={28} />
                         <span className="text-white font-bold text-xl">2-6</span>
                         <span className="text-gray-400 text-xs uppercase tracking-wide">{t('hero.stats_players')}</span>
                     </div>
-                    <div className="bg-black/50 backdrop-blur-sm p-4 rounded-2xl border border-brand-primary/30 flex flex-col items-center hover:border-brand-primary/50 hover:shadow-[0_0_25px_rgba(168,85,247,0.3)] transition-all">
+                    <div className="bg-black/50 backdrop-blur-sm p-4 rounded-2xl border border-brand-primary/30 flex flex-col items-center">
                         <Clock className="text-blue-400 mb-2" size={28} />
                         <span className="text-white font-bold text-xl">60</span>
                         <span className="text-gray-400 text-xs uppercase tracking-wide">{t('hero.stats_minutes')}</span>
                     </div>
-                    <div className="bg-black/50 backdrop-blur-sm p-4 rounded-2xl border border-brand-primary/30 flex flex-col items-center hover:border-brand-primary/50 hover:shadow-[0_0_25px_rgba(168,85,247,0.3)] transition-all">
+                    <div className="bg-black/50 backdrop-blur-sm p-4 rounded-2xl border border-brand-primary/30 flex flex-col items-center">
                         <Zap className="text-yellow-400 mb-2" size={28} />
                         <span className="text-white font-bold text-xl">3</span>
                         <span className="text-gray-400 text-xs uppercase tracking-wide">{t('hero.stats_worlds')}</span>
