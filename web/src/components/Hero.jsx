@@ -87,7 +87,7 @@ const Hero = () => {
 
                     <button
                         onClick={() => setIsTrailerOpen(true)}
-                        className="group/trailer bg-black/40 hover:bg-transparent backdrop-blur-md text-white px-8 py-2.5 rounded-full font-medium text-base border border-white/10 hover:border-white/30 transition-all flex items-center gap-2 w-full md:w-auto justify-center"
+                        className="group/trailer bg-white hover:bg-white/90 backdrop-blur-md text-brand-primary px-8 py-2.5 rounded-full font-medium text-base border border-white/20 transition-all flex items-center gap-2 w-full md:w-auto justify-center"
                     >
                         <Play size={18} fill="currentColor" className="group-hover/trailer:scale-125 transition-transform" /> {t('hero.trailer_btn')}
                     </button>
