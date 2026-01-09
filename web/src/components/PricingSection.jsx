@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Users, Tag, Check, MessageCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useBooking } from '../context/BookingContext';
+import { useContact } from '../context/ContactContext';
 import { useSettings } from '../context/SettingsContext';
 import SectionTitle from './ui/SectionTitle';
 import getApi from '../api/axios';
@@ -103,7 +103,7 @@ const PricingCard = ({ players, oldPrice, newPrice, totalPrice, discount, featur
 
 const PricingSection = () => {
     const { t } = useTranslation();
-    const { openBooking } = useBooking();
+    const { openContact } = useContact();
     const { language } = useSettings();
     const [pricingPlans, setPricingPlans] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -197,7 +197,7 @@ const PricingSection = () => {
                                     totalPrice={plan.totalPrice || plan.newPrice * plan.players}
                                     discount={plan.discount || plan.calculatedDiscount || 0}
                                     features={defaultFeatures}
-                                    onBook={() => openBooking()}
+                                    onBook={() => openContact()}
                                     t={t}
                                 />
                             ))}
@@ -215,7 +215,7 @@ const PricingSection = () => {
                                         totalPrice={plan.totalPrice || plan.newPrice * plan.players}
                                         discount={plan.discount || plan.calculatedDiscount || 0}
                                         features={defaultFeatures}
-                                        onBook={() => openBooking()}
+                                        onBook={() => openContact()}
                                         t={t}
                                     />
                                 ))}

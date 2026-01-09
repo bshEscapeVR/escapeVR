@@ -5,12 +5,12 @@ import Link from 'next/link';
 import { Facebook, Instagram, Phone, Mail, MapPin } from 'lucide-react'; // הוספתי אייקונים של טיקטוק/וואטסאפ אם צריך
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../context/SettingsContext';
-import { useBooking } from '../context/BookingContext';
+import { useContact } from '../context/ContactContext';
 
 const Footer = () => {
     const { t } = useTranslation();
     const { settings, getImg, t: tDB, loading, language } = useSettings();
-    const { openBooking } = useBooking();
+    const { openContact } = useContact();
     const currentYear = new Date().getFullYear();
 
     // שליפת נתונים דינמיים עם פולבק ל-JSON
@@ -70,7 +70,7 @@ const Footer = () => {
                         <ul className="space-y-3 text-sm">
                             <li><Link href={`/${language}`} className="hover:text-brand-primary transition-colors">{t('footer.link_home')}</Link></li>
                             <li><a href="#rooms" className="hover:text-brand-primary transition-colors">{t('footer.link_rooms')}</a></li>
-                            <li><button onClick={() => openBooking()} className="hover:text-brand-primary transition-colors">{t('footer.link_book')}</button></li>
+                            <li><button onClick={() => openContact()} className="hover:text-brand-primary transition-colors">{t('footer.link_book')}</button></li>
                             <li><Link href={`/${language}/contact`} className="hover:text-brand-primary transition-colors">{t('footer.link_contact')}</Link></li>
                         </ul>
                     </div>

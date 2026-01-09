@@ -32,7 +32,7 @@ const FormInput = ({ placeholder, error, ...props }) => (
 );
 
 const BookingModal = () => {
-  const { isOpen, closeBooking, preSelectedRoomId } = useBooking();
+  const { isOpen, closeBooking, preSelectedRoomId, handleSuccess } = useBooking();
   const { t } = useTranslation();
   const { t: tDB, getImg } = useSettings();
   
@@ -145,9 +145,10 @@ const BookingModal = () => {
                   phone: data.phone,
                   email: data.email
               },
-              totalPrice: totalPrice 
+              totalPrice: totalPrice
           });
           setBookingStatus('success');
+          handleSuccess(); // קריאה ל-callback אם קיים (לרענון רשימת הזמנות באדמין)
       } catch (err) {
           setBookingStatus('error');
       }

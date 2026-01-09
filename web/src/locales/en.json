@@ -170,5 +170,12 @@
         "err_name_short": "Name must be at least 2 characters",
         "err_phone_invalid": "Invalid phone number",
         "err_email_invalid": "Invalid email address"
+    },
+    "contact_popup": {
+        "title": "Book a Room & Schedule",
+        "subtitle": "We'd love to arrange the perfect experience for you",
+        "call_now": "Call Now",
+        "whatsapp": "Or send a WhatsApp message",
+        "response_time": "Quick response during business hours"
     }
 }

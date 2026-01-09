@@ -1,13 +1,13 @@
 'use client';
 
 import Navbar from '../../../components/Navbar';
-import BookingModal from '../../../components/BookingModal';
+import ContactPopup from '../../../components/ContactPopup';
 
 export default function SiteLayout({ children }) {
   return (
     <>
       <Navbar />
-      <BookingModal />
+      <ContactPopup />
       {children}
     </>
   );

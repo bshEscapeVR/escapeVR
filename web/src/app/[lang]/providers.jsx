@@ -5,6 +5,7 @@ import { I18nextProvider } from 'react-i18next';
 import i18n from '../../i18n';
 import { SettingsProvider } from '../../context/SettingsContext';
 import { BookingProvider } from '../../context/BookingContext';
+import { ContactProvider } from '../../context/ContactContext';
 
 export default function Providers({ children, lang, initialSettings }) {
   // SYNCHRONOUS: Direct mutation before children render
@@ -26,7 +27,9 @@ export default function Providers({ children, lang, initialSettings }) {
     <I18nextProvider i18n={i18n} key={lang}>
       <SettingsProvider lang={lang} initialSettings={initialSettings}>
         <BookingProvider>
-          {children}
+          <ContactProvider>
+            {children}
+          </ContactProvider>
         </BookingProvider>
       </SettingsProvider>
     </I18nextProvider>

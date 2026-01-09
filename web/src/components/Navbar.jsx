@@ -5,13 +5,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, X, Globe, LayoutDashboard } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useBooking } from '../context/BookingContext';
+import { useContact } from '../context/ContactContext';
 import { useSettings } from '../context/SettingsContext';
 import { authService } from '../services';
 
 const Navbar = () => {
   const { t, i18n } = useTranslation();
-  const { openBooking } = useBooking();
+  const { openContact } = useContact();
   const { settings, getImg, t: tDB, language, toggleLanguage } = useSettings();
   const pathname = usePathname();
 
@@ -107,7 +107,7 @@ const Navbar = () => {
             </button>
 
             <button 
-                onClick={() => openBooking()} 
+                onClick={() => openContact()} 
                 className="bg-brand-neon hover:bg-purple-600 text-white px-6 py-2 rounded-full font-bold shadow-lg shadow-purple-500/30 transition-all hover:scale-105 hover:shadow-purple-500/50"
             >
               {t('navbar.book_btn')}

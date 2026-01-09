@@ -1,112 +1,34 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Calendar from 'react-calendar';
 import { format } from 'date-fns';
-import { Plus, X, Phone, User, Clock, Save, Calendar as CalendarIcon, RefreshCw, AlertTriangle, Trash2, AlertCircle, RotateCcw, Trash } from 'lucide-react';
-import { bookingService, roomService } from '../../../services';
+import { Plus, Calendar as CalendarIcon, RefreshCw, AlertTriangle, Trash2, RotateCcw, Trash } from 'lucide-react';
+import { bookingService } from '../../../services';
+import { useBooking } from '../../../context/BookingContext';
 import NeonButton from '../../../components/ui/NeonButton';
 import Spinner from '../../../components/ui/Spinner';
+import BookingModal from '../../../components/BookingModal';
 import WeeklyScheduleEditor from '../../../components/admin/WeeklyScheduleEditor';
-import 'react-calendar/dist/Calendar.css';
-import '../../../BookingCalendarOverride.css';
-
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-
-// --- רכיבי UI פנימיים ---
-const AdminInput = ({ label, error, ...props }) => (
-    <div className="w-full">
-        {label && <label className="text-gray-400 text-xs font-bold uppercase mb-1 block">{label}</label>}
-        <input 
-            className={`w-full bg-[#0a0310] border rounded-lg p-3 text-white focus:outline-none transition-colors 
-                ${error ? 'border-red-500 focus:border-red-500' : 'border-white/10 focus:border-brand-primary'}`}
-            {...props} 
-        />
-        {error && <p className="text-red-400 text-xs mt-1 flex items-center gap-1"><AlertCircle size={10}/> {error.message}</p>}
-    </div>
-);
-
-const AdminSelect = ({ label, options, placeholder, error, ...props }) => (
-    <div className="w-full">
-        {label && <label className="text-gray-400 text-xs font-bold uppercase mb-1 block">{label}</label>}
-        <div className="relative">
-            <select 
-                className={`w-full bg-[#0a0310] border rounded-lg p-3 text-white focus:outline-none transition-colors appearance-none
-                    ${error ? 'border-red-500 focus:border-red-500' : 'border-white/10 focus:border-brand-primary'}`}
-                {...props}
-            >
-                <option value="" disabled className="text-gray-500">{placeholder}</option>
-                {options.map(opt => (
-                    <option key={opt.value} value={opt.value} className="text-black">{opt.label}</option>
-                ))}
-            </select>
-            <div className="absolute top-4 left-4 text-gray-400 text-xs pointer-events-none">▼</div>
-        </div>
-        {error && <p className="text-red-400 text-xs mt-1 flex items-center gap-1"><AlertCircle size={10}/> {error.message}</p>}
-    </div>
-);
 
 const TabBookings = () => {
     const [bookings, setBookings] = useState([]);
     const [trashedBookings, setTrashedBookings] = useState([]);
-    const [rooms, setRooms] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [showManualForm, setShowManualForm] = useState(false);
     const [viewMode, setViewMode] = useState('active'); // 'active' | 'trash'
 
-    const manualBookingSchema = z.object({
-        roomId: z.string().min(1, "חובה לבחור חדר"),
-        date: z.date(),
-        timeSlot: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "שעה לא תקינה (HH:MM)"),
-        participants: z.number().min(1, "מינימום משתתף אחד").max(20, "מקסימום 20 משתתפים"),
-        fullName: z.string().min(2, "שם קצר מדי"),
-        phone: z.string().regex(/^05\d-?\d{7}$/, "מספר טלפון לא תקין"),
-        email: z.string().email("אימייל לא תקין").or(z.literal('')),
-    });
-
-    const { 
-        register, 
-        handleSubmit, 
-        setValue, 
-        watch, 
-        reset, 
-        formState: { errors } 
-    } = useForm({
-        resolver: zodResolver(manualBookingSchema),
-        defaultValues: {
-            roomId: '',
-            date: new Date(),
-            timeSlot: '18:00',
-            participants: 2,
-            fullName: '',
-            phone: '',
-            email: ''
-        }
-    });
-
-    const selectedDate = watch('date');
+    const { openBooking } = useBooking();
 
     useEffect(() => {
         fetchAllData();
     }, []);
 
-    useEffect(() => {
-        if (rooms.length > 0 && !watch('roomId')) {
-            setValue('roomId', rooms[0]._id);
-        }
-    }, [rooms, setValue, watch]);
-
     const fetchAllData = async () => {
         setLoading(true);
         try {
-            const [roomsRes, bookingsRes, trashRes] = await Promise.all([
-                roomService.getAll(),
+            const [bookingsRes, trashRes] = await Promise.all([
                 bookingService.getAll(),
                 bookingService.getTrash()
             ]);
-            setRooms(roomsRes);
             setBookings(bookingsRes);
             setTrashedBookings(trashRes);
         } catch (err) {
@@ -164,43 +86,9 @@ const TabBookings = () => {
         }
     };
 
-    const onManualSubmit = async (data) => {
-        try {
-            const newBooking = await bookingService.create({
-                roomId: data.roomId,
-                date: format(data.date, 'yyyy-MM-dd'),
-                timeSlot: data.timeSlot,
-                participantsCount: data.participants,
-                customer: {
-                    fullName: data.fullName,
-                    phone: data.phone,
-                    email: data.email || 'manual@admin.com'
-                },
-                source: 'phone'
-            });
-            
-            const roomDetails = rooms.find(r => r._id === data.roomId);
-            const bookingForDisplay = { ...newBooking, roomId: roomDetails };
-            
-            setBookings(prev => [bookingForDisplay, ...prev]);
-            alert("ההזמנה נוצרה בהצלחה!");
-            
-            reset({
-                roomId: data.roomId,
-                date: data.date,
-                timeSlot: '18:00',
-                participants: 2,
-                fullName: '',
-                phone: '',
-                email: ''
-            });
-            
-            setShowManualForm(false);
-            
-        } catch (err) {
-            console.error(err);
-            alert("שגיאה ביצירת הזמנה");
-        }
+    // פתיחת פופאפ הזמנה עם callback לרענון
+    const handleOpenBookingModal = () => {
+        openBooking(null, fetchAllData);
     };
 
     if (loading) return (
@@ -212,6 +100,9 @@ const TabBookings = () => {
     return (
         <div className="animate-fade-in space-y-6">
 
+            {/* BookingModal - יוצג כשהמנהל לוחץ על הזמנה חדשה */}
+            <BookingModal />
+
             {/* קומפוננטת ניהול שעות פעילות */}
             <WeeklyScheduleEditor />
 
@@ -222,7 +113,7 @@ const TabBookings = () => {
                     </h2>
                     <p className="text-gray-400 text-sm">
                         {viewMode === 'active'
-                            ? 'צפה בכל ההזמנות וצור הזמנות ידניות'
+                            ? 'צפה בכל ההזמנות וצור הזמנות חדשות'
                             : 'הזמנות שנמחקו - ניתן לשחזר או למחוק לצמיתות'}
                     </p>
                 </div>
@@ -251,12 +142,12 @@ const TabBookings = () => {
 
                     {viewMode === 'active' && (
                         <NeonButton
-                            onClick={() => setShowManualForm(!showManualForm)}
-                            icon={showManualForm ? X : Plus}
-                            variant={showManualForm ? "outline" : "primary"}
+                            onClick={handleOpenBookingModal}
+                            icon={Plus}
+                            variant="primary"
                             className="py-2 px-4 text-sm w-full sm:w-auto"
                         >
-                            {showManualForm ? 'סגור טופס' : 'הזמנה חדשה'}
+                            הזמנה חדשה
                         </NeonButton>
                     )}
 
@@ -272,42 +163,6 @@ const TabBookings = () => {
                 </div>
             </div>
 
-            {showManualForm && viewMode === 'active' && (
-                <div className="bg-[#1a0b2e] border border-brand-primary/30 p-6 rounded-2xl shadow-2xl animate-fade-in mb-8 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-2 h-full bg-brand-primary"></div>
-                    <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                        <Phone size={20} className="text-brand-primary" /> ניהול הזמנה ידנית
-                    </h3>
-                    
-                    <form onSubmit={handleSubmit(onManualSubmit)} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                        <div className="lg:col-span-4 space-y-4">
-                            <AdminSelect 
-                                label="בחירת חדר"
-                                placeholder="בחר חדר..."
-                                options={rooms.map(r => ({ value: r._id, label: r.title?.he || r.title?.en }))}
-                                error={errors.roomId}
-                                {...register('roomId')}
-                            />
-                            <div className="booking-calendar-container">
-                                <label className="text-gray-400 text-xs font-bold uppercase mb-1 block">תאריך ההזמנה</label>
-                                <Calendar onChange={(date) => setValue('date', date)} value={selectedDate} className="text-sm w-full rounded-lg border-none shadow-none" />
-                            </div>
-                        </div>
-                        <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-4 content-start">
-                            <div className="md:col-span-2">
-                                <AdminInput label="שם הלקוח" placeholder="דני דין" error={errors.fullName} {...register('fullName')} />
-                            </div>
-                            <AdminInput label="טלפון" type="tel" placeholder="050-0000000" error={errors.phone} {...register('phone')} />
-                            <AdminInput label="שעה (24H)" type="time" error={errors.timeSlot} {...register('timeSlot')} />
-                            <AdminInput label="כמות משתתפים" type="number" error={errors.participants} {...register('participants', { valueAsNumber: true })} />
-                             <div className="md:col-span-2 mt-4">
-                                <NeonButton type="submit" fullWidth icon={Save}>שמור הזמנה במערכת</NeonButton>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            )}
-
             {/* תצוגת הזמנות פעילות */}
             {viewMode === 'active' && (
                 <div className="bg-[#1a0b2e] rounded-xl border border-white/10 overflow-hidden">
@@ -318,10 +173,10 @@ const TabBookings = () => {
                             </div>
                             <div>
                                 <h3 className="text-xl font-bold text-gray-400">אין הזמנות כרגע</h3>
-                                <p className="text-sm">הזמנות חדשות מהאתר או הזמנות ידניות יופיעו כאן</p>
+                                <p className="text-sm">הזמנות חדשות יופיעו כאן</p>
                             </div>
-                            <button onClick={() => setShowManualForm(true)} className="mt-2 text-brand-primary text-sm hover:underline">
-                                צור הזמנה ידנית
+                            <button onClick={handleOpenBookingModal} className="mt-2 text-brand-primary text-sm hover:underline">
+                                צור הזמנה חדשה
                             </button>
                         </div>
                     ) : (

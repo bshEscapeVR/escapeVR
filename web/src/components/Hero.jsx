@@ -4,13 +4,13 @@ import React, { useState } from 'react';
 import { Clock, Users, Zap, Play, CalendarDays } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../context/SettingsContext';
-import { useBooking } from '../context/BookingContext';
+import { useContact } from '../context/ContactContext';
 import TrailerModal from './TrailerModal';
 
 const Hero = () => {
     const { t } = useTranslation(); // תרגום סטטי (JSON)
     const { t: tDB, settings, getImg, loading } = useSettings(); // תרגום דינמי (DB)
-    const { openBooking } = useBooking();
+    const { openContact } = useContact();
     const [isTrailerOpen, setIsTrailerOpen] = useState(false);
 
     return (
@@ -68,7 +68,7 @@ const Hero = () => {
                 {/* כפתורים */}
                 <div className="flex flex-col md:flex-row gap-4 justify-center items-center mb-16">
                     <button
-                        onClick={() => openBooking()}
+                        onClick={() => openContact()}
                         className="btn-book-shimmer text-white px-8 py-4 rounded-full font-bold text-lg transition-all flex items-center gap-2 w-full md:w-auto justify-center"
                     >
                         <CalendarDays size={20} className="relative z-10" />
