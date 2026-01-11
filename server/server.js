@@ -49,9 +49,8 @@ const corsOptions = {
         }
 
         // ד. בדיקה: האם הכתובת היא דומיין של Vercel? (כולל כתובות Preview זמניות)
-        if (origin.endsWith('.vercel.app')) {
-            // לוג שיעזור לנו לראות ב-Render שזה עובד
-            console.log(`✅ CORS allowed Dynamic Vercel origin: ${origin}`);
+        if (origin.endsWith('.vercel.app') || origin.includes('escapevr.co.il')) {
+            console.log(`✅ CORS allowed origin: ${origin}`);
             return callback(null, true);
         }
 
