@@ -1,34 +1,191 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import Calendar from 'react-calendar';
 import { format } from 'date-fns';
-import { Plus, Calendar as CalendarIcon, RefreshCw, AlertTriangle, Trash2, RotateCcw, Trash } from 'lucide-react';
-import { bookingService } from '../../../services';
+import { Plus, X, Phone, Save, Calendar as CalendarIcon, RefreshCw, AlertTriangle, Trash2, AlertCircle, RotateCcw, Trash, Eye, Users } from 'lucide-react';
+import { bookingService, roomService } from '../../../services';
 import { useBooking } from '../../../context/BookingContext';
+import { useSettings } from '../../../context/SettingsContext';
 import NeonButton from '../../../components/ui/NeonButton';
 import Spinner from '../../../components/ui/Spinner';
 import BookingModal from '../../../components/BookingModal';
 import WeeklyScheduleEditor from '../../../components/admin/WeeklyScheduleEditor';
+import 'react-calendar/dist/Calendar.css';
+import '../../../BookingCalendarOverride.css';
+
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+
+// --- רכיבי UI פנימיים ---
+const AdminInput = ({ label, error, ...props }) => (
+    <div className="w-full">
+        {label && <label className="text-gray-400 text-xs font-bold uppercase mb-1 block">{label}</label>}
+        <input
+            className={`w-full bg-[#0a0310] border rounded-lg p-3 text-white focus:outline-none transition-colors
+                ${error ? 'border-red-500 focus:border-red-500' : 'border-white/10 focus:border-brand-primary'}`}
+            {...props}
+        />
+        {error && <p className="text-red-400 text-xs mt-1 flex items-center gap-1"><AlertCircle size={10}/> {error.message}</p>}
+    </div>
+);
+
+const AdminSelect = ({ label, options, placeholder, error, ...props }) => (
+    <div className="w-full">
+        {label && <label className="text-gray-400 text-xs font-bold uppercase mb-1 block">{label}</label>}
+        <div className="relative">
+            <select
+                className={`w-full bg-[#0a0310] border rounded-lg p-3 text-white focus:outline-none transition-colors appearance-none
+                    ${error ? 'border-red-500 focus:border-red-500' : 'border-white/10 focus:border-brand-primary'}`}
+                {...props}
+            >
+                <option value="" disabled className="text-gray-500">{placeholder}</option>
+                {options.map(opt => (
+                    <option key={opt.value} value={opt.value} className="text-black">{opt.label}</option>
+                ))}
+            </select>
+            <div className="absolute top-4 left-4 text-gray-400 text-xs pointer-events-none">▼</div>
+        </div>
+        {error && <p className="text-red-400 text-xs mt-1 flex items-center gap-1"><AlertCircle size={10}/> {error.message}</p>}
+    </div>
+);
 
 const TabBookings = () => {
     const [bookings, setBookings] = useState([]);
     const [trashedBookings, setTrashedBookings] = useState([]);
+    const [rooms, setRooms] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [showManualForm, setShowManualForm] = useState(false);
     const [viewMode, setViewMode] = useState('active'); // 'active' | 'trash'
+    const [calculatedPrice, setCalculatedPrice] = useState(0);
+    const [availableSlots, setAvailableSlots] = useState([]);
+    const [loadingSlots, setLoadingSlots] = useState(false);
 
     const { openBooking } = useBooking();
+    const { getImg } = useSettings();
+
+    // סכמת ולידציה בסיסית - המגבלות הדינמיות יבדקו בנפרד
+    const manualBookingSchema = z.object({
+        roomId: z.string().min(1, "חובה לבחור חדר"),
+        date: z.date(),
+        timeSlot: z.string().min(1, "חובה לבחור שעה"),
+        participants: z.number().min(1, "מינימום משתתף אחד"),
+        fullName: z.string().min(2, "השם קצר מדי (מינימום 2 תווים)"),
+        phone: z.string().regex(/^05\d-?\d{7}$/, "מספר טלפון לא תקין (05X-XXXXXXX)"),
+        email: z.string().email("כתובת אימייל לא תקינה").or(z.literal('')),
+    });
+
+    const {
+        register,
+        handleSubmit,
+        setValue,
+        watch,
+        reset,
+        formState: { errors }
+    } = useForm({
+        resolver: zodResolver(manualBookingSchema),
+        defaultValues: {
+            roomId: '',
+            date: new Date(),
+            timeSlot: '',
+            participants: 2,
+            fullName: '',
+            phone: '',
+            email: ''
+        }
+    });
+
+    const selectedDate = watch('date');
+    const selectedRoomId = watch('roomId');
+    const participants = watch('participants');
+
+    // החדר הנבחר
+    const selectedRoom = useMemo(() => {
+        return rooms.find(r => r._id === selectedRoomId);
+    }, [rooms, selectedRoomId]);
+
+    // חישוב מחיר דינמי לפי החדר והמשתתפים
+    useEffect(() => {
+        if (!selectedRoom || !participants) {
+            setCalculatedPrice(0);
+            return;
+        }
+
+        const pricing = selectedRoom.pricing;
+        if (!pricing) {
+            setCalculatedPrice(0);
+            return;
+        }
+
+        const count = participants.toString();
+        if (pricing.overrides && pricing.overrides[count]) {
+            setCalculatedPrice(pricing.overrides[count]);
+        } else {
+            setCalculatedPrice(pricing.basePrice + (participants * (pricing.personPenalty || 0)));
+        }
+    }, [selectedRoom, participants]);
+
+    // עדכון משתתפים כשמשנים חדר
+    useEffect(() => {
+        if (selectedRoom) {
+            const currentParticipants = watch('participants');
+            const min = selectedRoom.features?.minPlayers || 1;
+            const max = selectedRoom.features?.maxPlayers || 10;
+
+            if (currentParticipants < min) {
+                setValue('participants', min);
+            } else if (currentParticipants > max) {
+                setValue('participants', max);
+            }
+        }
+    }, [selectedRoom, setValue, watch]);
+
+    // טעינת שעות פנויות כשמשנים חדר או תאריך
+    useEffect(() => {
+        const fetchSlots = async () => {
+            if (!selectedRoomId || !selectedDate) {
+                setAvailableSlots([]);
+                return;
+            }
+
+            setLoadingSlots(true);
+            setValue('timeSlot', ''); // איפוס שעה נבחרת
+
+            try {
+                const dateStr = format(selectedDate, 'yyyy-MM-dd');
+                const slots = await bookingService.getAvailableSlots(selectedRoomId, dateStr);
+                setAvailableSlots(slots || []);
+            } catch (err) {
+                console.error("Error fetching slots:", err);
+                setAvailableSlots([]);
+            } finally {
+                setLoadingSlots(false);
+            }
+        };
+
+        fetchSlots();
+    }, [selectedRoomId, selectedDate, setValue]);
 
     useEffect(() => {
         fetchAllData();
     }, []);
 
+    useEffect(() => {
+        if (rooms.length > 0 && !watch('roomId')) {
+            setValue('roomId', rooms[0]._id);
+        }
+    }, [rooms, setValue, watch]);
+
     const fetchAllData = async () => {
         setLoading(true);
         try {
-            const [bookingsRes, trashRes] = await Promise.all([
+            const [roomsRes, bookingsRes, trashRes] = await Promise.all([
+                roomService.getAll(),
                 bookingService.getAll(),
                 bookingService.getTrash()
             ]);
+            setRooms(roomsRes);
             setBookings(bookingsRes);
             setTrashedBookings(trashRes);
         } catch (err) {
@@ -86,9 +243,59 @@ const TabBookings = () => {
         }
     };
 
-    // פתיחת פופאפ הזמנה עם callback לרענון
-    const handleOpenBookingModal = () => {
+    // פתיחת פופאפ הזמנה ללקוחות (לצפייה)
+    const handleOpenCustomerBookingModal = () => {
         openBooking(null, fetchAllData);
+    };
+
+    const onManualSubmit = async (data) => {
+        // ולידציה נוספת לפי החדר הנבחר
+        if (selectedRoom) {
+            const min = selectedRoom.features?.minPlayers || 1;
+            const max = selectedRoom.features?.maxPlayers || 10;
+            if (data.participants < min || data.participants > max) {
+                alert(`מספר משתתפים חייב להיות בין ${min} ל-${max}`);
+                return;
+            }
+        }
+
+        try {
+            const newBooking = await bookingService.create({
+                roomId: data.roomId,
+                date: format(data.date, 'yyyy-MM-dd'),
+                timeSlot: data.timeSlot,
+                participantsCount: data.participants,
+                customer: {
+                    fullName: data.fullName,
+                    phone: data.phone,
+                    email: data.email || 'manual@admin.com'
+                },
+                totalPrice: calculatedPrice,
+                source: 'phone'
+            });
+
+            const roomDetails = rooms.find(r => r._id === data.roomId);
+            const bookingForDisplay = { ...newBooking, roomId: roomDetails };
+
+            setBookings(prev => [bookingForDisplay, ...prev]);
+            alert("ההזמנה נוצרה בהצלחה!");
+
+            reset({
+                roomId: data.roomId,
+                date: data.date,
+                timeSlot: '',
+                participants: selectedRoom?.features?.minPlayers || 2,
+                fullName: '',
+                phone: '',
+                email: ''
+            });
+
+            setShowManualForm(false);
+
+        } catch (err) {
+            console.error(err);
+            alert("שגיאה ביצירת הזמנה");
+        }
     };
 
     if (loading) return (
@@ -97,10 +304,14 @@ const TabBookings = () => {
         </div>
     );
 
+    // מגבלות החדר הנבחר
+    const minPlayers = selectedRoom?.features?.minPlayers || 1;
+    const maxPlayers = selectedRoom?.features?.maxPlayers || 10;
+
     return (
         <div className="animate-fade-in space-y-6">
 
-            {/* BookingModal - יוצג כשהמנהל לוחץ על הזמנה חדשה */}
+            {/* BookingModal - פופאפ הזמנה ללקוחות */}
             <BookingModal />
 
             {/* קומפוננטת ניהול שעות פעילות */}
@@ -113,7 +324,7 @@ const TabBookings = () => {
                     </h2>
                     <p className="text-gray-400 text-sm">
                         {viewMode === 'active'
-                            ? 'צפה בכל ההזמנות וצור הזמנות חדשות'
+                            ? 'צפה בכל ההזמנות וצור הזמנות ידניות'
                             : 'הזמנות שנמחקו - ניתן לשחזר או למחוק לצמיתות'}
                     </p>
                 </div>
@@ -141,14 +352,27 @@ const TabBookings = () => {
                     </button>
 
                     {viewMode === 'active' && (
-                        <NeonButton
-                            onClick={handleOpenBookingModal}
-                            icon={Plus}
-                            variant="primary"
-                            className="py-2 px-4 text-sm w-full sm:w-auto"
-                        >
-                            הזמנה חדשה
-                        </NeonButton>
+                        <>
+                            {/* כפתור צפייה בפופאפ לקוחות */}
+                            <button
+                                onClick={handleOpenCustomerBookingModal}
+                                className="p-2 px-4 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium border border-cyan-500/30"
+                                title="צפה בפופאפ הזמנה ללקוחות"
+                            >
+                                <Eye size={18} />
+                                הזמנה ללקוחות
+                            </button>
+
+                            {/* כפתור הזמנה ידנית */}
+                            <NeonButton
+                                onClick={() => setShowManualForm(!showManualForm)}
+                                icon={showManualForm ? X : Plus}
+                                variant={showManualForm ? "outline" : "primary"}
+                                className="py-2 px-4 text-sm w-full sm:w-auto"
+                            >
+                                {showManualForm ? 'סגור טופס' : 'הזמנה חדשה'}
+                            </NeonButton>
+                        </>
                     )}
 
                     {viewMode === 'trash' && trashedBookings.length > 0 && (
@@ -163,6 +387,149 @@ const TabBookings = () => {
                 </div>
             </div>
 
+            {/* טופס הזמנה ידנית עם ולידציות משודרגות */}
+            {showManualForm && viewMode === 'active' && (
+                <div className="bg-[#1a0b2e] border border-brand-primary/30 p-6 rounded-2xl shadow-2xl animate-fade-in mb-8 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-2 h-full bg-brand-primary"></div>
+                    <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                        <Phone size={20} className="text-brand-primary" /> הזמנה ידנית (טלפונית)
+                    </h3>
+
+                    <form onSubmit={handleSubmit(onManualSubmit)} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                        {/* צד שמאל - בחירת חדר, לוח שנה ותמונה */}
+                        <div className="lg:col-span-4 space-y-4">
+                            <AdminSelect
+                                label="בחירת חדר"
+                                placeholder="בחר חדר..."
+                                options={rooms.map(r => ({ value: r._id, label: r.title?.he || r.title?.en }))}
+                                error={errors.roomId}
+                                {...register('roomId')}
+                            />
+
+                            {/* תמונת החדר */}
+                            {selectedRoom && (
+                                <div className="relative rounded-xl overflow-hidden border border-white/10">
+                                    <img
+                                        src={getImg(selectedRoom.images?.main)}
+                                        alt={selectedRoom.title?.he || selectedRoom.title?.en}
+                                        className="w-full h-40 object-cover"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                                    <div className="absolute bottom-0 left-0 right-0 p-3">
+                                        <h4 className="text-white font-bold">{selectedRoom.title?.he || selectedRoom.title?.en}</h4>
+                                        <div className="flex items-center gap-3 text-xs text-gray-300 mt-1">
+                                            <span className="flex items-center gap-1">
+                                                <Users size={12} />
+                                                {minPlayers}-{maxPlayers} משתתפים
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="booking-calendar-container">
+                                <label className="text-gray-400 text-xs font-bold uppercase mb-1 block">תאריך ההזמנה</label>
+                                <Calendar onChange={(date) => setValue('date', date)} value={selectedDate} minDate={new Date()} className="text-sm w-full rounded-lg border-none shadow-none" />
+                            </div>
+                        </div>
+
+                        {/* צד ימין - פרטי ההזמנה */}
+                        <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-4 content-start">
+                            <div className="md:col-span-2">
+                                <AdminInput label="שם הלקוח" placeholder="דני דין" error={errors.fullName} {...register('fullName')} />
+                            </div>
+                            <AdminInput label="טלפון" type="tel" placeholder="050-0000000" error={errors.phone} {...register('phone')} />
+                            <AdminInput label="אימייל (אופציונלי)" type="email" placeholder="example@mail.com" error={errors.email} {...register('email')} />
+
+                            {/* בחירת שעה מתוך רבועים */}
+                            <div className="md:col-span-2">
+                                <label className="text-gray-400 text-xs font-bold uppercase mb-1 block">בחירת שעה</label>
+                                {loadingSlots ? (
+                                    <div className="flex items-center gap-2 text-gray-500 text-sm py-4">
+                                        <RefreshCw size={16} className="animate-spin" />
+                                        טוען שעות פנויות...
+                                    </div>
+                                ) : availableSlots.length > 0 ? (
+                                    <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 max-h-[120px] overflow-y-auto custom-scrollbar pr-1">
+                                        {availableSlots.map(slot => (
+                                            <button
+                                                key={slot}
+                                                type="button"
+                                                onClick={() => setValue('timeSlot', slot, { shouldValidate: true })}
+                                                className={`py-2 px-1 text-sm rounded-lg border transition-all
+                                                    ${watch('timeSlot') === slot
+                                                        ? 'bg-brand-primary border-brand-primary text-white shadow-[0_0_10px_#a855f7]'
+                                                        : 'bg-white/5 border-white/10 hover:bg-white/10 text-gray-300'
+                                                    }`}
+                                            >
+                                                {slot}
+                                            </button>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-gray-500 text-sm py-4">
+                                        {selectedRoomId ? 'אין שעות פנויות בתאריך זה' : 'בחר חדר ותאריך כדי לראות שעות'}
+                                    </p>
+                                )}
+                                {errors.timeSlot && (
+                                    <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                                        <AlertCircle size={10}/> {errors.timeSlot.message}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* בחירת משתתפים דינמית */}
+                            <div className="w-full">
+                                <label className="text-gray-400 text-xs font-bold uppercase mb-1 block">
+                                    כמות משתתפים ({minPlayers}-{maxPlayers})
+                                </label>
+                                <div className="flex gap-2 flex-wrap">
+                                    {selectedRoom && [...Array(maxPlayers - minPlayers + 1).keys()].map(i => {
+                                        const num = i + minPlayers;
+                                        return (
+                                            <button
+                                                key={num}
+                                                type="button"
+                                                onClick={() => setValue('participants', num)}
+                                                className={`w-10 h-10 rounded-xl border flex items-center justify-center font-bold transition-all
+                                                    ${participants === num
+                                                        ? 'bg-brand-primary border-brand-primary text-white shadow-lg shadow-brand-primary/30'
+                                                        : 'border-white/10 bg-white/5 text-gray-400 hover:bg-white/10'
+                                                    }`}
+                                            >
+                                                {num}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                {errors.participants && (
+                                    <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                                        <AlertCircle size={10}/> {errors.participants.message}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* תצוגת מחיר */}
+                            {selectedRoom && calculatedPrice > 0 && (
+                                <div className="md:col-span-2 bg-white/5 border border-white/10 rounded-xl p-4">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-gray-400">מחיר סופי:</span>
+                                        <span className="text-2xl font-bold text-green-400">₪{calculatedPrice}</span>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        מחושב אוטומטית לפי {participants} משתתפים בחדר {selectedRoom.title?.he || selectedRoom.title?.en}
+                                    </p>
+                                </div>
+                            )}
+
+                            <div className="md:col-span-2 mt-4">
+                                <NeonButton type="submit" fullWidth icon={Save}>שמור הזמנה במערכת</NeonButton>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            )}
+
             {/* תצוגת הזמנות פעילות */}
             {viewMode === 'active' && (
                 <div className="bg-[#1a0b2e] rounded-xl border border-white/10 overflow-hidden">
@@ -173,10 +540,10 @@ const TabBookings = () => {
                             </div>
                             <div>
                                 <h3 className="text-xl font-bold text-gray-400">אין הזמנות כרגע</h3>
-                                <p className="text-sm">הזמנות חדשות יופיעו כאן</p>
+                                <p className="text-sm">הזמנות חדשות מהאתר או הזמנות ידניות יופיעו כאן</p>
                             </div>
-                            <button onClick={handleOpenBookingModal} className="mt-2 text-brand-primary text-sm hover:underline">
-                                צור הזמנה חדשה
+                            <button onClick={() => setShowManualForm(true)} className="mt-2 text-brand-primary text-sm hover:underline">
+                                צור הזמנה ידנית
                             </button>
                         </div>
                     ) : (
