@@ -20,10 +20,10 @@ const resolveApiBaseUrl = () => {
 const getApi = () => {
     const baseURL = resolveApiBaseUrl();
 
-    // Debug log - remove after fixing
-    if (typeof window !== 'undefined') {
-        console.log(`🔍 API_URL: ${String(baseURL)}`);
-    }
+    // // Debug log - remove after fixing
+    // if (typeof window !== 'undefined') {
+    //     console.log(`🔍 API_URL: ${String(baseURL)}`);
+    // }
 
     if (!apiInstance) {
         apiInstance = axios.create({ baseURL });
