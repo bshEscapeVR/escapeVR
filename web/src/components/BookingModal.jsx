@@ -9,7 +9,7 @@ import { useBooking } from '../context/BookingContext';
 import { useSettings } from '../context/SettingsContext';
 import NeonButton from './ui/NeonButton';
 import BookingModalSkeleton from './ui/BookingModalSkeleton';
-import { bookingService, roomService } from '../services';
+import { bookingService, roomService, pricingService } from '../services';
 import 'react-calendar/dist/Calendar.css';
 import '../BookingCalendarOverride.css';
 
@@ -37,6 +37,7 @@ const BookingModal = () => {
   const { t: tDB, getImg } = useSettings();
   
   const [rooms, setRooms] = useState([]);
+  const [pricingPlans, setPricingPlans] = useState([]);
   const [availableSlots, setAvailableSlots] = useState([]);
   const [bookingStatus, setBookingStatus] = useState('idle');
   const [totalPrice, setTotalPrice] = useState(0);
@@ -80,16 +81,20 @@ const BookingModal = () => {
   const selectedSlot = watch('timeSlot');
   const participants = watch('participants');
 
-  // טעינת חדרים והגדרת ברירת מחדל
+  // טעינת חדרים וכרטיסי מחירים
   useEffect(() => {
     if (isOpen) {
         setBookingStatus('idle');
-        roomService.getAll().then(data => {
-            setRooms(data);
+        Promise.all([
+            roomService.getAll(),
+            pricingService.getAll()
+        ]).then(([roomsData, pricingData]) => {
+            setRooms(roomsData);
+            setPricingPlans(pricingData);
             if (preSelectedRoomId) {
                 setValue('roomId', preSelectedRoomId);
-            } else if (data.length > 0 && !selectedRoomId) {
-                setValue('roomId', data[0]._id);
+            } else if (roomsData.length > 0 && !selectedRoomId) {
+                setValue('roomId', roomsData[0]._id);
             }
         }).catch(console.error);
     }
@@ -97,39 +102,49 @@ const BookingModal = () => {
 
   const selectedRoom = rooms.find(r => r._id === selectedRoomId);
 
-  // חישוב מחיר וטעינת סלוטים
+  // בדיקת מינימום משתתפים כשמשנים חדר
   useEffect(() => {
     if (!selectedRoom) return;
-    
-    // בדיקת מינימום משתתפים
+
     if (participants < selectedRoom.features.minPlayers) {
         setValue('participants', selectedRoom.features.minPlayers);
     }
+  }, [selectedRoom, participants, setValue]);
 
-    // חישוב מחיר
-    const pricing = selectedRoom.pricing;
-    const count = participants.toString();
-    if (pricing.overrides && pricing.overrides[count]) {
-        setTotalPrice(pricing.overrides[count]);
-    } else {
-        setTotalPrice(pricing.basePrice + (participants * pricing.personPenalty));
+  // חישוב מחיר לפי כרטיסי המחיר (מקור האמת היחיד)
+  useEffect(() => {
+    if (!participants || pricingPlans.length === 0) {
+        setTotalPrice(0);
+        return;
     }
 
-    // טעינת שעות פנויות
+    // חיפוש כרטיס מחיר מתאים לפי מספר המשתתפים
+    const matchingPlan = pricingPlans.find(plan => plan.players === participants && plan.isActive);
+
+    if (matchingPlan) {
+        // המחיר הסופי = מחיר לאדם * מספר משתתפים
+        setTotalPrice(matchingPlan.newPrice * participants);
+    } else {
+        setTotalPrice(0);
+    }
+  }, [participants, pricingPlans]);
+
+  // טעינת שעות פנויות
+  useEffect(() => {
+    if (!selectedRoomId || !selectedDate) return;
+
     const fetchSlots = async () => {
-        // setValue('timeSlot', ''); // (אופציונלי: איפוס שעה כשמשנים תאריך)
         const dateStr = format(selectedDate, 'yyyy-MM-dd');
         try {
             const slots = await bookingService.getAvailableSlots(selectedRoomId, dateStr);
             setAvailableSlots(slots || []);
-        } catch (err) { 
-            console.error("Error fetching slots:", err); 
+        } catch (err) {
+            console.error("Error fetching slots:", err);
         }
     };
 
     fetchSlots();
-
-  }, [selectedRoomId, participants, selectedDate, selectedRoom]);
+  }, [selectedRoomId, selectedDate]);
 
   // שליחת הטופס (נקרא רק אם הולידציה עברה)
   const onSubmit = async (data) => {

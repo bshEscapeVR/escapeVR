@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Calendar from 'react-calendar';
 import { format } from 'date-fns';
 import { Plus, X, Phone, Save, Calendar as CalendarIcon, RefreshCw, AlertTriangle, Trash2, AlertCircle, RotateCcw, Trash, Eye, Users } from 'lucide-react';
-import { bookingService, roomService } from '../../../services';
+import { bookingService, roomService, pricingService } from '../../../services';
 import { useBooking } from '../../../context/BookingContext';
 import { useSettings } from '../../../context/SettingsContext';
 import NeonButton from '../../../components/ui/NeonButton';
@@ -55,6 +55,7 @@ const TabBookings = () => {
     const [bookings, setBookings] = useState([]);
     const [trashedBookings, setTrashedBookings] = useState([]);
     const [rooms, setRooms] = useState([]);
+    const [pricingPlans, setPricingPlans] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showManualForm, setShowManualForm] = useState(false);
     const [viewMode, setViewMode] = useState('active'); // 'active' | 'trash'
@@ -105,26 +106,24 @@ const TabBookings = () => {
         return rooms.find(r => r._id === selectedRoomId);
     }, [rooms, selectedRoomId]);
 
-    // חישוב מחיר דינמי לפי החדר והמשתתפים
+    // חישוב מחיר דינמי לפי כרטיסי המחיר (מקור האמת היחיד)
     useEffect(() => {
-        if (!selectedRoom || !participants) {
+        if (!participants || pricingPlans.length === 0) {
             setCalculatedPrice(0);
             return;
         }
 
-        const pricing = selectedRoom.pricing;
-        if (!pricing) {
-            setCalculatedPrice(0);
-            return;
-        }
+        // חיפוש כרטיס מחיר מתאים לפי מספר המשתתפים
+        const matchingPlan = pricingPlans.find(plan => plan.players === participants && plan.isActive);
 
-        const count = participants.toString();
-        if (pricing.overrides && pricing.overrides[count]) {
-            setCalculatedPrice(pricing.overrides[count]);
+        if (matchingPlan) {
+            // המחיר הסופי = מחיר לאדם * מספר משתתפים
+            setCalculatedPrice(matchingPlan.newPrice * participants);
         } else {
-            setCalculatedPrice(pricing.basePrice + (participants * (pricing.personPenalty || 0)));
+            // אם אין כרטיס מחיר מתאים, מציגים 0 (המנהל צריך להוסיף כרטיס)
+            setCalculatedPrice(0);
         }
-    }, [selectedRoom, participants]);
+    }, [participants, pricingPlans]);
 
     // עדכון משתתפים כשמשנים חדר
     useEffect(() => {
@@ -180,14 +179,16 @@ const TabBookings = () => {
     const fetchAllData = async () => {
         setLoading(true);
         try {
-            const [roomsRes, bookingsRes, trashRes] = await Promise.all([
+            const [roomsRes, bookingsRes, trashRes, pricingRes] = await Promise.all([
                 roomService.getAll(),
                 bookingService.getAll(),
-                bookingService.getTrash()
+                bookingService.getTrash(),
+                pricingService.getAll()
             ]);
             setRooms(roomsRes);
             setBookings(bookingsRes);
             setTrashedBookings(trashRes);
+            setPricingPlans(pricingRes);
         } catch (err) {
             console.error(err);
         } finally {
@@ -510,14 +511,21 @@ const TabBookings = () => {
                             </div>
 
                             {/* תצוגת מחיר */}
-                            {selectedRoom && calculatedPrice > 0 && (
-                                <div className="md:col-span-2 bg-white/5 border border-white/10 rounded-xl p-4">
+                            {selectedRoom && (
+                                <div className={`md:col-span-2 border rounded-xl p-4 ${calculatedPrice > 0 ? 'bg-white/5 border-white/10' : 'bg-yellow-500/10 border-yellow-500/30'}`}>
                                     <div className="flex justify-between items-center">
                                         <span className="text-gray-400">מחיר סופי:</span>
-                                        <span className="text-2xl font-bold text-green-400">₪{calculatedPrice}</span>
+                                        {calculatedPrice > 0 ? (
+                                            <span className="text-2xl font-bold text-green-400">₪{calculatedPrice}</span>
+                                        ) : (
+                                            <span className="text-lg font-bold text-yellow-400">לא הוגדר מחיר</span>
+                                        )}
                                     </div>
                                     <p className="text-xs text-gray-500 mt-1">
-                                        מחושב אוטומטית לפי {participants} משתתפים בחדר {selectedRoom.title?.he || selectedRoom.title?.en}
+                                        {calculatedPrice > 0
+                                            ? `מחושב אוטומטית לפי כרטיס מחיר ל-${participants} משתתפים`
+                                            : `יש להוסיף כרטיס מחיר ל-${participants} משתתפים בטאב "כרטיסי מחירים"`
+                                        }
                                     </p>
                                 </div>
                             )}
