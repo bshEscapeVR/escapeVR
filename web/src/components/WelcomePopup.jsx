@@ -83,12 +83,12 @@ const WelcomePopup = () => {
                         </div>
 
                         {/* Title */}
-                        <h2 className="text-2xl font-bold text-white mb-4 tracking-wide">
+                        <h2 className="text-3xl font-bold text-white mb-4 tracking-wide drop-shadow-[0_0_25px_rgba(168,85,247,0.8)]">
                             {tDB(title)}
                         </h2>
 
                         {/* Content */}
-                        <div className="text-gray-300 text-base leading-relaxed whitespace-pre-line">
+                        <div className="text-gray-200 text-lg leading-relaxed whitespace-pre-line">
                             {tDB(content)}
                         </div>
 
