@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import { Phone, Mail, MessageCircle, Send, Star, User, Hash, CheckCircle, AlertCircle, Flame } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../context/SettingsContext';
@@ -82,6 +83,8 @@ const ContactCard = ({ icon: Icon, title, content, subContent, action, colorClas
 const ContactSection = () => {
     const { t } = useTranslation();
     const { t: tDB, settings, loading } = useSettings(); // שליפת הגדרות מה-DB
+    const params = useParams();
+    const lang = params?.lang || 'he';
 
     const [activeTab, setActiveTab] = useState('contact');
     const [status, setStatus] = useState('idle');
@@ -385,7 +388,7 @@ const ContactSection = () => {
                             content={{ text: t('contact.book_click'), className: "text-blue-400 underline" }}
                             icon={Hash}
                             colorClass="text-blue-400" bgIcon="bg-blue-500/10" borderColor="border-white/10 hover:border-blue-500/50"
-                            action={<a href="#rooms" className="absolute inset-0 z-10"></a>}
+                            action={<a href={`/${lang}#rooms`} className="absolute inset-0 z-10"></a>}
                         />
 
                         <div className="bg-[#1a0b2e] border border-orange-500/30 rounded-xl p-5 relative overflow-hidden text-start group transition-all duration-300 transform-gpu hover:scale-[1.02] shadow-lg">
