@@ -85,6 +85,14 @@ const SiteSettingsSchema = new mongoose.Schema({
         // מפה של אינדקס יום (0-6) למערך שעות
         // דוגמה: { "0": ["10:00", "11:30"], "1": [...] }
         weeklyHours: { type: Map, of: [String], default: new Map() }
+    },
+
+    // פופאפ הודעת כניסה
+    welcomePopup: {
+        enabled: { type: Boolean, default: false },
+        delaySeconds: { type: Number, default: 3 },
+        title: BilingualSchema,
+        content: BilingualSchema
     }
 
 }, { timestamps: true });

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Settings, Save, Image, FileText, Youtube, BarChart, LogOut, Calendar, MessageSquare, TrendingUp, ExternalLink, Layout, DollarSign } from 'lucide-react';
+import { Settings, Save, Image, FileText, Youtube, BarChart, LogOut, Calendar, MessageSquare, TrendingUp, ExternalLink, Layout, DollarSign, Sparkles } from 'lucide-react';
 import { settingsService, authService } from '../../../../../services';
 import NeonButton from '../../../../../components/ui/NeonButton';
 import Spinner from '../../../../../components/ui/Spinner';
@@ -17,6 +17,7 @@ import TabReviews from '../../../../../components/admin/tabs/TabReviews';
 import TabLeads from '../../../../../components/admin/tabs/TabLeads';
 import TabRooms from '../../../../../components/admin/tabs/TabRooms';
 import TabPricing from '../../../../../components/admin/tabs/TabPricing';
+import TabWelcomePopup from '../../../../../components/admin/tabs/TabWelcomePopup';
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -38,6 +39,7 @@ export default function DashboardPage() {
         { id: 'content', label: 'תוכן', icon: <FileText size={15} /> },
         { id: 'images', label: 'תמונות', icon: <Image size={15} /> },
         { id: 'trailer', label: 'טריילר', icon: <Youtube size={15} /> },
+        { id: 'welcome', label: 'פופאפ כניסה', icon: <Sparkles size={15} /> },
     ];
 
     useEffect(() => {
@@ -156,6 +158,7 @@ export default function DashboardPage() {
                     {activeTab === 'content' && <TabContent settings={settings} update={updateSettingsState} />}
                     {activeTab === 'images' && <TabImages settings={settings} update={updateSettingsState} />}
                     {activeTab === 'trailer' && <TabTrailer settings={settings} update={updateSettingsState} />}
+                    {activeTab === 'welcome' && <TabWelcomePopup />}
 
                     {/* Global save button (only for settings tabs) */}
                     {['seo', 'images', 'content', 'trailer'].includes(activeTab) && (
