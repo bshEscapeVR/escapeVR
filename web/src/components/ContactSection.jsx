@@ -93,7 +93,9 @@ const ContactSection = () => {
     // שליפת נתונים דינמיים מההגדרות (עם פולבק לערכים קבועים)
     const contactPhone = settings?.general?.contactPhone || "054-8530162";
     const contactEmail = settings?.general?.contactEmail || "escapevr.bsh@gmail.com";
-    const whatsappNum = settings?.general?.contactWhatsapp || "972548530162";
+    // מספר וואטסאפ - אם הוגדר ב-socialLinks נשתמש בו, אחרת נמיר את מספר הטלפון
+    const whatsappFromSettings = settings?.general?.socialLinks?.whatsapp;
+    const whatsappNum = whatsappFromSettings || contactPhone.replace(/-/g, '').replace(/^0/, '972');
 
     // 2. הגדרת הולידציות (Zod)
 

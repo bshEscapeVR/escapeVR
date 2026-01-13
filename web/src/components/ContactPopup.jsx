@@ -12,7 +12,9 @@ const ContactPopup = () => {
     const { settings } = useSettings();
 
     const contactPhone = settings?.general?.contactPhone || "054-8530162";
-    const whatsappNumber = contactPhone.replace(/-/g, '').replace(/^0/, '972');
+    // מספר וואטסאפ - אם הוגדר ב-socialLinks נשתמש בו, אחרת נמיר את מספר הטלפון
+    const whatsappFromSettings = settings?.general?.socialLinks?.whatsapp;
+    const whatsappNumber = whatsappFromSettings || contactPhone.replace(/-/g, '').replace(/^0/, '972');
 
     if (!isOpen) return null;
 
