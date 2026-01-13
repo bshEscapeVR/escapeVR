@@ -9,7 +9,7 @@ const RoomSkeleton = () => {
             <div className="h-64 bg-white/5 relative">
                 <div className="absolute inset-0 bg-gradient-to-t from-brand-card via-transparent to-transparent z-10 opacity-80" />
                 {/* Badge skeletons */}
-                <div className="absolute bottom-4 right-4 z-20 flex gap-2">
+                <div className="absolute bottom-4 end-4 z-20 flex gap-2">
                     <div className="h-6 w-16 bg-white/10 rounded-full" />
                     <div className="h-6 w-12 bg-white/10 rounded-full" />
                 </div>
