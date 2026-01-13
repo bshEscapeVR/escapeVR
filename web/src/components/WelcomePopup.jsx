@@ -1,12 +1,16 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Sparkles } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import { X, Sparkles, DollarSign, CalendarCheck } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
 
 const WelcomePopup = () => {
     const [isOpen, setIsOpen] = useState(false);
-    const { settings, t: tDB } = useSettings();
+    const { settings, t: tDB, language } = useSettings();
+    const router = useRouter();
+    const params = useParams();
+    const lang = params?.lang || language || 'he';
 
     const welcomeSettings = settings?.welcomePopup;
     const isEnabled = welcomeSettings?.enabled;
@@ -92,20 +96,45 @@ const WelcomePopup = () => {
                             {tDB(content)}
                         </div>
 
-                        {/* CTA Button */}
-                        <button
-                            onClick={handleClose}
-                            className="group relative mt-6 w-full py-3 px-6 rounded-xl overflow-hidden
-                                bg-gradient-to-r from-brand-primary to-purple-600
-                                text-white font-bold
-                                shadow-[0_0_20px_rgba(168,85,247,0.3)]
-                                hover:shadow-[0_0_30px_rgba(168,85,247,0.6)]
-                                hover:brightness-110
-                                transition-all duration-300 transform active:scale-95"
-                        >
-                            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 skew-y-12"></div>
-                            <span className="relative z-10">הבנתי!</span>
-                        </button>
+                        {/* CTA Buttons */}
+                        <div className="flex gap-3 mt-6">
+                            {/* מחירים */}
+                            <button
+                                onClick={() => {
+                                    handleClose();
+                                    router.push(`/${lang}/pricing`);
+                                }}
+                                className="group relative flex-1 py-3 px-4 rounded-xl overflow-hidden
+                                    bg-white/10 border border-white/20
+                                    text-white font-bold
+                                    hover:bg-white/20
+                                    transition-all duration-300 transform active:scale-95
+                                    flex items-center justify-center gap-2"
+                            >
+                                <DollarSign size={18} />
+                                <span>{language === 'en' ? 'Prices' : 'מחירים'}</span>
+                            </button>
+
+                            {/* הזמן עכשיו */}
+                            <button
+                                onClick={() => {
+                                    handleClose();
+                                    router.push(`/${lang}#rooms`);
+                                }}
+                                className="group relative flex-1 py-3 px-4 rounded-xl overflow-hidden
+                                    bg-gradient-to-r from-brand-primary to-purple-600
+                                    text-white font-bold
+                                    shadow-[0_0_20px_rgba(168,85,247,0.3)]
+                                    hover:shadow-[0_0_30px_rgba(168,85,247,0.6)]
+                                    hover:brightness-110
+                                    transition-all duration-300 transform active:scale-95
+                                    flex items-center justify-center gap-2"
+                            >
+                                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 skew-y-12"></div>
+                                <CalendarCheck size={18} className="relative z-10" />
+                                <span className="relative z-10">{language === 'en' ? 'Book Now' : 'הזמן עכשיו'}</span>
+                            </button>
+                        </div>
                     </div>
 
                     {/* Bottom decorative border */}
