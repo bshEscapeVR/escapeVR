@@ -3,13 +3,13 @@
 import React from 'react';
 
 const InfoCardSkeleton = () => (
-    <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 flex flex-col items-center justify-center animate-pulse">
+    <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 flex flex-col items-center justify-center animate-pulse">
         {/* Icon placeholder */}
-        <div className="w-14 h-14 bg-white/10 rounded-full mb-3" />
+        <div className="w-10 h-10 bg-white/10 rounded-full mb-2" />
         {/* Title placeholder */}
-        <div className="h-3 w-16 bg-white/5 rounded mb-2" />
+        <div className="h-2 w-12 bg-white/5 rounded mb-1" />
         {/* Value placeholder */}
-        <div className="h-6 w-12 bg-white/10 rounded" />
+        <div className="h-4 w-10 bg-white/10 rounded" />
     </div>
 );
 
@@ -27,17 +27,33 @@ const BookingPageSkeleton = () => {
                     {/* Glow Effect Background */}
                     <div className="absolute top-0 right-0 w-64 h-64 bg-brand-primary/10 blur-[100px] rounded-full pointer-events-none" />
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
-                        {/* Left side - Text content */}
-                        <div className="space-y-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start relative z-10">
+
+                        {/* Left side - Image + Info Cards */}
+                        <div className="space-y-4">
+                            {/* Image placeholder */}
+                            <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+                                <div className="w-full h-72 md:h-96 bg-white/10" />
+                            </div>
+
+                            {/* Info cards - 3 cards in a row */}
+                            <div className="grid grid-cols-3 gap-3">
+                                <InfoCardSkeleton />
+                                <InfoCardSkeleton />
+                                <InfoCardSkeleton />
+                            </div>
+                        </div>
+
+                        {/* Right side - Text + Button */}
+                        <div className="space-y-6 flex flex-col h-full">
                             {/* Title */}
                             <div>
-                                <div className="h-12 md:h-16 w-3/4 bg-white/10 rounded-lg mb-3" />
+                                <div className="h-12 md:h-14 w-3/4 bg-white/10 rounded-lg mb-3" />
                                 <div className="h-6 w-1/2 bg-white/5 rounded" />
                             </div>
 
                             {/* Description */}
-                            <div className="space-y-3">
+                            <div className="space-y-3 flex-grow">
                                 <div className="h-5 w-full bg-white/5 rounded" />
                                 <div className="h-5 w-full bg-white/5 rounded" />
                                 <div className="h-5 w-4/5 bg-white/5 rounded" />
@@ -45,15 +61,7 @@ const BookingPageSkeleton = () => {
                             </div>
 
                             {/* CTA Button placeholder */}
-                            <div className="h-14 w-48 bg-white/10 rounded-full" />
-                        </div>
-
-                        {/* Right side - Info cards grid */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <InfoCardSkeleton />
-                            <InfoCardSkeleton />
-                            <InfoCardSkeleton />
-                            <InfoCardSkeleton />
+                            <div className="h-14 w-full bg-white/10 rounded-xl" />
                         </div>
                     </div>
                 </div>

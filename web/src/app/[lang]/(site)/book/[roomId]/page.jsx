@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Clock, Users, Zap, ArrowRight, CalendarCheck, Star } from 'lucide-react';
+import { Clock, Users, Zap, ArrowRight, CalendarCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { useContact } from '../../../../../context/ContactContext';
@@ -14,10 +14,10 @@ import Footer from '../../../../../components/Footer';
 import { roomService } from '../../../../../services';
 
 const InfoCard = ({ icon, title, subtitle }) => (
-    <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 flex flex-col items-center justify-center text-center hover:bg-white/10 transition-all duration-300 group hover:border-brand-primary/30">
-        <div className="mb-3 transform group-hover:scale-110 transition-transform bg-black/20 p-3 rounded-full">{icon}</div>
-        <div className="text-sm text-gray-400 uppercase tracking-wider mb-1">{title}</div>
-        <div className="text-xl font-bold text-white">{subtitle}</div>
+    <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 flex flex-col items-center justify-center text-center hover:bg-white/10 transition-all duration-300 group hover:border-brand-primary/30">
+        <div className="mb-2 transform group-hover:scale-110 transition-transform bg-black/20 p-2 rounded-full">{icon}</div>
+        <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">{title}</div>
+        <div className="text-base font-bold text-white">{subtitle}</div>
     </div>
 );
 
@@ -76,7 +76,7 @@ export default function BookingPage() {
 
                     {/* Back button */}
                     <button
-                        onClick={() => router.push(`/${lang}`)}
+                        onClick={() => router.push(`/${lang}#rooms`)}
                         className="flex items-center gap-2 text-gray-400 hover:text-brand-primary mb-8 transition-colors group"
                     >
                         <ArrowRight
@@ -90,12 +90,43 @@ export default function BookingPage() {
                         {/* Glow Effect Background */}
                         <div className="absolute top-0 right-0 w-64 h-64 bg-brand-primary/20 blur-[100px] rounded-full pointer-events-none"></div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start relative z-10">
 
-                            {/* Text */}
-                            <div className="space-y-8 text-start">
+                            {/* Image + Info Cards */}
+                            <div className="space-y-4">
+                                {/* Room Image */}
+                                <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+                                    <img
+                                        src={getImg(room.images?.main)}
+                                        alt={tDB(room.title)}
+                                        className="w-full h-72 md:h-96 object-cover"
+                                    />
+                                </div>
+
+                                {/* Info cards - 3 cards in a row (smaller/rectangular) */}
+                                <div className="grid grid-cols-3 gap-3">
+                                    <InfoCard
+                                        icon={<Zap size={20} className="text-yellow-400" />}
+                                        title={t('booking_page.difficulty')}
+                                        subtitle={`${room.features?.difficultyLevel}/5`}
+                                    />
+                                    <InfoCard
+                                        icon={<Clock size={20} className="text-brand-secondary" />}
+                                        title={t('booking_page.duration')}
+                                        subtitle={`${room.features?.durationMinutes} ${t('booking_page.min_suffix')}`}
+                                    />
+                                    <InfoCard
+                                        icon={<Users size={20} className="text-brand-primary" />}
+                                        title={t('booking_page.players')}
+                                        subtitle={`${room.features?.minPlayers}-${room.features?.maxPlayers}`}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Text + Button */}
+                            <div className="space-y-6 text-start flex flex-col h-full">
                                 <div>
-                                    <h1 className="text-4xl md:text-6xl font-bold text-white mb-2 leading-tight drop-shadow-lg">
+                                    <h1 className="text-4xl md:text-5xl font-bold text-white mb-2 leading-tight drop-shadow-lg">
                                         {tDB(room.title)}
                                     </h1>
                                     <h2 className="text-xl text-brand-primary font-medium tracking-wide">
@@ -103,45 +134,19 @@ export default function BookingPage() {
                                     </h2>
                                 </div>
 
-                                <p className="text-lg text-gray-300 leading-relaxed font-light">
+                                <p className="text-lg text-gray-300 leading-relaxed font-light flex-grow">
                                     {tDB(room.description)}
                                 </p>
 
-                                {/* CTA Button */}
-                                <div className="flex gap-4">
-                                    <NeonButton
-                                        onClick={() => openContact()}
-                                        variant="primary"
-                                        icon={CalendarCheck}
-                                        className="text-lg py-4 px-8"
-                                    >
-                                        {t('booking_page.book_now')}
-                                    </NeonButton>
-                                </div>
-                            </div>
-
-                            {/* Info cards */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <InfoCard
-                                    icon={<Zap size={28} className="text-yellow-400" />}
-                                    title={t('booking_page.difficulty')}
-                                    subtitle={`${room.features?.difficultyLevel}/5`}
-                                />
-                                <InfoCard
-                                    icon={<Clock size={28} className="text-brand-secondary" />}
-                                    title={t('booking_page.duration')}
-                                    subtitle={`${room.features?.durationMinutes} ${t('booking_page.min_suffix')}`}
-                                />
-                                <InfoCard
-                                    icon={<Users size={28} className="text-brand-primary" />}
-                                    title={t('booking_page.players')}
-                                    subtitle={`${room.features?.minPlayers}-${room.features?.maxPlayers}`}
-                                />
-                                <InfoCard
-                                    icon={<Star size={28} className="text-orange-400" />}
-                                    title={t('booking_page.tech')}
-                                    subtitle={room.features?.isVr ? t('booking_page.full_vr') : t('booking_page.standard')}
-                                />
+                                {/* CTA Button - at the bottom of text column */}
+                                <NeonButton
+                                    onClick={() => openContact()}
+                                    variant="primary"
+                                    icon={CalendarCheck}
+                                    className="text-lg py-4 px-8 w-full mt-auto"
+                                >
+                                    {t('booking_page.book_now')}
+                                </NeonButton>
                             </div>
                         </div>
                     </div>
