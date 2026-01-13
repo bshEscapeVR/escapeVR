@@ -44,6 +44,23 @@ const authService = {
       }
       return false;
     }
+  },
+
+  // רענון טוקן - מקבל טוקן חדש עם תוקף מחודש
+  refreshToken: async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return false;
+
+    try {
+      const response = await httpService.post(`${ENDPOINT}/refresh`);
+      if (response.token) {
+        localStorage.setItem('token', response.token);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      return false;
+    }
   }
 };
 

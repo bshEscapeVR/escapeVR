@@ -41,6 +41,22 @@ router.get('/verify', auth, (req, res) => {
     res.json({ valid: true, userId: req.user.id });
 });
 
+// @route   POST /api/auth/refresh
+// @desc    רענון טוקן - מחזיר טוקן חדש אם הישן עדיין תקף
+router.post('/refresh', auth, (req, res) => {
+    try {
+        // יצירת טוקן חדש עם תוקף מחודש
+        const newToken = jwt.sign(
+            { id: req.user.id },
+            process.env.JWT_SECRET || 'secretkey123',
+            { expiresIn: '12h' }
+        );
+        res.json({ token: newToken });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // @route   POST /api/auth/register-initial
 // @desc    שימוש חד פעמי ליצירת המנהל הראשון
 // @route   POST /api/auth/register-initial

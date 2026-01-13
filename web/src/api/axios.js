@@ -35,9 +35,32 @@ const getApi = () => {
             (error) => Promise.reject(error)
         );
 
-        // Response interceptor - טיפול בטוקן שפג תוקף
+        // Response interceptor - רענון טוקן אוטומטי + טיפול בטוקן שפג תוקף
         apiInstance.interceptors.response.use(
-            (response) => response,
+            (response) => {
+                // בכל בקשה מוצלחת מעמוד אדמין - נרענן את הטוקן ברקע
+                if (typeof window !== 'undefined') {
+                    const isAdminPage = window.location.pathname.includes('/admin/');
+                    const isLoginPage = window.location.pathname.includes('/admin/login');
+                    const isRefreshRequest = response.config?.url?.includes('/auth/refresh');
+
+                    // לא נרענן אם זו כבר בקשת רענון (כדי למנוע לולאה אינסופית)
+                    if (isAdminPage && !isLoginPage && !isRefreshRequest) {
+                        // רענון ברקע - לא חוסם את התשובה
+                        const token = localStorage.getItem('token');
+                        if (token) {
+                            apiInstance.post('v1/auth/refresh')
+                                .then(res => {
+                                    if (res.data?.token) {
+                                        localStorage.setItem('token', res.data.token);
+                                    }
+                                })
+                                .catch(() => { /* שגיאה ברענון - לא קריטי */ });
+                        }
+                    }
+                }
+                return response;
+            },
             (error) => {
                 // אם קיבלנו 401 (Unauthorized) - הטוקן פג תוקף או לא תקין
                 if (error.response?.status === 401 && typeof window !== 'undefined') {
