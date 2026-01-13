@@ -20,14 +20,10 @@ const resolveApiBaseUrl = () => {
 const getApi = () => {
     const baseURL = resolveApiBaseUrl();
 
-    // // Debug log - remove after fixing
-    // if (typeof window !== 'undefined') {
-    //     console.log(`🔍 API_URL: ${String(baseURL)}`);
-    // }
-
     if (!apiInstance) {
         apiInstance = axios.create({ baseURL });
 
+        // Request interceptor - הוספת טוקן לכל בקשה
         apiInstance.interceptors.request.use(
             (config) => {
                 if (typeof window !== 'undefined') {
@@ -37,6 +33,32 @@ const getApi = () => {
                 return config;
             },
             (error) => Promise.reject(error)
+        );
+
+        // Response interceptor - טיפול בטוקן שפג תוקף
+        apiInstance.interceptors.response.use(
+            (response) => response,
+            (error) => {
+                // אם קיבלנו 401 (Unauthorized) - הטוקן פג תוקף או לא תקין
+                if (error.response?.status === 401 && typeof window !== 'undefined') {
+                    // בדיקה אם אנחנו בעמוד אדמין (לא נפעיל logout בעמודים ציבוריים)
+                    const isAdminPage = window.location.pathname.includes('/admin/');
+                    const isLoginPage = window.location.pathname.includes('/admin/login');
+
+                    if (isAdminPage && !isLoginPage) {
+                        // מחיקת הטוקן
+                        localStorage.removeItem('token');
+
+                        // חילוץ השפה מה-URL
+                        const pathParts = window.location.pathname.split('/');
+                        const lang = pathParts[1] || 'he';
+
+                        // הפניה לדף הלוגין
+                        window.location.href = `/${lang}/admin/login`;
+                    }
+                }
+                return Promise.reject(error);
+            }
         );
     }
     return apiInstance;
