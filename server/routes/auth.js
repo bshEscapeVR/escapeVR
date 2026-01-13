@@ -4,6 +4,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Admin = require('../models/Admin');
+const auth = require('../middleware/auth');
 
 // @route   POST /api/auth/login
 // @desc    Authenticate admin & get token
@@ -32,6 +33,12 @@ router.post('/login', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+});
+
+// @route   GET /api/auth/verify
+// @desc    בדיקת תוקף הטוקן
+router.get('/verify', auth, (req, res) => {
+    res.json({ valid: true, userId: req.user.id });
 });
 
 // @route   POST /api/auth/register-initial

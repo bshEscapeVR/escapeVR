@@ -43,13 +43,22 @@ export default function DashboardPage() {
     ];
 
     useEffect(() => {
-        const fetchSettings = async () => {
+        const initDashboard = async () => {
+            // בדיקה ראשונית - האם יש טוקן בכלל
             if (!authService.isAuthenticated()) {
                 return router.push(`/${lang}/admin/login`);
             }
 
+            setLoading(true);
+
+            // בדיקת תוקף הטוקן מול השרת
+            const isValid = await authService.verifyToken();
+            if (!isValid) {
+                return router.push(`/${lang}/admin/login`);
+            }
+
+            // אם הטוקן תקין, נטען את ההגדרות
             try {
-                setLoading(true);
                 const data = await settingsService.get();
                 setSettings(data);
             } catch (err) {
@@ -62,7 +71,7 @@ export default function DashboardPage() {
                 setLoading(false);
             }
         };
-        fetchSettings();
+        initDashboard();
     }, [router, lang]);
 
     const handleSave = async () => {
