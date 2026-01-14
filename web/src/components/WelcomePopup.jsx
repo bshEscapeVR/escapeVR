@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { X, Sparkles, DollarSign, CalendarCheck } from 'lucide-react';
+import { X, Sparkles, CalendarCheck } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
 
 const WelcomePopup = () => {
@@ -92,7 +92,7 @@ const WelcomePopup = () => {
                         </h2>
 
                         {/* Content */}
-                        <div className="text-gray-200 text-lg leading-relaxed whitespace-pre-line">
+                        <div className="text-gray-200 text-xl leading-relaxed whitespace-pre-line">
                             {tDB(content)}
                         </div>
 
@@ -111,7 +111,7 @@ const WelcomePopup = () => {
                                     transition-all duration-300 transform active:scale-95
                                     flex items-center justify-center gap-2"
                             >
-                                <DollarSign size={18} />
+                                <span className="text-lg font-bold">₪</span>
                                 <span>{language === 'en' ? 'Prices' : 'מחירים'}</span>
                             </button>
 
