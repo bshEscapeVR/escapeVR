@@ -1,10 +1,27 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Save, Eye, EyeOff, Clock, Sparkles } from 'lucide-react';
+import { Save, Eye, EyeOff, Clock, Sparkles, Gift, Star, Zap, PartyPopper, Flame, Heart, Rocket, Trophy, Crown, Gem, Target, Bell } from 'lucide-react';
 import { settingsService } from '../../../services';
 import NeonButton from '../../../components/ui/NeonButton';
 import Spinner from '../../../components/ui/Spinner';
+
+// Available icons for the welcome popup
+const POPUP_ICONS = [
+    { id: 'sparkles', icon: Sparkles, label: 'ניצוצות' },
+    { id: 'gift', icon: Gift, label: 'מתנה' },
+    { id: 'star', icon: Star, label: 'כוכב' },
+    { id: 'zap', icon: Zap, label: 'ברק' },
+    { id: 'partyPopper', icon: PartyPopper, label: 'חגיגה' },
+    { id: 'flame', icon: Flame, label: 'להבה' },
+    { id: 'heart', icon: Heart, label: 'לב' },
+    { id: 'rocket', icon: Rocket, label: 'רקטה' },
+    { id: 'trophy', icon: Trophy, label: 'גביע' },
+    { id: 'crown', icon: Crown, label: 'כתר' },
+    { id: 'gem', icon: Gem, label: 'יהלום' },
+    { id: 'target', icon: Target, label: 'מטרה' },
+    { id: 'bell', icon: Bell, label: 'פעמון' },
+];
 
 const TabWelcomePopup = () => {
     const [loading, setLoading] = useState(true);
@@ -12,6 +29,7 @@ const TabWelcomePopup = () => {
     const [formData, setFormData] = useState({
         enabled: false,
         delaySeconds: 3,
+        icon: 'sparkles',
         title: { he: '', en: '' },
         content: { he: '', en: '' }
     });
@@ -28,6 +46,7 @@ const TabWelcomePopup = () => {
                 setFormData({
                     enabled: settings.welcomePopup.enabled || false,
                     delaySeconds: settings.welcomePopup.delaySeconds || 3,
+                    icon: settings.welcomePopup.icon || 'sparkles',
                     title: settings.welcomePopup.title || { he: '', en: '' },
                     content: settings.welcomePopup.content || { he: '', en: '' }
                 });
@@ -130,6 +149,47 @@ const TabWelcomePopup = () => {
                             className="w-24 bg-black/30 border border-white/10 rounded-lg p-3 text-white text-center text-lg font-bold focus:outline-none focus:border-brand-primary"
                         />
                         <span className="text-gray-400">שניות אחרי כניסה לאתר</span>
+                    </div>
+                </div>
+
+                {/* Icon Selector */}
+                <div className="bg-[#1a0b2e] border border-white/10 p-6 rounded-xl">
+                    <h3 className="text-white font-bold mb-4">בחירת אייקון</h3>
+                    <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-7 gap-3">
+                        {POPUP_ICONS.map(({ id, icon: Icon, label }) => (
+                            <button
+                                key={id}
+                                onClick={() => setFormData(prev => ({ ...prev, icon: id }))}
+                                className={`flex flex-col items-center gap-2 p-3 rounded-xl transition-all duration-300 ${
+                                    formData.icon === id
+                                        ? 'bg-gradient-to-br from-purple-500/30 to-cyan-500/30 border-2 border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.3)]'
+                                        : 'bg-black/30 border border-white/10 hover:border-white/30 hover:bg-white/5'
+                                }`}
+                                title={label}
+                            >
+                                <div className={`relative w-10 h-10 flex items-center justify-center ${
+                                    formData.icon === id ? '' : ''
+                                }`}>
+                                    {formData.icon === id && (
+                                        <>
+                                            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-500/20 to-cyan-500/20 animate-pulse"></div>
+                                            <div className="absolute inset-1 rounded-full border border-purple-400/30 bg-gradient-to-br from-purple-900/50 to-transparent"></div>
+                                        </>
+                                    )}
+                                    <Icon
+                                        size={24}
+                                        className={`relative z-10 ${
+                                            formData.icon === id
+                                                ? 'text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]'
+                                                : 'text-gray-400'
+                                        }`}
+                                    />
+                                </div>
+                                <span className={`text-xs ${formData.icon === id ? 'text-cyan-400' : 'text-gray-500'}`}>
+                                    {label}
+                                </span>
+                            </button>
+                        ))}
                     </div>
                 </div>
 

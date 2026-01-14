@@ -91,6 +91,7 @@ const SiteSettingsSchema = new mongoose.Schema({
     welcomePopup: {
         enabled: { type: Boolean, default: false },
         delaySeconds: { type: Number, default: 3 },
+        icon: { type: String, default: 'sparkles' },
         title: BilingualSchema,
         content: BilingualSchema
     }

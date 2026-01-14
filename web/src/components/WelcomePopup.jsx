@@ -2,8 +2,25 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { X, Sparkles, CalendarCheck } from 'lucide-react';
+import { X, CalendarCheck, Sparkles, Gift, Star, Zap, PartyPopper, Flame, Heart, Rocket, Trophy, Crown, Gem, Target, Bell } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
+
+// Icon mapping - same as in admin panel
+const ICON_MAP = {
+    sparkles: Sparkles,
+    gift: Gift,
+    star: Star,
+    zap: Zap,
+    partyPopper: PartyPopper,
+    flame: Flame,
+    heart: Heart,
+    rocket: Rocket,
+    trophy: Trophy,
+    crown: Crown,
+    gem: Gem,
+    target: Target,
+    bell: Bell,
+};
 
 const WelcomePopup = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -15,8 +32,12 @@ const WelcomePopup = () => {
     const welcomeSettings = settings?.welcomePopup;
     const isEnabled = welcomeSettings?.enabled;
     const delaySeconds = welcomeSettings?.delaySeconds || 3;
+    const iconId = welcomeSettings?.icon || 'sparkles';
     const title = welcomeSettings?.title;
     const content = welcomeSettings?.content;
+
+    // Get the icon component
+    const IconComponent = ICON_MAP[iconId] || Sparkles;
 
     useEffect(() => {
         if (!isEnabled || !title) return;
@@ -82,7 +103,7 @@ const WelcomePopup = () => {
                             <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-500/20 to-cyan-500/20 animate-pulse"></div>
                             <div className="absolute inset-2 rounded-full border border-purple-400/30 bg-gradient-to-br from-purple-900/50 to-transparent"></div>
                             <div className="absolute inset-0 flex items-center justify-center">
-                                <Sparkles size={28} className="text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]" />
+                                <IconComponent size={28} className="text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]" />
                             </div>
                         </div>
 
