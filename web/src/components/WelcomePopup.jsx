@@ -52,7 +52,7 @@ const WelcomePopup = () => {
 
                 {/* Main Modal */}
                 <div className="relative rounded-2xl overflow-hidden
-                    bg-gradient-to-b from-[#1a0a2e]/95 via-[#16082a]/95 to-[#0d0515]/95
+                    bg-gradient-to-br from-[#2d1555]/95 via-[#241045]/95 to-[#1a0a2e]/95
                     backdrop-blur-xl
                     border border-purple-500/20
                     shadow-[0_0_40px_rgba(168,85,247,0.15),0_0_80px_rgba(168,85,247,0.1)]">
