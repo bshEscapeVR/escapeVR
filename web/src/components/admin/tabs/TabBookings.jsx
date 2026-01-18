@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Calendar from 'react-calendar';
 import { format } from 'date-fns';
-import { Plus, X, Phone, Save, Calendar as CalendarIcon, RefreshCw, AlertTriangle, Trash2, AlertCircle, RotateCcw, Trash, Eye, Users, Pencil } from 'lucide-react';
+import { Plus, X, Phone, Save, Calendar as CalendarIcon, RefreshCw, AlertTriangle, Trash2, AlertCircle, RotateCcw, Trash, Eye, Users, Pencil, CheckCircle, Clock } from 'lucide-react';
 import { bookingService, roomService, pricingService } from '../../../services';
 import { useBooking } from '../../../context/BookingContext';
 import { useSettings } from '../../../context/SettingsContext';
@@ -40,9 +40,9 @@ const AdminSelect = ({ label, options, placeholder, error, ...props }) => (
                     ${error ? 'border-red-500 focus:border-red-500' : 'border-white/10 focus:border-brand-primary'}`}
                 {...props}
             >
-                <option value="" disabled className="text-gray-500">{placeholder}</option>
+                <option value="" disabled className="text-gray-500 bg-[#1a0b2e]">{placeholder}</option>
                 {options.map(opt => (
-                    <option key={opt.value} value={opt.value} className="text-black">{opt.label}</option>
+                    <option key={opt.value} value={opt.value} className="text-white bg-[#1a0b2e]">{opt.label}</option>
                 ))}
             </select>
             <div className="absolute top-4 left-4 text-gray-400 text-xs pointer-events-none">▼</div>
@@ -393,6 +393,19 @@ const TabBookings = () => {
         setEditCalculatedPrice(0);
     };
 
+    // מעבר בין סטטוס פעיל להושלם
+    const handleToggleStatus = async (bookingId, newStatus) => {
+        try {
+            const updatedBooking = await bookingService.update(bookingId, { status: newStatus });
+            setBookings(prev => prev.map(b =>
+                b._id === bookingId ? updatedBooking : b
+            ));
+        } catch (err) {
+            console.error(err);
+            alert('שגיאה בעדכון הסטטוס');
+        }
+    };
+
     // החדר הנבחר בעריכה
     const editSelectedRoom = useMemo(() => {
         if (!editFormData?.roomId) return null;
@@ -583,17 +596,14 @@ const TabBookings = () => {
                                     </div>
                                 </div>
 
-                                {/* סטטוס */}
+                                {/* סטטוס - רק פעיל והושלם */}
                                 <AdminSelect
                                     label="סטטוס"
-                                    value={editFormData.status}
+                                    value={editFormData.status === 'completed' ? 'completed' : 'pending'}
                                     onChange={e => updateEditField('status', e.target.value)}
                                     options={[
-                                        { value: 'pending', label: 'ממתין' },
-                                        { value: 'confirmed', label: 'מאושר' },
-                                        { value: 'cancelled', label: 'בוטל' },
-                                        { value: 'completed', label: 'הושלם' },
-                                        { value: 'no-show', label: 'לא הגיע' }
+                                        { value: 'pending', label: 'פעיל' },
+                                        { value: 'completed', label: 'הושלם' }
                                     ]}
                                 />
 
@@ -917,9 +927,27 @@ const TabBookings = () => {
                                                 </td>
                                                 <td className="p-4 text-center"><span className="bg-white/5 px-2 py-1 rounded-md">{booking.details?.participantsCount}</span></td>
                                                 <td className="p-4 text-green-400 font-bold font-mono">₪{booking.details?.totalPrice}</td>
-                                                <td className="p-4"><StatusBadge status={booking.status} /></td>
+                                                <td className="p-4"><StatusBadge status={calculateDynamicStatus(booking)} /></td>
                                                 <td className="p-4 text-center">
                                                     <div className="flex items-center justify-center gap-1">
+                                                        {/* כפתור מעבר בין פעיל להושלם */}
+                                                        {booking.status === 'completed' ? (
+                                                            <button
+                                                                onClick={() => handleToggleStatus(booking._id, 'pending')}
+                                                                className="p-2 text-blue-400 hover:text-green-400 hover:bg-green-500/10 rounded-lg transition-colors"
+                                                                title="החזר לפעיל"
+                                                            >
+                                                                <Clock size={18} />
+                                                            </button>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => handleToggleStatus(booking._id, 'completed')}
+                                                                className="p-2 text-gray-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
+                                                                title="סמן כהושלם"
+                                                            >
+                                                                <CheckCircle size={18} />
+                                                            </button>
+                                                        )}
                                                         <button onClick={() => handleEditBooking(booking)} className="p-2 text-gray-500 hover:text-brand-primary hover:bg-brand-primary/10 rounded-lg transition-colors" title="ערוך הזמנה"><Pencil size={18} /></button>
                                                         <button onClick={() => handleDelete(booking._id)} className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors" title="העבר לפח"><Trash2 size={18} /></button>
                                                     </div>
@@ -1024,9 +1052,64 @@ const TabBookings = () => {
     );
 };
 
+// פונקציה לחישוב סטטוס דינמי של הזמנה
+const calculateDynamicStatus = (booking) => {
+    // אם המנהל סימן כהושלם - זה הסטטוס הסופי
+    if (booking.status === 'completed') return 'completed';
+
+    // אם מבוטל - נשאר מבוטל
+    if (booking.status === 'cancelled') return 'cancelled';
+
+    // חישוב זמן ההזמנה
+    const now = new Date();
+    const bookingDate = new Date(booking.date);
+    const [hours, minutes] = (booking.timeSlot || '00:00').split(':').map(Number);
+
+    // יצירת תאריך+שעה מלא של ההזמנה
+    const bookingDateTime = new Date(bookingDate);
+    bookingDateTime.setHours(hours, minutes, 0, 0);
+
+    // הפרש בדקות
+    const diffMs = bookingDateTime - now;
+    const diffMinutes = diffMs / (1000 * 60);
+
+    // אם הזמן עבר (הזמנה בעבר) ולא סומנה כהושלמה
+    if (diffMinutes < 0) {
+        return 'late'; // באיחור
+    }
+
+    // אם ההזמנה היום וב-30 דקות הקרובות
+    const isToday = now.toDateString() === bookingDate.toDateString();
+    if (isToday && diffMinutes <= 30 && diffMinutes >= 0) {
+        return 'soon'; // בקרוב
+    }
+
+    // הזמנה עתידית רגילה
+    return 'active'; // פעיל
+};
+
 const StatusBadge = ({ status }) => {
-    const styles = { confirmed: "bg-green-500/10 text-green-400 border-green-500/20", pending: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20", cancelled: "bg-red-500/10 text-red-400 border-red-500/20", completed: "bg-blue-500/10 text-blue-400 border-blue-500/20", 'no-show': "bg-gray-700 text-gray-400 border-gray-600" };
-    return <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${styles[status] || styles.pending}`}>{status}</span>;
+    const styles = {
+        active: "bg-green-500/10 text-green-400 border-green-500/20",
+        soon: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
+        late: "bg-red-500/10 text-red-400 border-red-500/20",
+        completed: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+        cancelled: "bg-gray-700 text-gray-400 border-gray-600"
+    };
+
+    const labels = {
+        active: 'פעיל',
+        soon: 'בקרוב',
+        late: 'באיחור',
+        completed: 'הושלם',
+        cancelled: 'בוטל'
+    };
+
+    return (
+        <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${styles[status] || styles.active}`}>
+            {labels[status] || status}
+        </span>
+    );
 };
 
 export default TabBookings;

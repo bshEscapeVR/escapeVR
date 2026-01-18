@@ -213,7 +213,7 @@ const BookingModal = () => {
                             {...register('roomId')} // חיבור ל-Hook Form
                         >
                             {rooms.map(r => (
-                                <option key={r._id} value={r._id} style={{ color: 'black' }}>
+                                <option key={r._id} value={r._id} className="text-white bg-[#1a0b2e]">
                                     {tDB(r.title)}
                                 </option>
                             ))}
