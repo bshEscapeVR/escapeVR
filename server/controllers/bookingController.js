@@ -199,6 +199,77 @@ exports.getAllBookings = asyncHandler(async (req, res, next) => {
     res.status(200).json({ status: 'success', results: bookings.length, data: bookings });
 });
 
+// עדכון הזמנה קיימת
+exports.updateBooking = asyncHandler(async (req, res, next) => {
+    const { id } = req.params;
+    const { roomId, date, timeSlot, customer, participantsCount, totalPrice, status } = req.body;
+
+    // בדיקה שההזמנה קיימת ולא בפח
+    const existingBooking = await Booking.findById(id);
+    if (!existingBooking) {
+        return next(new AppError('Booking not found', 404));
+    }
+    if (existingBooking.isDeleted) {
+        return next(new AppError('Cannot edit a deleted booking', 400));
+    }
+
+    // בדיקת כפילות אם משנים תאריך/שעה/חדר
+    const newDate = date ? new Date(date) : existingBooking.date;
+    const newTimeSlot = timeSlot || existingBooking.timeSlot;
+    const newRoomId = roomId || existingBooking.roomId;
+
+    // רק אם יש שינוי בתאריך/שעה/חדר - נבדוק כפילות
+    const dateChanged = date && new Date(date).toDateString() !== existingBooking.date.toDateString();
+    const slotChanged = timeSlot && timeSlot !== existingBooking.timeSlot;
+    const roomChanged = roomId && roomId !== existingBooking.roomId.toString();
+
+    if (dateChanged || slotChanged || roomChanged) {
+        const conflicting = await Booking.findOne({
+            _id: { $ne: id },
+            roomId: newRoomId,
+            date: newDate,
+            timeSlot: newTimeSlot,
+            status: { $ne: 'cancelled' },
+            isDeleted: { $ne: true }
+        });
+
+        if (conflicting) {
+            return next(new AppError('Slot already booked', 409));
+        }
+    }
+
+    // בניית אובייקט העדכון
+    const updateData = {};
+
+    if (roomId) updateData.roomId = roomId;
+    if (date) updateData.date = new Date(date);
+    if (timeSlot) updateData.timeSlot = timeSlot;
+    if (status) updateData.status = status;
+
+    if (customer) {
+        updateData.customer = {
+            ...existingBooking.customer,
+            ...customer
+        };
+    }
+
+    if (participantsCount || totalPrice) {
+        updateData.details = {
+            ...existingBooking.details,
+            ...(participantsCount && { participantsCount }),
+            ...(totalPrice && { totalPrice })
+        };
+    }
+
+    const updatedBooking = await Booking.findByIdAndUpdate(
+        id,
+        updateData,
+        { new: true, runValidators: true }
+    ).populate('roomId', 'title');
+
+    res.status(200).json({ status: 'success', data: updatedBooking });
+});
+
 // מחיקה רכה (soft delete) - מעביר לפח
 exports.deleteBooking = asyncHandler(async (req, res, next) => {
     const booking = await Booking.findByIdAndUpdate(

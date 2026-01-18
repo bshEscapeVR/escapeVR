@@ -10,6 +10,7 @@ router.post('/', bookingController.createBooking);
 
 // Protected routes (require auth)
 router.get('/all', auth, bookingController.getAllBookings);
+router.patch('/:id', auth, bookingController.updateBooking);
 router.delete('/:id', auth, bookingController.deleteBooking);
 
 // Admin: Trash Management (must come before /:id routes)

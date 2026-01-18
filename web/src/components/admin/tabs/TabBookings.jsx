@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Calendar from 'react-calendar';
 import { format } from 'date-fns';
-import { Plus, X, Phone, Save, Calendar as CalendarIcon, RefreshCw, AlertTriangle, Trash2, AlertCircle, RotateCcw, Trash, Eye, Users } from 'lucide-react';
+import { Plus, X, Phone, Save, Calendar as CalendarIcon, RefreshCw, AlertTriangle, Trash2, AlertCircle, RotateCcw, Trash, Eye, Users, Pencil } from 'lucide-react';
 import { bookingService, roomService, pricingService } from '../../../services';
 import { useBooking } from '../../../context/BookingContext';
 import { useSettings } from '../../../context/SettingsContext';
@@ -62,6 +62,14 @@ const TabBookings = () => {
     const [calculatedPrice, setCalculatedPrice] = useState(0);
     const [availableSlots, setAvailableSlots] = useState([]);
     const [loadingSlots, setLoadingSlots] = useState(false);
+
+    // Edit modal state
+    const [editingBooking, setEditingBooking] = useState(null);
+    const [editFormData, setEditFormData] = useState(null);
+    const [editAvailableSlots, setEditAvailableSlots] = useState([]);
+    const [loadingEditSlots, setLoadingEditSlots] = useState(false);
+    const [editCalculatedPrice, setEditCalculatedPrice] = useState(0);
+    const [savingEdit, setSavingEdit] = useState(false);
 
     const { openBooking } = useBooking();
     const { getImg } = useSettings();
@@ -249,6 +257,148 @@ const TabBookings = () => {
         openBooking(null, fetchAllData);
     };
 
+    // --- לוגיקת עריכת הזמנה ---
+
+    // פתיחת מודל עריכה
+    const handleEditBooking = (booking) => {
+        const roomId = booking.roomId?._id || booking.roomId;
+        setEditingBooking(booking);
+        setEditFormData({
+            roomId: roomId,
+            date: new Date(booking.date),
+            timeSlot: booking.timeSlot,
+            participants: booking.details?.participantsCount || 2,
+            fullName: booking.customer?.fullName || '',
+            phone: booking.customer?.phone || '',
+            email: booking.customer?.email || '',
+            status: booking.status || 'pending'
+        });
+        setEditCalculatedPrice(booking.details?.totalPrice || 0);
+        // טעינת שעות פנויות לתאריך הנוכחי
+        fetchEditSlots(roomId, new Date(booking.date), booking.timeSlot);
+    };
+
+    // טעינת שעות פנויות לעריכה
+    const fetchEditSlots = async (roomId, date, currentSlot = null) => {
+        if (!roomId || !date) {
+            setEditAvailableSlots([]);
+            return;
+        }
+        setLoadingEditSlots(true);
+        try {
+            const dateStr = format(date, 'yyyy-MM-dd');
+            const slots = await bookingService.getAvailableSlots(roomId, dateStr);
+            // מוסיפים את השעה הנוכחית אם היא לא קיימת (כי היא תפוסה ע"י ההזמנה הנוכחית)
+            let allSlots = slots || [];
+            if (currentSlot && !allSlots.includes(currentSlot)) {
+                allSlots = [...allSlots, currentSlot].sort();
+            }
+            setEditAvailableSlots(allSlots);
+        } catch (err) {
+            console.error("Error fetching edit slots:", err);
+            setEditAvailableSlots([]);
+        } finally {
+            setLoadingEditSlots(false);
+        }
+    };
+
+    // עדכון שדה בטופס העריכה
+    const updateEditField = (field, value) => {
+        setEditFormData(prev => ({ ...prev, [field]: value }));
+
+        // אם משנים חדר או תאריך - לטעון מחדש את השעות
+        if (field === 'roomId' || field === 'date') {
+            const newRoomId = field === 'roomId' ? value : editFormData.roomId;
+            const newDate = field === 'date' ? value : editFormData.date;
+            // לא מעבירים את ה-currentSlot כשמשנים תאריך/חדר כי צריך לבחור מחדש
+            fetchEditSlots(newRoomId, newDate);
+            if (field === 'roomId' || field === 'date') {
+                setEditFormData(prev => ({ ...prev, [field]: value, timeSlot: '' }));
+            }
+        }
+    };
+
+    // חישוב מחיר לעריכה
+    useEffect(() => {
+        if (!editFormData?.participants || pricingPlans.length === 0) return;
+
+        const matchingPlan = pricingPlans.find(plan => plan.players === editFormData.participants && plan.isActive);
+        if (matchingPlan) {
+            setEditCalculatedPrice(matchingPlan.newPrice * editFormData.participants);
+        } else {
+            setEditCalculatedPrice(0);
+        }
+    }, [editFormData?.participants, pricingPlans]);
+
+    // שמירת עריכה
+    const handleSaveEdit = async () => {
+        if (!editFormData || !editingBooking) return;
+
+        // ולידציה בסיסית
+        if (!editFormData.fullName || editFormData.fullName.length < 2) {
+            alert('השם קצר מדי (מינימום 2 תווים)');
+            return;
+        }
+        if (!editFormData.phone || !/^05\d-?\d{7}$/.test(editFormData.phone)) {
+            alert('מספר טלפון לא תקין (05X-XXXXXXX)');
+            return;
+        }
+        if (!editFormData.timeSlot) {
+            alert('חובה לבחור שעה');
+            return;
+        }
+
+        setSavingEdit(true);
+        try {
+            const updateData = {
+                roomId: editFormData.roomId,
+                date: format(editFormData.date, 'yyyy-MM-dd'),
+                timeSlot: editFormData.timeSlot,
+                participantsCount: editFormData.participants,
+                totalPrice: editCalculatedPrice,
+                status: editFormData.status,
+                customer: {
+                    fullName: editFormData.fullName,
+                    phone: editFormData.phone,
+                    email: editFormData.email || ''
+                }
+            };
+
+            const updatedBooking = await bookingService.update(editingBooking._id, updateData);
+
+            // עדכון ברשימה המקומית
+            setBookings(prev => prev.map(b =>
+                b._id === editingBooking._id ? updatedBooking : b
+            ));
+
+            alert('ההזמנה עודכנה בהצלחה!');
+            closeEditModal();
+        } catch (err) {
+            console.error(err);
+            if (err.response?.status === 409) {
+                alert('השעה הזו כבר תפוסה. אנא בחר שעה אחרת.');
+            } else {
+                alert('שגיאה בעדכון ההזמנה');
+            }
+        } finally {
+            setSavingEdit(false);
+        }
+    };
+
+    // סגירת מודל עריכה
+    const closeEditModal = () => {
+        setEditingBooking(null);
+        setEditFormData(null);
+        setEditAvailableSlots([]);
+        setEditCalculatedPrice(0);
+    };
+
+    // החדר הנבחר בעריכה
+    const editSelectedRoom = useMemo(() => {
+        if (!editFormData?.roomId) return null;
+        return rooms.find(r => r._id === editFormData.roomId);
+    }, [rooms, editFormData?.roomId]);
+
     const onManualSubmit = async (data) => {
         // ולידציה נוספת לפי החדר הנבחר
         if (selectedRoom) {
@@ -314,6 +464,173 @@ const TabBookings = () => {
 
             {/* BookingModal - פופאפ הזמנה ללקוחות */}
             <BookingModal />
+
+            {/* מודל עריכת הזמנה */}
+            {editFormData && (
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={closeEditModal}>
+                    <div className="bg-[#1a0b2e] border border-brand-primary/30 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                        <div className="sticky top-0 bg-[#1a0b2e] border-b border-white/10 p-4 flex justify-between items-center z-10">
+                            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                <Pencil size={20} className="text-brand-primary" />
+                                עריכת הזמנה
+                                <span className="text-sm font-normal text-gray-400">({editingBooking?.bookingId})</span>
+                            </h3>
+                            <button onClick={closeEditModal} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                                <X size={20} className="text-gray-400" />
+                            </button>
+                        </div>
+
+                        <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* צד שמאל - חדר, תאריך, שעה */}
+                            <div className="space-y-4">
+                                <AdminSelect
+                                    label="חדר"
+                                    placeholder="בחר חדר..."
+                                    value={editFormData.roomId}
+                                    onChange={e => updateEditField('roomId', e.target.value)}
+                                    options={rooms.map(r => ({ value: r._id, label: r.title?.he || r.title?.en }))}
+                                />
+
+                                <div className="booking-calendar-container">
+                                    <label className="text-gray-400 text-xs font-bold uppercase mb-1 block">תאריך</label>
+                                    <Calendar
+                                        onChange={(date) => updateEditField('date', date)}
+                                        value={editFormData.date}
+                                        minDate={new Date()}
+                                        className="text-sm w-full rounded-lg border-none shadow-none"
+                                    />
+                                </div>
+
+                                {/* בחירת שעה */}
+                                <div>
+                                    <label className="text-gray-400 text-xs font-bold uppercase mb-1 block">שעה</label>
+                                    {loadingEditSlots ? (
+                                        <div className="flex items-center gap-2 text-gray-500 text-sm py-4">
+                                            <RefreshCw size={16} className="animate-spin" />
+                                            טוען שעות פנויות...
+                                        </div>
+                                    ) : editAvailableSlots.length > 0 ? (
+                                        <div className="grid grid-cols-4 gap-2 max-h-[120px] overflow-y-auto custom-scrollbar">
+                                            {editAvailableSlots.map(slot => (
+                                                <button
+                                                    key={slot}
+                                                    type="button"
+                                                    onClick={() => updateEditField('timeSlot', slot)}
+                                                    className={`py-2 px-1 text-sm rounded-lg border transition-all
+                                                        ${editFormData.timeSlot === slot
+                                                            ? 'bg-brand-primary border-brand-primary text-white shadow-[0_0_10px_#a855f7]'
+                                                            : 'bg-white/5 border-white/10 hover:bg-white/10 text-gray-300'
+                                                        }`}
+                                                >
+                                                    {slot}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-gray-500 text-sm py-4">אין שעות פנויות בתאריך זה</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* צד ימין - פרטי לקוח וסטטוס */}
+                            <div className="space-y-4">
+                                <AdminInput
+                                    label="שם הלקוח"
+                                    value={editFormData.fullName}
+                                    onChange={e => updateEditField('fullName', e.target.value)}
+                                    placeholder="שם מלא"
+                                />
+
+                                <AdminInput
+                                    label="טלפון"
+                                    type="tel"
+                                    value={editFormData.phone}
+                                    onChange={e => updateEditField('phone', e.target.value)}
+                                    placeholder="050-0000000"
+                                />
+
+                                <AdminInput
+                                    label="אימייל"
+                                    type="email"
+                                    value={editFormData.email}
+                                    onChange={e => updateEditField('email', e.target.value)}
+                                    placeholder="example@mail.com"
+                                />
+
+                                {/* כמות משתתפים */}
+                                <div>
+                                    <label className="text-gray-400 text-xs font-bold uppercase mb-1 block">
+                                        כמות משתתפים ({editSelectedRoom?.features?.minPlayers || 1}-{editSelectedRoom?.features?.maxPlayers || 10})
+                                    </label>
+                                    <div className="flex gap-2 flex-wrap">
+                                        {editSelectedRoom && [...Array((editSelectedRoom.features?.maxPlayers || 10) - (editSelectedRoom.features?.minPlayers || 1) + 1).keys()].map(i => {
+                                            const num = i + (editSelectedRoom.features?.minPlayers || 1);
+                                            return (
+                                                <button
+                                                    key={num}
+                                                    type="button"
+                                                    onClick={() => updateEditField('participants', num)}
+                                                    className={`w-10 h-10 rounded-xl border flex items-center justify-center font-bold transition-all
+                                                        ${editFormData.participants === num
+                                                            ? 'bg-brand-primary border-brand-primary text-white shadow-lg shadow-brand-primary/30'
+                                                            : 'border-white/10 bg-white/5 text-gray-400 hover:bg-white/10'
+                                                        }`}
+                                                >
+                                                    {num}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* סטטוס */}
+                                <AdminSelect
+                                    label="סטטוס"
+                                    value={editFormData.status}
+                                    onChange={e => updateEditField('status', e.target.value)}
+                                    options={[
+                                        { value: 'pending', label: 'ממתין' },
+                                        { value: 'confirmed', label: 'מאושר' },
+                                        { value: 'cancelled', label: 'בוטל' },
+                                        { value: 'completed', label: 'הושלם' },
+                                        { value: 'no-show', label: 'לא הגיע' }
+                                    ]}
+                                />
+
+                                {/* תצוגת מחיר */}
+                                <div className={`border rounded-xl p-4 ${editCalculatedPrice > 0 ? 'bg-white/5 border-white/10' : 'bg-yellow-500/10 border-yellow-500/30'}`}>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-gray-400">מחיר סופי:</span>
+                                        {editCalculatedPrice > 0 ? (
+                                            <span className="text-2xl font-bold text-green-400">₪{editCalculatedPrice}</span>
+                                        ) : (
+                                            <span className="text-lg font-bold text-yellow-400">לא הוגדר מחיר</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* כפתורי פעולה */}
+                        <div className="sticky bottom-0 bg-[#1a0b2e] border-t border-white/10 p-4 flex gap-3 justify-end">
+                            <button
+                                onClick={closeEditModal}
+                                className="px-6 py-2 rounded-lg border border-white/10 text-gray-400 hover:bg-white/5 transition-colors"
+                            >
+                                ביטול
+                            </button>
+                            <NeonButton
+                                onClick={handleSaveEdit}
+                                icon={Save}
+                                disabled={savingEdit}
+                                className="px-6"
+                            >
+                                {savingEdit ? 'שומר...' : 'שמור שינויים'}
+                            </NeonButton>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* קומפוננטת ניהול שעות פעילות */}
             <WeeklyScheduleEditor />
@@ -602,7 +919,10 @@ const TabBookings = () => {
                                                 <td className="p-4 text-green-400 font-bold font-mono">₪{booking.details?.totalPrice}</td>
                                                 <td className="p-4"><StatusBadge status={booking.status} /></td>
                                                 <td className="p-4 text-center">
-                                                    <button onClick={() => handleDelete(booking._id)} className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors" title="העבר לפח"><Trash2 size={18} /></button>
+                                                    <div className="flex items-center justify-center gap-1">
+                                                        <button onClick={() => handleEditBooking(booking)} className="p-2 text-gray-500 hover:text-brand-primary hover:bg-brand-primary/10 rounded-lg transition-colors" title="ערוך הזמנה"><Pencil size={18} /></button>
+                                                        <button onClick={() => handleDelete(booking._id)} className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors" title="העבר לפח"><Trash2 size={18} /></button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         );

@@ -21,6 +21,12 @@ const bookingService = {
     return response.data;
   },
 
+  // עדכון הזמנה קיימת
+  update: async (id, bookingData) => {
+    const response = await httpService.patch(`${ENDPOINT}/${id}`, bookingData);
+    return response.data;
+  },
+
   // מחיקה רכה (העברה לפח)
   remove: async (id) => {
     return await httpService.delete(`${ENDPOINT}/${id}`);
