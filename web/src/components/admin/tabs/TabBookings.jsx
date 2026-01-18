@@ -510,6 +510,7 @@ const TabBookings = () => {
                                         onChange={(date) => updateEditField('date', date)}
                                         value={editFormData.date}
                                         minDate={new Date()}
+                                        locale="he-IL"
                                         className="text-sm w-full rounded-lg border-none shadow-none"
                                     />
                                 </div>
@@ -757,7 +758,7 @@ const TabBookings = () => {
 
                             <div className="booking-calendar-container">
                                 <label className="text-gray-400 text-xs font-bold uppercase mb-1 block">תאריך ההזמנה</label>
-                                <Calendar onChange={(date) => setValue('date', date)} value={selectedDate} minDate={new Date()} className="text-sm w-full rounded-lg border-none shadow-none" />
+                                <Calendar onChange={(date) => setValue('date', date)} value={selectedDate} minDate={new Date()} locale="he-IL" className="text-sm w-full rounded-lg border-none shadow-none" />
                             </div>
                         </div>
 

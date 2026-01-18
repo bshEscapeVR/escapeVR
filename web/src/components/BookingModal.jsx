@@ -242,11 +242,12 @@ const BookingModal = () => {
                     <h3 className="flex items-center gap-2 font-bold mb-3 text-brand-primary"><Clock size={18}/> {t('booking_modal.title_when')}</h3>
                     <div className="flex flex-col gap-4">
                         <div className="booking-calendar-container w-full">
-                             <Calendar 
-                                onChange={(date) => setValue('date', date)} 
-                                value={selectedDate} 
-                                minDate={new Date()} 
-                                className="text-sm w-full" 
+                             <Calendar
+                                onChange={(date) => setValue('date', date)}
+                                value={selectedDate}
+                                minDate={new Date()}
+                                locale="he-IL"
+                                className="text-sm w-full"
                              />
                         </div>
 
