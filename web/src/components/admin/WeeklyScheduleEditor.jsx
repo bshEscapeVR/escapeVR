@@ -5,14 +5,18 @@ import { Plus, X, Clock, Save, ChevronDown, ChevronUp } from 'lucide-react';
 import NeonButton from '../ui/NeonButton';
 import { settingsService } from '../../services';
 
-// שמות הימים בעברית (רק ראשון עד חמישי)
+// שמות הימים בעברית (ראשון עד חמישי + מוצ"ש)
 const DAYS = [
-    { index: 0, name: 'ראשון' },
-    { index: 1, name: 'שני' },
-    { index: 2, name: 'שלישי' },
-    { index: 3, name: 'רביעי' },
-    { index: 4, name: 'חמישי' }
+    { index: 0, name: 'ראשון', isMotzash: false },
+    { index: 1, name: 'שני', isMotzash: false },
+    { index: 2, name: 'שלישי', isMotzash: false },
+    { index: 3, name: 'רביעי', isMotzash: false },
+    { index: 4, name: 'חמישי', isMotzash: false },
+    { index: 6, name: 'מוצ"ש', isMotzash: true } // שבת בערב בלבד
 ];
+
+// שעת תחילת מוצ"ש המינימלית
+const MOTZASH_MIN_HOUR = 19;
 
 // שעות ברירת מחדל
 const DEFAULT_HOURS = ["10:00", "11:30", "13:00", "14:30", "16:00", "17:30", "19:00", "20:30", "22:00"];
@@ -66,10 +70,20 @@ const WeeklyScheduleEditor = () => {
     const addSlot = (dayIndex) => {
         const dayKey = String(dayIndex);
         const time = newSlot[dayKey];
+        const day = DAYS.find(d => d.index === dayIndex);
 
         if (!time || !/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(time)) {
             alert('נא להזין שעה תקינה בפורמט HH:MM');
             return;
+        }
+
+        // בדיקת שעת מוצ"ש - רק 19:00 ומעלה
+        if (day?.isMotzash) {
+            const [hour] = time.split(':').map(Number);
+            if (hour < MOTZASH_MIN_HOUR) {
+                alert(`במוצ"ש ניתן להגדיר שעות רק מ-${MOTZASH_MIN_HOUR}:00 ומעלה`);
+                return;
+            }
         }
 
         if (weeklyHours[dayKey]?.includes(time)) {
@@ -99,7 +113,15 @@ const WeeklyScheduleEditor = () => {
 
         const newHours = {};
         for (const day of DAYS) {
-            newHours[String(day.index)] = [...sourceHours];
+            if (day.isMotzash) {
+                // עבור מוצ"ש - רק שעות מ-19:00 ומעלה
+                newHours[String(day.index)] = sourceHours.filter(slot => {
+                    const [hour] = slot.split(':').map(Number);
+                    return hour >= MOTZASH_MIN_HOUR;
+                });
+            } else {
+                newHours[String(day.index)] = [...sourceHours];
+            }
         }
         setWeeklyHours(newHours);
     };
@@ -145,7 +167,7 @@ const WeeklyScheduleEditor = () => {
                     ) : (
                         <>
                             <p className="text-gray-400 text-sm mb-6">
-                                הגדר את שעות הפעילות לכל יום בשבוע. ימי שישי ושבת סגורים אוטומטית.
+                                הגדר את שעות הפעילות לכל יום בשבוע. יום שישי סגור אוטומטית. במוצ"ש ניתן להגדיר שעות מ-19:00 ומעלה.
                             </p>
 
                             <div className="space-y-4">
@@ -155,7 +177,16 @@ const WeeklyScheduleEditor = () => {
                                         className="bg-[#0a0310] border border-white/10 rounded-lg p-4"
                                     >
                                         <div className="flex items-center justify-between mb-3">
-                                            <h4 className="text-white font-bold">יום {day.name}</h4>
+                                            <div className="flex items-center gap-2">
+                                                <h4 className="text-white font-bold">
+                                                    {day.isMotzash ? day.name : `יום ${day.name}`}
+                                                </h4>
+                                                {day.isMotzash && (
+                                                    <span className="text-xs text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded">
+                                                        שעות ערב בלבד
+                                                    </span>
+                                                )}
+                                            </div>
                                             <button
                                                 onClick={() => copyToAllDays(day.index)}
                                                 className="text-xs text-brand-primary hover:underline"

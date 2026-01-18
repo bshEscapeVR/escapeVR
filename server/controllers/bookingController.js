@@ -56,10 +56,14 @@ exports.getAvailableSlots = asyncHandler(async (req, res, next) => {
     // יום בשבוע (לפי ישראל)
     const dayOfWeek = israelRequestedDate.getDay();
 
-    // --- חסימה 1: סופ"ש (שישי=5, שבת=6) ---
-    if (dayOfWeek === 5 || dayOfWeek === 6) {
-        return res.status(200).json({ status: 'success', data: [], reason: 'weekend' });
+    // --- חסימה 1: יום שישי (5) סגור לחלוטין ---
+    if (dayOfWeek === 5) {
+        return res.status(200).json({ status: 'success', data: [], reason: 'friday' });
     }
+
+    // שבת (6) = מוצ"ש - מאפשרים רק שעות ערב (19:00 ומעלה)
+    const isSaturday = dayOfWeek === 6;
+    const MOTZASH_MIN_HOUR = 19; // שעת תחילת מוצ"ש
 
     // --- חסימה 2: חגי ישראל ---
     if (isJewishHoliday(requestedDate)) {
@@ -138,6 +142,14 @@ exports.getAvailableSlots = asyncHandler(async (req, res, next) => {
 
     const bookedSlots = existingBookings.map(b => b.timeSlot);
     availableSlots = availableSlots.filter(slot => !bookedSlots.includes(slot));
+
+    // ד. סינון מוצ"ש - מאפשרים רק שעות ערב (19:00+)
+    if (isSaturday) {
+        availableSlots = availableSlots.filter(slot => {
+            const [h] = slot.split(':').map(Number);
+            return h >= MOTZASH_MIN_HOUR;
+        });
+    }
 
     res.status(200).json({
         status: 'success',
