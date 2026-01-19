@@ -104,9 +104,13 @@ const PricingCard = ({ players, oldPrice, newPrice, totalPrice, discount, featur
 const PricingSection = () => {
     const { t } = useTranslation();
     const { openContact } = useContact();
-    const { language } = useSettings();
+    const { language, settings, t: tDB } = useSettings();
     const [pricingPlans, setPricingPlans] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    // כותרות מותאמות אישית מההגדרות, או ברירת מחדל מהתרגומים
+    const sectionTitle = tDB(settings?.content?.pricing?.title) || t('pricing.title');
+    const sectionSubtitle = tDB(settings?.content?.pricing?.subtitle) || t('pricing.subtitle');
 
     // פיצ'רים מה-JSON (ברירת מחדל)
     const defaultFeatures = [
@@ -149,8 +153,8 @@ const PricingSection = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
 
                 <SectionTitle
-                    title={t('pricing.title')}
-                    subtitle={t('pricing.subtitle')}
+                    title={sectionTitle}
+                    subtitle={sectionSubtitle}
                 />
 
                 {/* הודעה כשאין כרטיסי מחיר */}

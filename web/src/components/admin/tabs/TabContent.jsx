@@ -2,7 +2,7 @@
 
 import React from 'react';
 import BilingualInput from '../../../components/admin/ui/BilingualInput';
-import { Layout, Info, Phone, MapPin, Grid3X3 } from 'lucide-react';
+import { Layout, Info, Phone, MapPin, Grid3X3, Tag } from 'lucide-react';
 
 // רכיב Input פשוט לשדות שאינם דו-לשוניים (כמו טלפון/מייל)
 const SimpleInput = ({ label, value, onChange, dir = "ltr" }) => (
@@ -143,7 +143,31 @@ const TabContent = ({ settings, update }) => {
                 </div>
             </div>
 
-            {/* --- 4. CONTACT INFO --- */}
+            {/* --- 4. PRICING SECTION --- */}
+            <div className="bg-[#1a0b2e]/50 border border-white/10 p-4 md:p-6 rounded-2xl">
+                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2 pb-4 border-b border-white/5">
+                    <Tag className="text-emerald-400" size={24} />
+                    אזור המחירון (Pricing)
+                </h3>
+
+                <div className="space-y-4">
+                    <BilingualInput
+                        label="כותרת אזור המחירון"
+                        value={settings.content?.pricing?.title}
+                        onChange={(val) => handleContentChange('pricing', 'title', val)}
+                        placeholder="השאר ריק לברירת מחדל"
+                    />
+
+                    <BilingualInput
+                        label="תת כותרת"
+                        value={settings.content?.pricing?.subtitle}
+                        onChange={(val) => handleContentChange('pricing', 'subtitle', val)}
+                        placeholder="השאר ריק לברירת מחדל"
+                    />
+                </div>
+            </div>
+
+            {/* --- 5. CONTACT INFO --- */}
             <div className="bg-[#1a0b2e]/50 border border-white/10 p-4 md:p-6 rounded-2xl">
                 <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2 pb-4 border-b border-white/5">
                     <Phone className="text-brand-primary" size={24} />

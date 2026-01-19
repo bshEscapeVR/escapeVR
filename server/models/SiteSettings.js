@@ -63,6 +63,12 @@ const SiteSettingsSchema = new mongoose.Schema({
             subtitle: BilingualSchema
         },
 
+        // --- 👇 Pricing Section ---
+        pricing: {
+            title: BilingualSchema,
+            subtitle: BilingualSchema
+        },
+
         // --- 👇 Contact Texts (חדש) ---
         contact: {
             title: BilingualSchema,     // כותרת הסקשן ("צור קשר")
