@@ -63,7 +63,9 @@ export async function generateMetadata({ params }) {
       ],
     },
     icons: {
-      icon: settings?.general?.faviconUrl || '/favicon.ico',
+      icon: settings?.general?.faviconUrl
+        ? `${settings.general.faviconUrl}?v=${Date.now()}`
+        : '/favicon.ico',
     },
   };
 }

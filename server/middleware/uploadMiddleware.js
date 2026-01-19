@@ -190,14 +190,21 @@ const storage = new CloudinaryStorage({
         }
 
         // ─────────────────────────────────────
-        // ICO FILES (favicon - keep original)
+        // ICO FILES (favicon - convert to PNG for compatibility)
         // ─────────────────────────────────────
         if (isIco(effectiveMime)) {
-            console.log('🔷 Processing as ICO (favicon)');
+            console.log('🔷 Processing as ICO (converting to PNG for favicon)');
             return {
                 folder: 'vr_escape',
                 resource_type: 'image',
-                format: 'ico',
+                format: 'png',
+                transformation: [
+                    {
+                        width: 64,
+                        height: 64,
+                        crop: 'fill'
+                    }
+                ],
                 public_id: publicId
             };
         }
