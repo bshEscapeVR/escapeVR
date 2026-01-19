@@ -1,118 +1,329 @@
 const multer = require('multer');
 const { v2: cloudinary } = require('cloudinary');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const path = require('path');
+
+// ============================================
+// CONFIGURATION
+// ============================================
 
 // Check for CLOUDINARY_URL (SDK reads it automatically)
 if (process.env.CLOUDINARY_URL) {
-    console.log('CLOUDINARY_URL: found');
+    console.log('✅ CLOUDINARY_URL: found');
 } else {
-    console.error('CLOUDINARY_URL: missing');
+    console.error('❌ CLOUDINARY_URL: missing');
 }
 
-// סוגי קבצים מותרים
-const ALLOWED_IMAGE_TYPES = [
+// File size limits (in bytes)
+const FILE_LIMITS = {
+    IMAGE: 25 * 1024 * 1024,   // 25MB for images
+    VIDEO: 100 * 1024 * 1024   // 100MB for videos
+};
+
+// ============================================
+// ALLOWED FILE TYPES
+// ============================================
+
+// Supported image MIME types
+const ALLOWED_IMAGE_MIMES = [
     'image/jpeg',
+    'image/jpg',
     'image/png',
     'image/webp',
-    'image/jpg',
-    'image/svg+xml',  // תמיכה ב-SVG
-    'image/gif'       // תמיכה ב-GIF
+    'image/gif',
+    'image/svg+xml',
+    'image/bmp',
+    'image/tiff',
+    'image/x-icon',
+    'image/vnd.microsoft.icon',
+    'image/heic',
+    'image/heif'
 ];
 
-// בדיקה אם הקובץ הוא SVG
+// Supported video MIME types
+const ALLOWED_VIDEO_MIMES = [
+    'video/mp4',
+    'video/quicktime',
+    'video/x-msvideo',
+    'video/webm',
+    'video/mpeg',
+    'video/x-matroska'
+];
+
+// Extension to MIME type mapping (fallback for incorrect browser detection)
+const EXTENSION_TO_MIME = {
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.webp': 'image/webp',
+    '.gif': 'image/gif',
+    '.svg': 'image/svg+xml',
+    '.bmp': 'image/bmp',
+    '.tiff': 'image/tiff',
+    '.tif': 'image/tiff',
+    '.ico': 'image/x-icon',
+    '.heic': 'image/heic',
+    '.heif': 'image/heif',
+    '.mp4': 'video/mp4',
+    '.mov': 'video/quicktime',
+    '.avi': 'video/x-msvideo',
+    '.webm': 'video/webm',
+    '.mpeg': 'video/mpeg',
+    '.mkv': 'video/x-matroska'
+};
+
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
+
+/**
+ * Get the effective MIME type - uses extension as fallback
+ */
+const getEffectiveMimeType = (file) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const mimeFromExt = EXTENSION_TO_MIME[ext];
+
+    // If browser-detected MIME is generic or missing, use extension-based
+    if (!file.mimetype || file.mimetype === 'application/octet-stream') {
+        return mimeFromExt || file.mimetype;
+    }
+
+    // For HEIC/HEIF - browsers often don't detect correctly
+    if ((ext === '.heic' || ext === '.heif') && !file.mimetype.includes('heic') && !file.mimetype.includes('heif')) {
+        return mimeFromExt;
+    }
+
+    return file.mimetype;
+};
+
+/**
+ * Check if file is an image
+ */
+const isImage = (mimetype) => ALLOWED_IMAGE_MIMES.includes(mimetype);
+
+/**
+ * Check if file is a video
+ */
+const isVideo = (mimetype) => ALLOWED_VIDEO_MIMES.includes(mimetype) || mimetype?.startsWith('video/');
+
+/**
+ * Check if file is SVG
+ */
 const isSvg = (mimetype) => mimetype === 'image/svg+xml';
 
-// בדיקה אם הקובץ הוא GIF (לא לדחוס)
+/**
+ * Check if file is GIF (don't transform - preserves animation)
+ */
 const isGif = (mimetype) => mimetype === 'image/gif';
+
+/**
+ * Check if file is ICO (favicon)
+ */
+const isIco = (mimetype) => mimetype === 'image/x-icon' || mimetype === 'image/vnd.microsoft.icon';
+
+/**
+ * Check if file is HEIC/HEIF
+ */
+const isHeic = (mimetype) => mimetype === 'image/heic' || mimetype === 'image/heif';
+
+/**
+ * Generate a unique, clean public_id for Cloudinary
+ */
+const generatePublicId = (originalname) => {
+    const cleanName = originalname
+        .replace(/\.[^/.]+$/, '')  // Remove extension
+        .replace(/[^a-zA-Z0-9]/g, '_')  // Replace special chars with underscore
+        .substring(0, 50);  // Limit length
+    return `${cleanName}_${Date.now()}`;
+};
+
+// ============================================
+// CLOUDINARY STORAGE CONFIGURATION
+// ============================================
 
 const storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: async (req, file) => {
-        // Debug: Log file type being uploaded
-        console.log('Uploading file of type:', file.mimetype);
+        const effectiveMime = getEffectiveMimeType(file);
+        const publicId = generatePublicId(file.originalname);
 
-        // Clean filename: remove extension and special characters
-        const cleanName = file.originalname.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9]/g, '_');
-        const uniqueId = cleanName + '-' + Date.now();
+        console.log(`📤 Upload: "${file.originalname}" | MIME: ${file.mimetype} | Effective: ${effectiveMime}`);
 
-        // Video files: explicit resource_type and format
-        if (file.mimetype.startsWith('video/')) {
-            console.log('Processing as VIDEO upload');
+        // ─────────────────────────────────────
+        // VIDEO FILES
+        // ─────────────────────────────────────
+        if (isVideo(effectiveMime)) {
+            console.log('🎬 Processing as VIDEO');
             return {
                 folder: 'vr_escape',
                 resource_type: 'video',
                 format: 'mp4',
-                allowed_formats: ['mp4', 'mov', 'avi', 'webm'],
-                public_id: uniqueId
+                allowed_formats: ['mp4', 'mov', 'avi', 'webm', 'mpeg', 'mkv'],
+                public_id: publicId
             };
         }
 
-        // SVG files: keep as raw/original format (no transformation)
-        if (isSvg(file.mimetype)) {
-            console.log('Processing as SVG upload (no transformation)');
+        // ─────────────────────────────────────
+        // SVG FILES (keep original, no transformation)
+        // ─────────────────────────────────────
+        if (isSvg(effectiveMime)) {
+            console.log('🎨 Processing as SVG (no transformation)');
             return {
                 folder: 'vr_escape',
-                resource_type: 'raw',  // SVG נשמר כ-raw
+                resource_type: 'image',
                 format: 'svg',
-                public_id: uniqueId
+                public_id: publicId
             };
         }
 
-        // GIF files: keep original (animated GIFs lose animation if transformed)
-        if (isGif(file.mimetype)) {
-            console.log('Processing as GIF upload (no transformation)');
+        // ─────────────────────────────────────
+        // GIF FILES (preserve animation)
+        // ─────────────────────────────────────
+        if (isGif(effectiveMime)) {
+            console.log('🎞️ Processing as GIF (preserving animation)');
             return {
                 folder: 'vr_escape',
                 resource_type: 'image',
                 format: 'gif',
-                public_id: uniqueId
+                public_id: publicId
             };
         }
 
-        // Regular image files: optimize and resize (supports any size input)
-        console.log('Processing as IMAGE upload with optimization');
+        // ─────────────────────────────────────
+        // ICO FILES (favicon - keep original)
+        // ─────────────────────────────────────
+        if (isIco(effectiveMime)) {
+            console.log('🔷 Processing as ICO (favicon)');
+            return {
+                folder: 'vr_escape',
+                resource_type: 'image',
+                format: 'ico',
+                public_id: publicId
+            };
+        }
+
+        // ─────────────────────────────────────
+        // HEIC/HEIF FILES (convert to WebP)
+        // ─────────────────────────────────────
+        if (isHeic(effectiveMime)) {
+            console.log('📱 Processing as HEIC/HEIF (converting to WebP)');
+            return {
+                folder: 'vr_escape',
+                resource_type: 'image',
+                format: 'webp',
+                transformation: [
+                    {
+                        width: 1920,
+                        height: 1920,
+                        crop: 'limit',
+                        quality: 'auto:best'
+                    }
+                ],
+                public_id: publicId
+            };
+        }
+
+        // ─────────────────────────────────────
+        // REGULAR IMAGES (optimize and convert to WebP)
+        // ─────────────────────────────────────
+        console.log('🖼️ Processing as IMAGE (optimizing to WebP)');
         return {
             folder: 'vr_escape',
             resource_type: 'image',
-            format: 'webp',  // WebP לאופטימיזציה מקסימלית
-            allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'bmp', 'tiff'],
+            format: 'webp',
+            allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'bmp', 'tiff', 'tif'],
             transformation: [
                 {
                     width: 1920,
                     height: 1920,
-                    crop: 'limit',  // לא חותך, רק מקטין אם גדול יותר
-                    quality: 'auto:best',  // איכות אוטומטית מיטבית
-                    fetch_format: 'auto'   // פורמט אוטומטי לפי הדפדפן
+                    crop: 'limit',  // Only resize if larger, no cropping
+                    quality: 'auto:best',
+                    fetch_format: 'auto'
                 }
             ],
-            public_id: uniqueId
+            public_id: publicId
         };
     }
 });
 
+// ============================================
+// FILE FILTER (VALIDATION)
+// ============================================
+
 const fileFilter = (req, file, cb) => {
-    console.log('File filter check:', file.originalname, file.mimetype);
+    const effectiveMime = getEffectiveMimeType(file);
+    const ext = path.extname(file.originalname).toLowerCase();
 
-    // בדיקת סוגי תמונות מותרים
-    if (ALLOWED_IMAGE_TYPES.includes(file.mimetype)) {
+    console.log(`🔍 Validating: "${file.originalname}" | Browser MIME: ${file.mimetype} | Extension: ${ext} | Effective MIME: ${effectiveMime}`);
+
+    // Check if it's a valid image
+    if (isImage(effectiveMime)) {
+        console.log('✅ Accepted as image');
         cb(null, true);
         return;
     }
 
-    // בדיקת וידאו
-    if (file.mimetype.startsWith('video/')) {
+    // Check if it's a valid video
+    if (isVideo(effectiveMime)) {
+        console.log('✅ Accepted as video');
         cb(null, true);
         return;
     }
 
-    // סוג לא נתמך
-    cb(new Error('Format not supported! Allowed: Images (JPEG, PNG, WebP, SVG, GIF) and Videos.'), false);
+    // Rejected
+    console.log('❌ Rejected: unsupported file type');
+    const supportedFormats = 'Images: JPEG, PNG, WebP, GIF, SVG, BMP, TIFF, ICO, HEIC/HEIF | Videos: MP4, MOV, AVI, WebM';
+    cb(new Error(`סוג קובץ לא נתמך! פורמטים נתמכים: ${supportedFormats}`), false);
 };
 
+// ============================================
+// MULTER INSTANCES
+// ============================================
+
+// General upload (auto-detect image or video, with appropriate limit)
 const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
-    limits: { fileSize: 500 * 1024 * 1024 } // 500MB for large videos
+    limits: {
+        fileSize: FILE_LIMITS.VIDEO  // Use video limit as max, validate further in route if needed
+    }
 });
 
-module.exports = upload;
+// Image-only upload (stricter limit)
+const uploadImage = multer({
+    storage: storage,
+    fileFilter: (req, file, cb) => {
+        const effectiveMime = getEffectiveMimeType(file);
+        if (isImage(effectiveMime)) {
+            cb(null, true);
+        } else {
+            cb(new Error('רק תמונות מותרות! פורמטים: JPEG, PNG, WebP, GIF, SVG, BMP, TIFF, ICO, HEIC/HEIF'), false);
+        }
+    },
+    limits: { fileSize: FILE_LIMITS.IMAGE }
+});
+
+// Video-only upload
+const uploadVideo = multer({
+    storage: storage,
+    fileFilter: (req, file, cb) => {
+        const effectiveMime = getEffectiveMimeType(file);
+        if (isVideo(effectiveMime)) {
+            cb(null, true);
+        } else {
+            cb(new Error('רק וידאו מותר! פורמטים: MP4, MOV, AVI, WebM'), false);
+        }
+    },
+    limits: { fileSize: FILE_LIMITS.VIDEO }
+});
+
+// ============================================
+// EXPORTS
+// ============================================
+
+module.exports = upload;  // Default export for backward compatibility
+module.exports.upload = upload;
+module.exports.uploadImage = uploadImage;
+module.exports.uploadVideo = uploadVideo;
+module.exports.FILE_LIMITS = FILE_LIMITS;
+module.exports.getEffectiveMimeType = getEffectiveMimeType;
