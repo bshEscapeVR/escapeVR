@@ -83,6 +83,7 @@ const TabBookings = () => {
         fullName: z.string().min(2, "השם קצר מדי (מינימום 2 תווים)"),
         phone: z.string().regex(/^05\d-?\d{7}$/, "מספר טלפון לא תקין (05X-XXXXXXX)"),
         email: z.string().email("כתובת אימייל לא תקינה").or(z.literal('')),
+        finalPrice: z.string().optional(), // מחיר סופי - אופציונלי, דורס את המחיר האוטומטי
     });
 
     const {
@@ -101,7 +102,8 @@ const TabBookings = () => {
             participants: 2,
             fullName: '',
             phone: '',
-            email: ''
+            email: '',
+            finalPrice: ''
         }
     });
 
@@ -262,18 +264,29 @@ const TabBookings = () => {
     // פתיחת מודל עריכה
     const handleEditBooking = (booking) => {
         const roomId = booking.roomId?._id || booking.roomId;
+        const participantsCount = booking.details?.participantsCount || 2;
+        const savedPrice = booking.details?.totalPrice || 0;
+
+        // חישוב המחיר האוטומטי לפי כמות המשתתפים
+        const matchingPlan = pricingPlans.find(plan => plan.players === participantsCount && plan.isActive);
+        const autoPrice = matchingPlan ? matchingPlan.newPrice * participantsCount : 0;
+
+        // אם המחיר השמור שונה מהאוטומטי - זה מחיר סופי שהמנהל הזין
+        const hasFinalPrice = savedPrice > 0 && autoPrice > 0 && savedPrice !== autoPrice;
+
         setEditingBooking(booking);
         setEditFormData({
             roomId: roomId,
             date: new Date(booking.date),
             timeSlot: booking.timeSlot,
-            participants: booking.details?.participantsCount || 2,
+            participants: participantsCount,
             fullName: booking.customer?.fullName || '',
             phone: booking.customer?.phone || '',
             email: booking.customer?.email || '',
-            status: booking.status || 'pending'
+            status: booking.status || 'pending',
+            finalPrice: hasFinalPrice ? savedPrice.toString() : '' // אם יש מחיר סופי שונה - מציגים אותו
         });
-        setEditCalculatedPrice(booking.details?.totalPrice || 0);
+        setEditCalculatedPrice(autoPrice);
         // טעינת שעות פנויות לתאריך הנוכחי
         fetchEditSlots(roomId, new Date(booking.date), booking.timeSlot);
     };
@@ -350,12 +363,16 @@ const TabBookings = () => {
 
         setSavingEdit(true);
         try {
+            // מחיר סופי - אם הוזן מחיר ידני, משתמשים בו. אחרת המחיר האוטומטי
+            const finalPriceNum = editFormData.finalPrice ? parseFloat(editFormData.finalPrice) : null;
+            const priceToUse = (finalPriceNum && finalPriceNum > 0) ? finalPriceNum : editCalculatedPrice;
+
             const updateData = {
                 roomId: editFormData.roomId,
                 date: format(editFormData.date, 'yyyy-MM-dd'),
                 timeSlot: editFormData.timeSlot,
                 participantsCount: editFormData.participants,
-                totalPrice: editCalculatedPrice,
+                totalPrice: priceToUse,
                 status: editFormData.status,
                 customer: {
                     fullName: editFormData.fullName,
@@ -423,6 +440,10 @@ const TabBookings = () => {
             }
         }
 
+        // מחיר סופי - אם הוזן מחיר ידני, משתמשים בו. אחרת המחיר האוטומטי
+        const finalPriceNum = data.finalPrice ? parseFloat(data.finalPrice) : null;
+        const priceToUse = (finalPriceNum && finalPriceNum > 0) ? finalPriceNum : calculatedPrice;
+
         try {
             const newBooking = await bookingService.create({
                 roomId: data.roomId,
@@ -434,7 +455,7 @@ const TabBookings = () => {
                     phone: data.phone,
                     email: data.email || 'manual@admin.com'
                 },
-                totalPrice: calculatedPrice,
+                totalPrice: priceToUse,
                 source: 'phone'
             });
 
@@ -451,7 +472,8 @@ const TabBookings = () => {
                 participants: selectedRoom?.features?.minPlayers || 2,
                 fullName: '',
                 phone: '',
-                email: ''
+                email: '',
+                finalPrice: ''
             });
 
             setShowManualForm(false);
@@ -608,16 +630,38 @@ const TabBookings = () => {
                                     ]}
                                 />
 
-                                {/* תצוגת מחיר */}
+                                {/* תצוגת מחיר אוטומטי */}
                                 <div className={`border rounded-xl p-4 ${editCalculatedPrice > 0 ? 'bg-white/5 border-white/10' : 'bg-yellow-500/10 border-yellow-500/30'}`}>
                                     <div className="flex justify-between items-center">
-                                        <span className="text-gray-400">מחיר סופי:</span>
+                                        <span className="text-gray-400">מחיר אוטומטי:</span>
                                         {editCalculatedPrice > 0 ? (
                                             <span className="text-2xl font-bold text-green-400">₪{editCalculatedPrice}</span>
                                         ) : (
                                             <span className="text-lg font-bold text-yellow-400">לא הוגדר מחיר</span>
                                         )}
                                     </div>
+                                </div>
+
+                                {/* מחיר סופי - דורס את האוטומטי */}
+                                <div className="border border-brand-primary/30 rounded-xl p-4 bg-brand-primary/5">
+                                    <label className="text-gray-400 text-xs font-bold uppercase mb-2 block">
+                                        מחיר סופי (אופציונלי - דורס את האוטומטי)
+                                    </label>
+                                    <div className="relative">
+                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₪</span>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="1"
+                                            value={editFormData.finalPrice}
+                                            onChange={e => updateEditField('finalPrice', e.target.value)}
+                                            placeholder={editCalculatedPrice > 0 ? editCalculatedPrice.toString() : "הזן מחיר"}
+                                            className="w-full bg-[#0a0310] border border-white/10 rounded-lg p-3 pr-8 text-white text-lg font-bold focus:outline-none focus:border-brand-primary transition-colors"
+                                        />
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-2">
+                                        השאר ריק כדי להשתמש במחיר האוטומטי
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -838,23 +882,47 @@ const TabBookings = () => {
                                 )}
                             </div>
 
-                            {/* תצוגת מחיר */}
+                            {/* תצוגת מחיר אוטומטי + אינפוט מחיר סופי */}
                             {selectedRoom && (
-                                <div className={`md:col-span-2 border rounded-xl p-4 ${calculatedPrice > 0 ? 'bg-white/5 border-white/10' : 'bg-yellow-500/10 border-yellow-500/30'}`}>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-gray-400">מחיר סופי:</span>
-                                        {calculatedPrice > 0 ? (
-                                            <span className="text-2xl font-bold text-green-400">₪{calculatedPrice}</span>
-                                        ) : (
-                                            <span className="text-lg font-bold text-yellow-400">לא הוגדר מחיר</span>
-                                        )}
+                                <div className="md:col-span-2 space-y-3">
+                                    {/* מחיר אוטומטי */}
+                                    <div className={`border rounded-xl p-4 ${calculatedPrice > 0 ? 'bg-white/5 border-white/10' : 'bg-yellow-500/10 border-yellow-500/30'}`}>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-gray-400">מחיר אוטומטי:</span>
+                                            {calculatedPrice > 0 ? (
+                                                <span className="text-2xl font-bold text-green-400">₪{calculatedPrice}</span>
+                                            ) : (
+                                                <span className="text-lg font-bold text-yellow-400">לא הוגדר מחיר</span>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            {calculatedPrice > 0
+                                                ? `מחושב אוטומטית לפי כרטיס מחיר ל-${participants} משתתפים`
+                                                : `יש להוסיף כרטיס מחיר ל-${participants} משתתפים בטאב "כרטיסי מחירים"`
+                                            }
+                                        </p>
                                     </div>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                        {calculatedPrice > 0
-                                            ? `מחושב אוטומטית לפי כרטיס מחיר ל-${participants} משתתפים`
-                                            : `יש להוסיף כרטיס מחיר ל-${participants} משתתפים בטאב "כרטיסי מחירים"`
-                                        }
-                                    </p>
+
+                                    {/* מחיר סופי - דורס את האוטומטי */}
+                                    <div className="border border-brand-primary/30 rounded-xl p-4 bg-brand-primary/5">
+                                        <label className="text-gray-400 text-xs font-bold uppercase mb-2 block">
+                                            מחיר סופי (אופציונלי - דורס את האוטומטי)
+                                        </label>
+                                        <div className="relative">
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₪</span>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="1"
+                                                placeholder={calculatedPrice > 0 ? calculatedPrice.toString() : "הזן מחיר"}
+                                                className="w-full bg-[#0a0310] border border-white/10 rounded-lg p-3 pr-8 text-white text-lg font-bold focus:outline-none focus:border-brand-primary transition-colors"
+                                                {...register('finalPrice')}
+                                            />
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-2">
+                                            השאר ריק כדי להשתמש במחיר האוטומטי, או הזן מחיר מותאם
+                                        </p>
+                                    </div>
                                 </div>
                             )}
 
