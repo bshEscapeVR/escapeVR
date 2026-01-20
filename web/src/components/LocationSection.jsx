@@ -3,8 +3,23 @@
 import React from 'react';
 import { MapPin, Bus, Car } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useSettings } from '../context/SettingsContext'; 
+import { useSettings } from '../context/SettingsContext';
 import SectionTitle from './ui/SectionTitle';
+
+// Waze Icon SVG
+const WazeIcon = ({ size = 20, className = "" }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+        <path d="M20.54 6.63C19.69 4.04 17.14 2 13.86 2c-3.29 0-6.18 2.03-7.21 4.96-.15.33-.15.71-.15 1.04 0 2.96 2.14 5.39 4.93 5.96.29.04.58.08.86.08 1.11 0 2.14-.33 3-.96.29.25.58.46.86.71.72.54 1.57.96 2.57 1.04.14 0 .29.04.43.04 1.86 0 3.43-1.17 4-2.88.14-.33.14-.67.14-1 .04-1.67-.71-3.21-2.14-4.32zm-12.54 3.87c-.71 0-1.29-.58-1.29-1.29s.58-1.29 1.29-1.29 1.29.58 1.29 1.29-.58 1.29-1.29 1.29zm5.71 0c-.71 0-1.29-.58-1.29-1.29s.58-1.29 1.29-1.29 1.29.58 1.29 1.29-.58 1.29-1.29 1.29z"/>
+        <path d="M12 22c-1.43 0-2.79-.29-4.04-.79-.14-.04-.29-.08-.43-.17l-3.04 1.04 1.04-3.04c-.08-.14-.12-.29-.17-.43C4.29 17.36 4 16 4 14.57c0-1.29.25-2.5.71-3.64.14.17.29.33.43.5.43.5.93.92 1.5 1.29-.29.58-.43 1.21-.43 1.86 0 2.71 2.21 4.93 4.93 4.93.64 0 1.29-.12 1.86-.43.36.54.79 1.07 1.29 1.5.17.14.33.29.5.43-1.07.42-2.28.67-3.57.67l-.22.32z"/>
+    </svg>
+);
+
+// Google Maps Icon SVG
+const GoogleMapsIcon = ({ size = 20, className = "" }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+    </svg>
+);
 
 const LocationSection = () => {
     const { t } = useTranslation();
@@ -79,11 +94,12 @@ const LocationSection = () => {
                             </div>
 
                             <div className="flex flex-col sm:flex-row gap-4">
-                                <a href={wazeLink} target="_blank" rel="noreferrer" className="flex-1 bg-[#00a1df] hover:bg-[#0086ba] text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-blue-500/20">
+                                <a href={wazeLink} target="_blank" rel="noreferrer" className="flex-1 bg-[#33ccff] hover:bg-[#00a1df] text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-blue-500/20">
+                                    <WazeIcon size={22} />
                                     Waze
                                 </a>
-                                <a href={googleMapsLink} target="_blank" rel="noreferrer" className="flex-1 bg-[#0f766e] hover:bg-teal-700 text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-teal-500/20">
-                                    <MapPin size={20} />
+                                <a href={googleMapsLink} target="_blank" rel="noreferrer" className="flex-1 bg-[#4285F4] hover:bg-[#3367D6] text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-blue-500/20">
+                                    <GoogleMapsIcon size={22} />
                                     Google Maps
                                 </a>
                             </div>
