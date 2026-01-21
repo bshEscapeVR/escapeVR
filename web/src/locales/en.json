@@ -63,7 +63,8 @@
         "success": "Sent Successfully!",
         "error": "Error Sending",
         "details_title": "Contact Details",
-        "whatsapp_btn": "WhatsApp Msg",
+        "online_form_title": "Contact Form",
+        "online_form_desc": "You can also send us a message through the website",
         "shabbat_title": "Shabbat Observance",
         "shabbat_desc": "No phone/internet service on Shabbat. We'll be happy to serve you after Shabbat.",
         "book_now": "Book Now",
@@ -175,7 +176,7 @@
         "title": "Book a Room & Schedule",
         "subtitle": "We'd love to arrange the perfect experience for you",
         "call_now": "Call Now",
-        "whatsapp": "Or send a WhatsApp message",
+        "contact_form": "Or send a message through the website",
         "response_time": "Quick response during business hours"
     }
 }

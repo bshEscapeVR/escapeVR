@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { Phone, Mail, MessageCircle, Send, Star, User, Hash, CheckCircle, AlertCircle, Flame } from 'lucide-react';
+import { Phone, Mail, Send, Star, User, Hash, CheckCircle, AlertCircle, Flame, FileText } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../context/SettingsContext';
 import { roomService, leadService, reviewService } from '../services';
@@ -93,9 +93,6 @@ const ContactSection = () => {
     // שליפת נתונים דינמיים מההגדרות (עם פולבק לערכים קבועים)
     const contactPhone = settings?.general?.contactPhone || "054-8530162";
     const contactEmail = settings?.general?.contactEmail || "escapevr.bsh@gmail.com";
-    // מספר וואטסאפ - אם הוגדר ב-socialLinks נשתמש בו, אחרת נמיר את מספר הטלפון
-    const whatsappFromSettings = settings?.general?.socialLinks?.whatsapp;
-    const whatsappNum = whatsappFromSettings || contactPhone.replace(/-/g, '').replace(/^0/, '972');
 
     // 2. הגדרת הולידציות (Zod)
 
@@ -374,15 +371,10 @@ const ContactSection = () => {
                         />
 
                         <ContactCard
-                            title="WhatsApp"
-                            subContent={t('contact.talk_desc')}
-                            icon={MessageCircle}
+                            title={t('contact.online_form_title')}
+                            subContent={t('contact.online_form_desc')}
+                            icon={FileText}
                             colorClass="text-green-500" bgIcon="bg-green-500/10" borderColor="border-white/10 hover:border-green-500/50"
-                            action={
-                                <a href={`https://wa.me/${whatsappNum}`} target="_blank" rel="noreferrer" className="mt-4 w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2.5 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-green-500/30">
-                                    <MessageCircle size={18} /> {t('contact.whatsapp_btn')}
-                                </a>
-                            }
                         />
 
                         <ContactCard
