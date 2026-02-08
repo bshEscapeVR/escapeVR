@@ -74,15 +74,15 @@ const sendNewLeadNotification = async (lead) => {
         html: `
         <div dir="rtl" style="font-family: 'Rubik', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <!-- Header -->
-            <div style="background: linear-gradient(135deg, #1a0533 0%, #3e096b 50%, #1a0533 100%); padding: 28px 20px; text-align: center; border-radius: 16px 16px 0 0;">
+            <div style="background: linear-gradient(135deg, #2a0f4e 0%, #5b21b6 50%, #2a0f4e 100%); padding: 28px 20px; text-align: center; border-radius: 16px 16px 0 0;">
                 ${buildLogoHtml(logoUrl)}
                 <div style="width: 60px; height: 2px; background: linear-gradient(90deg, #a855f7, #c084fc); margin: 10px auto;"></div>
                 <p style="margin: 0; color: #f3e8ff; font-size: 18px; font-weight: 600;">📩 הודעה חדשה מטופס צור קשר</p>
             </div>
 
             <!-- Body -->
-            <div style="background: #1a0b2e; padding: 25px; border-left: 1px solid rgba(168,85,247,0.2); border-right: 1px solid rgba(168,85,247,0.2);">
-                <div style="background: linear-gradient(135deg, #2d1052, #1a0533); border: 1px solid rgba(168,85,247,0.3); border-radius: 12px; padding: 22px;">
+            <div style="background: #2d1650; padding: 25px; border-left: 1px solid rgba(168,85,247,0.2); border-right: 1px solid rgba(168,85,247,0.2);">
+                <div style="background: linear-gradient(135deg, #3b1a6e, #2a0f4e); border: 1px solid rgba(168,85,247,0.3); border-radius: 12px; padding: 22px;">
                     <table style="width: 100%; border-collapse: collapse;">
                         <tr>
                             <td style="padding: 12px 8px; color: #9ca3af; font-size: 14px; width: 90px;">שם מלא</td>
@@ -108,7 +108,7 @@ const sendNewLeadNotification = async (lead) => {
             </div>
 
             <!-- Footer -->
-            <div style="background: #0f0518; padding: 14px; text-align: center; border-radius: 0 0 16px 16px; border-left: 1px solid rgba(168,85,247,0.1); border-right: 1px solid rgba(168,85,247,0.1); border-bottom: 1px solid rgba(168,85,247,0.1);">
+            <div style="background: #1e0a38; padding: 14px; text-align: center; border-radius: 0 0 16px 16px; border-left: 1px solid rgba(168,85,247,0.1); border-right: 1px solid rgba(168,85,247,0.1); border-bottom: 1px solid rgba(168,85,247,0.1);">
                 <p style="margin: 0; color: #4c1d95; font-size: 11px;">
                     התקבל בתאריך ${new Date().toLocaleDateString('he-IL')} בשעה ${new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
                 </p>
@@ -136,7 +136,7 @@ const sendNewBookingAdminNotification = async (booking, roomName, roomImage) => 
         html: `
         <div dir="rtl" style="font-family: 'Rubik', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <!-- Header -->
-            <div style="background: linear-gradient(135deg, #1a0533 0%, #3e096b 50%, #1a0533 100%); padding: 28px 20px; text-align: center; border-radius: 16px 16px 0 0;">
+            <div style="background: linear-gradient(135deg, #2a0f4e 0%, #5b21b6 50%, #2a0f4e 100%); padding: 28px 20px; text-align: center; border-radius: 16px 16px 0 0;">
                 ${buildLogoHtml(logoUrl)}
                 <div style="width: 60px; height: 2px; background: linear-gradient(90deg, #a855f7, #c084fc); margin: 10px auto;"></div>
                 <p style="margin: 0; color: #f3e8ff; font-size: 18px; font-weight: 600;">🎮 הזמנה חדשה התקבלה!</p>
@@ -144,14 +144,14 @@ const sendNewBookingAdminNotification = async (booking, roomName, roomImage) => 
             </div>
 
             <!-- Body -->
-            <div style="background: #1a0b2e; padding: 25px; border-left: 1px solid rgba(168,85,247,0.2); border-right: 1px solid rgba(168,85,247,0.2);">
+            <div style="background: #2d1650; padding: 25px; border-left: 1px solid rgba(168,85,247,0.2); border-right: 1px solid rgba(168,85,247,0.2);">
 
                 <!-- תמונת חדר -->
                 ${roomImageHtml}
 
                 <!-- פרטי הזמנה -->
                 <p style="color: #a855f7; font-size: 12px; text-transform: uppercase; letter-spacing: 3px; margin: 0 0 10px;">פרטי ההזמנה</p>
-                <div style="background: linear-gradient(135deg, #2d1052, #1a0533); border: 1px solid rgba(168,85,247,0.3); border-radius: 12px; padding: 22px; margin-bottom: 18px;">
+                <div style="background: linear-gradient(135deg, #3b1a6e, #2a0f4e); border: 1px solid rgba(168,85,247,0.3); border-radius: 12px; padding: 22px; margin-bottom: 18px;">
                     <table style="width: 100%; border-collapse: collapse;">
                         <tr>
                             <td style="padding: 10px 8px; color: #9ca3af; font-size: 14px;">חדר</td>
@@ -182,7 +182,7 @@ const sendNewBookingAdminNotification = async (booking, roomName, roomImage) => 
 
                 <!-- פרטי לקוח -->
                 <p style="color: #a855f7; font-size: 12px; text-transform: uppercase; letter-spacing: 3px; margin: 0 0 10px;">פרטי הלקוח</p>
-                <div style="background: linear-gradient(135deg, #2d1052, #1a0533); border: 1px solid rgba(168,85,247,0.3); border-radius: 12px; padding: 22px;">
+                <div style="background: linear-gradient(135deg, #3b1a6e, #2a0f4e); border: 1px solid rgba(168,85,247,0.3); border-radius: 12px; padding: 22px;">
                     <table style="width: 100%; border-collapse: collapse;">
                         <tr>
                             <td style="padding: 10px 8px; color: #9ca3af; font-size: 14px; width: 90px;">שם</td>
@@ -206,7 +206,7 @@ const sendNewBookingAdminNotification = async (booking, roomName, roomImage) => 
             </div>
 
             <!-- Footer -->
-            <div style="background: #0f0518; padding: 14px; text-align: center; border-radius: 0 0 16px 16px; border-left: 1px solid rgba(168,85,247,0.1); border-right: 1px solid rgba(168,85,247,0.1); border-bottom: 1px solid rgba(168,85,247,0.1);">
+            <div style="background: #1e0a38; padding: 14px; text-align: center; border-radius: 0 0 16px 16px; border-left: 1px solid rgba(168,85,247,0.1); border-right: 1px solid rgba(168,85,247,0.1); border-bottom: 1px solid rgba(168,85,247,0.1);">
                 <p style="margin: 0; color: #4c1d95; font-size: 11px;">
                     התקבל בתאריך ${new Date().toLocaleDateString('he-IL')} בשעה ${new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
                 </p>
@@ -234,14 +234,14 @@ const sendBookingConfirmationToCustomer = async (booking, roomName, roomImage) =
         html: `
         <div dir="rtl" style="font-family: 'Rubik', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <!-- Header -->
-            <div style="background: linear-gradient(135deg, #1a0533 0%, #3e096b 50%, #1a0533 100%); padding: 35px 20px 25px; text-align: center; border-radius: 16px 16px 0 0;">
+            <div style="background: linear-gradient(135deg, #2a0f4e 0%, #5b21b6 50%, #2a0f4e 100%); padding: 35px 20px 25px; text-align: center; border-radius: 16px 16px 0 0;">
                 ${buildLogoHtml(logoUrl, 'large')}
                 <div style="width: 70px; height: 2px; background: linear-gradient(90deg, #a855f7, #c084fc); margin: 12px auto;"></div>
                 <p style="margin: 0; color: #f3e8ff; font-size: 20px; font-weight: 600;">ההזמנה שלך אושרה!</p>
             </div>
 
             <!-- Body -->
-            <div style="background: #1a0b2e; padding: 30px 25px; border-left: 1px solid rgba(168,85,247,0.2); border-right: 1px solid rgba(168,85,247,0.2);">
+            <div style="background: #2d1650; padding: 30px 25px; border-left: 1px solid rgba(168,85,247,0.2); border-right: 1px solid rgba(168,85,247,0.2);">
                 <p style="color: #f3e8ff; font-size: 16px; margin: 0 0 4px;">שלום <strong style="color: #a855f7;">${booking.customer.fullName}</strong>,</p>
                 <p style="color: #9ca3af; font-size: 14px; margin: 0 0 25px;">ההזמנה שלך התקבלה בהצלחה. מחכים לך!</p>
 
@@ -249,7 +249,7 @@ const sendBookingConfirmationToCustomer = async (booking, roomName, roomImage) =
                 ${roomImageHtml}
 
                 <!-- Booking Details Card -->
-                <div style="background: linear-gradient(135deg, #2d1052, #1a0533); border: 1px solid rgba(168,85,247,0.3); border-radius: 12px; padding: 25px; margin-bottom: 20px;">
+                <div style="background: linear-gradient(135deg, #3b1a6e, #2a0f4e); border: 1px solid rgba(168,85,247,0.3); border-radius: 12px; padding: 25px; margin-bottom: 20px;">
                     <div style="text-align: center; margin-bottom: 18px;">
                         <span style="color: #9ca3af; font-size: 12px; text-transform: uppercase; letter-spacing: 3px;">מספר הזמנה</span>
                         <div style="color: #a855f7; font-size: 24px; font-weight: 700; letter-spacing: 1px; margin-top: 4px; text-shadow: 0 0 20px rgba(168,85,247,0.4);">${booking.bookingId}</div>
@@ -292,7 +292,7 @@ const sendBookingConfirmationToCustomer = async (booking, roomName, roomImage) =
             </div>
 
             <!-- Footer -->
-            <div style="background: #0f0518; padding: 18px; text-align: center; border-radius: 0 0 16px 16px; border-left: 1px solid rgba(168,85,247,0.1); border-right: 1px solid rgba(168,85,247,0.1); border-bottom: 1px solid rgba(168,85,247,0.1);">
+            <div style="background: #1e0a38; padding: 18px; text-align: center; border-radius: 0 0 16px 16px; border-left: 1px solid rgba(168,85,247,0.1); border-right: 1px solid rgba(168,85,247,0.1); border-bottom: 1px solid rgba(168,85,247,0.1);">
                 <p style="margin: 0; color: #4c1d95; font-size: 12px;">EscapeVR - חוויית מציאות מדומה בלתי נשכחת</p>
             </div>
         </div>
