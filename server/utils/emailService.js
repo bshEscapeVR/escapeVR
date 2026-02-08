@@ -69,7 +69,7 @@ const sendNewLeadNotification = async (lead) => {
                     </tr>
                     <tr style="background: #f9fafb;">
                         <td style="padding: 10px; font-weight: bold; color: #6366f1;">הודעה:</td>
-                        <td style="padding: 10px;">${lead.message || 'ללא הודעה'}</td>
+                        <td style="padding: 10px;">${lead.notes || 'ללא הודעה'}</td>
                     </tr>
                 </table>
                 <p style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #e5e7eb; color: #9ca3af; font-size: 12px; text-align: center;">
