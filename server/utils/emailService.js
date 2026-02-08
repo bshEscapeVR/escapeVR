@@ -109,7 +109,7 @@ const sendNewLeadNotification = async (lead) => {
 
             <!-- Footer -->
             <div style="background: #0f0518; padding: 14px; text-align: center; border-radius: 0 0 16px 16px; border-left: 1px solid rgba(168,85,247,0.1); border-right: 1px solid rgba(168,85,247,0.1); border-bottom: 1px solid rgba(168,85,247,0.1);">
-                <p style="margin: 0; color: #4c1d95; font-size: 11px;">
+                <p style="margin: 0; color: #9ca3af; font-size: 11px;">
                     התקבל בתאריך ${new Date().toLocaleDateString('he-IL')} בשעה ${new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
                 </p>
             </div>
@@ -207,7 +207,7 @@ const sendNewBookingAdminNotification = async (booking, roomName, roomImage) => 
 
             <!-- Footer -->
             <div style="background: #0f0518; padding: 14px; text-align: center; border-radius: 0 0 16px 16px; border-left: 1px solid rgba(168,85,247,0.1); border-right: 1px solid rgba(168,85,247,0.1); border-bottom: 1px solid rgba(168,85,247,0.1);">
-                <p style="margin: 0; color: #4c1d95; font-size: 11px;">
+                <p style="margin: 0; color: #9ca3af; font-size: 11px;">
                     התקבל בתאריך ${new Date().toLocaleDateString('he-IL')} בשעה ${new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
                 </p>
             </div>
@@ -293,7 +293,7 @@ const sendBookingConfirmationToCustomer = async (booking, roomName, roomImage) =
 
             <!-- Footer -->
             <div style="background: #0f0518; padding: 18px; text-align: center; border-radius: 0 0 16px 16px; border-left: 1px solid rgba(168,85,247,0.1); border-right: 1px solid rgba(168,85,247,0.1); border-bottom: 1px solid rgba(168,85,247,0.1);">
-                <p style="margin: 0; color: #4c1d95; font-size: 12px;">EscapeVR - חוויית מציאות מדומה בלתי נשכחת</p>
+                <p style="margin: 0; color: #9ca3af; font-size: 12px;">EscapeVR - חוויית מציאות מדומה בלתי נשכחת</p>
             </div>
         </div>
         `
