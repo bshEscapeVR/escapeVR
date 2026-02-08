@@ -202,11 +202,12 @@ exports.createBooking = asyncHandler(async (req, res, next) => {
 
     // שליחת מיילים (ברקע - לא חוסם את התגובה ללקוח)
     const roomName = room?.title?.he || room?.title?.en || 'חדר בריחה';
+    const roomImage = room?.images?.main || null;
 
     // מייל למנהל
-    sendNewBookingAdminNotification(newBooking, roomName).catch(err => console.error('Booking admin email error:', err));
+    sendNewBookingAdminNotification(newBooking, roomName, roomImage).catch(err => console.error('Booking admin email error:', err));
     // מייל ללקוח (רק אם יש לו אימייל)
-    sendBookingConfirmationToCustomer(newBooking, roomName).catch(err => console.error('Booking customer email error:', err));
+    sendBookingConfirmationToCustomer(newBooking, roomName, roomImage).catch(err => console.error('Booking customer email error:', err));
 
     res.status(201).json({ status: 'success', data: newBooking });
 });
