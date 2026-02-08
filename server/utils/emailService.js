@@ -159,56 +159,67 @@ const sendBookingConfirmationToCustomer = async (booking, roomName) => {
 
     await sendEmail({
         to: booking.customer.email,
-        subject: `✅ אישור הזמנה ${booking.bookingId} - EscapeVR`,
+        subject: `אישור הזמנה ${booking.bookingId} - EscapeVR`,
         html: `
-        <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f9f9f9; border-radius: 10px;">
-            <div style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 25px; border-radius: 10px 10px 0 0; text-align: center;">
-                <h1 style="margin: 0; font-size: 24px;">✅ ההזמנה אושרה!</h1>
-                <p style="margin: 8px 0 0; font-size: 16px; opacity: 0.9;">תודה שבחרת ב-EscapeVR</p>
+        <div dir="rtl" style="font-family: 'Rubik', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, #1a0533 0%, #3e096b 50%, #1a0533 100%); padding: 35px 20px; text-align: center; border-radius: 16px 16px 0 0;">
+                <h1 style="margin: 0; font-size: 28px; color: #a855f7; letter-spacing: 2px;">ESCAPE<span style="color: #06b6d4;">VR</span></h1>
+                <div style="width: 60px; height: 2px; background: linear-gradient(90deg, #a855f7, #06b6d4); margin: 12px auto;"></div>
+                <p style="margin: 0; color: #f3e8ff; font-size: 18px; font-weight: 600;">ההזמנה שלך אושרה!</p>
             </div>
-            <div style="background: white; padding: 25px; border-radius: 0 0 10px 10px; border: 1px solid #e5e7eb;">
-                <p style="font-size: 16px;">שלום <strong>${booking.customer.fullName}</strong>,</p>
-                <p>ההזמנה שלך התקבלה בהצלחה! הנה הפרטים:</p>
 
-                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <!-- Body -->
+            <div style="background: #1a0b2e; padding: 30px 25px; border-left: 1px solid rgba(168,85,247,0.2); border-right: 1px solid rgba(168,85,247,0.2);">
+                <p style="color: #f3e8ff; font-size: 16px; margin: 0 0 5px;">שלום <strong style="color: #a855f7;">${booking.customer.fullName}</strong>,</p>
+                <p style="color: #9ca3af; font-size: 14px; margin: 0 0 25px;">ההזמנה שלך התקבלה בהצלחה. מחכים לך!</p>
+
+                <!-- Booking Details Card -->
+                <div style="background: linear-gradient(135deg, #2d1052, #1a0533); border: 1px solid rgba(168,85,247,0.3); border-radius: 12px; padding: 25px; margin-bottom: 20px;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <span style="color: #06b6d4; font-size: 12px; text-transform: uppercase; letter-spacing: 3px;">מספר הזמנה</span>
+                        <div style="color: #a855f7; font-size: 32px; font-weight: 700; letter-spacing: 2px; margin-top: 4px;">${booking.bookingId}</div>
+                    </div>
+
+                    <div style="width: 100%; height: 1px; background: linear-gradient(90deg, transparent, rgba(168,85,247,0.4), transparent); margin: 15px 0;"></div>
+
                     <table style="width: 100%; border-collapse: collapse;">
                         <tr>
-                            <td style="padding: 8px; font-weight: bold; color: #374151;">מספר הזמנה:</td>
-                            <td style="padding: 8px; font-weight: bold; color: #6366f1; font-size: 18px;">${booking.bookingId}</td>
+                            <td style="padding: 10px 5px; color: #9ca3af; font-size: 13px;">חדר</td>
+                            <td style="padding: 10px 5px; color: #f3e8ff; font-weight: 600; text-align: left;">${roomName}</td>
                         </tr>
                         <tr>
-                            <td style="padding: 8px; font-weight: bold; color: #374151;">חדר:</td>
-                            <td style="padding: 8px;">${roomName}</td>
+                            <td style="padding: 10px 5px; color: #9ca3af; font-size: 13px;">תאריך</td>
+                            <td style="padding: 10px 5px; color: #f3e8ff; font-weight: 600; text-align: left;">${date}</td>
                         </tr>
                         <tr>
-                            <td style="padding: 8px; font-weight: bold; color: #374151;">תאריך:</td>
-                            <td style="padding: 8px;">${date}</td>
+                            <td style="padding: 10px 5px; color: #9ca3af; font-size: 13px;">שעה</td>
+                            <td style="padding: 10px 5px; color: #f3e8ff; font-weight: 600; text-align: left;">${booking.timeSlot}</td>
                         </tr>
                         <tr>
-                            <td style="padding: 8px; font-weight: bold; color: #374151;">שעה:</td>
-                            <td style="padding: 8px;">${booking.timeSlot}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 8px; font-weight: bold; color: #374151;">משתתפים:</td>
-                            <td style="padding: 8px;">${booking.details.participantsCount}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 8px; font-weight: bold; color: #374151;">מחיר:</td>
-                            <td style="padding: 8px; font-weight: bold; font-size: 18px; color: #10b981;">₪${booking.details.totalPrice}</td>
+                            <td style="padding: 10px 5px; color: #9ca3af; font-size: 13px;">משתתפים</td>
+                            <td style="padding: 10px 5px; color: #f3e8ff; font-weight: 600; text-align: left;">${booking.details.participantsCount}</td>
                         </tr>
                     </table>
+
+                    <div style="width: 100%; height: 1px; background: linear-gradient(90deg, transparent, rgba(168,85,247,0.4), transparent); margin: 15px 0;"></div>
+
+                    <div style="text-align: center;">
+                        <span style="color: #9ca3af; font-size: 13px;">סה"כ לתשלום</span>
+                        <div style="color: #06b6d4; font-size: 28px; font-weight: 700; margin-top: 4px;">₪${booking.details.totalPrice}</div>
+                    </div>
                 </div>
 
-                <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 15px; margin: 20px 0;">
-                    <p style="margin: 0; font-weight: bold; color: #92400e;">⏰ חשוב להגיע 10 דקות לפני השעה המתוכננת</p>
+                <!-- Contact -->
+                <div style="background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.15); border-radius: 10px; padding: 15px; text-align: center;">
+                    <p style="margin: 0; color: #9ca3af; font-size: 13px;">לשאלות או שינויים בהזמנה</p>
+                    <a href="tel:${contactPhone}" style="color: #a855f7; font-size: 18px; font-weight: 600; text-decoration: none; letter-spacing: 1px;">${contactPhone}</a>
                 </div>
+            </div>
 
-                <p style="color: #6b7280;">לשאלות או שינויים בהזמנה, ניתן ליצור קשר:</p>
-                <p style="color: #6b7280;">📞 <a href="tel:${contactPhone}" style="color: #6366f1;">${contactPhone}</a></p>
-
-                <p style="margin-top: 25px; padding-top: 15px; border-top: 1px solid #e5e7eb; color: #9ca3af; font-size: 12px; text-align: center;">
-                    EscapeVR - חוויית מציאות מדומה בלתי נשכחת
-                </p>
+            <!-- Footer -->
+            <div style="background: #0f0518; padding: 20px; text-align: center; border-radius: 0 0 16px 16px; border-left: 1px solid rgba(168,85,247,0.1); border-right: 1px solid rgba(168,85,247,0.1); border-bottom: 1px solid rgba(168,85,247,0.1);">
+                <p style="margin: 0; color: #4c1d95; font-size: 12px;">EscapeVR - חוויית מציאות מדומה בלתי נשכחת</p>
             </div>
         </div>
         `
