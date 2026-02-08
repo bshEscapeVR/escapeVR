@@ -5,6 +5,7 @@ const SiteSettings = require('../models/SiteSettings');
 const asyncHandler = require('../utils/asyncHandler');
 const AppError = require('../utils/AppError');
 const { HebrewCalendar, Location } = require('@hebcal/core');
+const { sendNewBookingAdminNotification, sendBookingConfirmationToCustomer } = require('../utils/emailService');
 
 // שעות פעילות ברירת מחדל (אם לא הוגדרו בהגדרות)
 const DEFAULT_OPERATING_HOURS = ["10:00", "11:30", "13:00", "14:30", "16:00", "17:30", "19:00", "20:30", "22:00"];
@@ -174,11 +175,13 @@ exports.createBooking = asyncHandler(async (req, res, next) => {
         return next(new AppError('Slot already booked', 409));
     }
 
+    // טעינת החדר (לחישוב מחיר + שם לשליחת מייל)
+    const room = await Room.findById(roomId);
+    if (!room) return next(new AppError('Room not found', 404));
+
     // חישוב מחיר
     let finalPrice = totalPrice;
     if (!finalPrice) {
-        const room = await Room.findById(roomId);
-        if (!room) return next(new AppError('Room not found', 404));
         const pCount = participantsCount.toString();
         if (room.pricing.overrides && room.pricing.overrides.get(pCount)) {
             finalPrice = room.pricing.overrides.get(pCount);
@@ -197,7 +200,13 @@ exports.createBooking = asyncHandler(async (req, res, next) => {
         source: source || 'website'
     });
 
-    // הוסר: אין כאן שליחת מיילים כרגע
+    // שליחת מיילים (ברקע - לא חוסם את התגובה ללקוח)
+    const roomName = room?.title?.he || room?.title?.en || 'חדר בריחה';
+
+    // מייל למנהל
+    sendNewBookingAdminNotification(newBooking, roomName).catch(err => console.error('Booking admin email error:', err));
+    // מייל ללקוח (רק אם יש לו אימייל)
+    sendBookingConfirmationToCustomer(newBooking, roomName).catch(err => console.error('Booking customer email error:', err));
 
     res.status(201).json({ status: 'success', data: newBooking });
 });

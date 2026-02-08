@@ -1,10 +1,15 @@
 // controllers/leadController.js
 const Lead = require('../models/Lead');
 const asyncHandler = require('../utils/asyncHandler');
+const { sendNewLeadNotification } = require('../utils/emailService');
 
 // יצירת ליד חדש (פומבי - לטופס צור קשר)
 exports.createLead = asyncHandler(async (req, res) => {
     const lead = await Lead.create(req.body);
+
+    // שליחת מייל למנהל (ברקע - לא חוסם את התגובה ללקוח)
+    sendNewLeadNotification(lead).catch(err => console.error('Lead email error:', err));
+
     res.status(201).json({ status: 'success', data: lead });
 });
 
