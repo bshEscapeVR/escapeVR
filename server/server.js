@@ -4,7 +4,6 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const mongoSanitize = require('express-mongo-sanitize');
 const mainRouter = require('./routes/index');
 const errorMiddleware = require('./middleware/errorMiddleware');
 const uploadRouter = require('./routes/upload');
@@ -71,7 +70,23 @@ app.use(cors(corsOptions));
 
 // 5. Body parsing & NoSQL injection prevention
 app.use(express.json({ limit: '1mb' }));
-app.use(mongoSanitize());
+
+// Custom mongo sanitization (express-mongo-sanitize is incompatible with Express 5)
+app.use((req, res, next) => {
+    const sanitize = (obj) => {
+        if (!obj || typeof obj !== 'object') return obj;
+        for (const key of Object.keys(obj)) {
+            if (key.startsWith('$') || key.includes('.')) {
+                delete obj[key];
+            } else if (typeof obj[key] === 'object') {
+                sanitize(obj[key]);
+            }
+        }
+        return obj;
+    };
+    if (req.body) sanitize(req.body);
+    next();
+});
 
 // 6. Database connection
 mongoose.connect(process.env.MONGO_URI)
