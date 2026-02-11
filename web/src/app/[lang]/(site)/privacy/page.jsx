@@ -25,7 +25,7 @@ const privacyContent = {
             },
             {
                 title: "4. שיתוף מידע עם צדדים שלישיים",
-                content: "אנו לא מוכרים, סוחרים או מעבירים את המידע האישי שלכם לצדדים שלישיים, למעט:\n• Cloudinary – שירות אחסון תמונות וסרטונים המשמש להצגת תוכן באתר\n• Google Analytics – לצורך ניתוח סטטיסטי אנונימי של השימוש באתר\n• Gmail (Google) – לצורך משלוח הודעות דוא\"ל תפעוליות (אישורי הזמנה והתראות מערכת)\n• במקרים בהם נדרש על פי חוק או צו בית משפט"
+                content: "אנו לא מוכרים, סוחרים או מעבירים את המידע האישי שלכם לצדדים שלישיים, למעט:\n• ספקי שירותי ענן לצורך תפעול האתר (אחסון תוכן ומשלוח דוא\"ל)\n• Google Analytics לצורך ניתוח סטטיסטי אנונימי של השימוש באתר\n• במקרים בהם נדרש על פי חוק או צו בית משפט"
             },
             {
                 title: "5. דוא\"ל תפעולי",
@@ -33,11 +33,11 @@ const privacyContent = {
             },
             {
                 title: "6. עוגיות (Cookies)",
-                content: "האתר משתמש בעוגיות ואחסון מקומי (localStorage) לצורך:\n• שמירת העדפות שפה ותצוגה\n• שמירת הסכמה לשימוש בעוגיות\n• ניתוח סטטיסטי של השימוש באתר (Google Analytics)\n• שיפור חוויית הגלישה\n\nתוכלו לשלוט בהגדרות העוגיות דרך הדפדפן שלכם. חסימת עוגיות מסוימות עלולה להשפיע על חוויית השימוש באתר."
+                content: "האתר משתמש בעוגיות לצורך:\n• שמירת העדפות שפה ותצוגה\n• שמירת הסכמה לשימוש בעוגיות\n• ניתוח סטטיסטי של השימוש באתר (Google Analytics)\n• שיפור חוויית הגלישה\n\nתוכלו לשלוט בהגדרות העוגיות דרך הדפדפן שלכם. חסימת עוגיות מסוימות עלולה להשפיע על חוויית השימוש באתר."
             },
             {
                 title: "7. אבטחת מידע",
-                content: "אנו נוקטים באמצעי אבטחה סבירים ומקובלים כדי להגן על המידע האישי שלכם, לרבות:\n• הצפנת סיסמאות באמצעות bcrypt\n• תקשורת מוצפנת (HTTPS)\n• הגבלת ניסיונות התחברות\n• כותרות אבטחה (Helmet)\n• הגנה מפני מתקפות הזרקה (NoSQL injection)\n\nעם זאת, אין שיטת העברה או אחסון באינטרנט שהיא בטוחה ב-100%, ולכן איננו יכולים להבטיח אבטחה מוחלטת."
+                content: "אנו נוקטים באמצעי אבטחה מתקדמים כדי להגן על המידע האישי שלכם, כולל הצפנת מידע רגיש, תקשורת מאובטחת והגנה מפני גישה לא מורשית.\n\nעם זאת, אין שיטת העברה או אחסון באינטרנט שהיא בטוחה ב-100%, ולכן איננו יכולים להבטיח אבטחה מוחלטת."
             },
             {
                 title: "8. זכויות המשתמש",
@@ -71,7 +71,7 @@ const privacyContent = {
             },
             {
                 title: "4. Sharing Information with Third Parties",
-                content: "We do not sell, trade, or transfer your personal information to third parties, except:\n• Cloudinary – image and video hosting service used to display content on the website\n• Google Analytics – for anonymous statistical analysis of website usage\n• Gmail (Google) – for sending operational emails (booking confirmations and system notifications)\n• When required by law or court order"
+                content: "We do not sell, trade, or transfer your personal information to third parties, except:\n• Cloud service providers for website operation (content hosting and email delivery)\n• Google Analytics for anonymous statistical analysis of website usage\n• When required by law or court order"
             },
             {
                 title: "5. Operational Emails",
@@ -79,11 +79,11 @@ const privacyContent = {
             },
             {
                 title: "6. Cookies",
-                content: "The website uses cookies and local storage (localStorage) for:\n• Saving language and display preferences\n• Saving cookie consent preference\n• Statistical analysis of website usage (Google Analytics)\n• Improving the browsing experience\n\nYou can control cookie settings through your browser. Blocking certain cookies may affect your experience on the website."
+                content: "The website uses cookies for:\n• Saving language and display preferences\n• Saving cookie consent preference\n• Statistical analysis of website usage (Google Analytics)\n• Improving the browsing experience\n\nYou can control cookie settings through your browser. Blocking certain cookies may affect your experience on the website."
             },
             {
                 title: "7. Data Security",
-                content: "We take reasonable and accepted security measures to protect your personal information, including:\n• Password encryption using bcrypt\n• Encrypted communication (HTTPS)\n• Login attempt rate limiting\n• Security headers (Helmet)\n• Protection against injection attacks (NoSQL injection)\n\nHowever, no method of internet transmission or storage is 100% secure, and therefore we cannot guarantee absolute security."
+                content: "We take advanced security measures to protect your personal information, including encryption of sensitive data, secure communication, and protection against unauthorized access.\n\nHowever, no method of internet transmission or storage is 100% secure, and therefore we cannot guarantee absolute security."
             },
             {
                 title: "8. User Rights",
