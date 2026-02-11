@@ -336,27 +336,17 @@ const ContactSection = () => {
                                 {/* Privacy Policy Consent */}
                                 <div className="mb-4">
                                     <label className="flex items-start gap-3 cursor-pointer group">
-                                        <div className="relative mt-0.5 shrink-0">
-                                            <input
-                                                type="checkbox"
-                                                className="sr-only"
-                                                {...register('privacyConsent')}
-                                            />
-                                            <div className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center
+                                        <input
+                                            type="checkbox"
+                                            id="privacyConsent"
+                                            className={`mt-1 shrink-0 w-5 h-5 rounded border-2 appearance-none cursor-pointer transition-all duration-200 checked:bg-brand-primary checked:border-brand-primary
                                                 ${errors.privacyConsent
                                                     ? 'border-red-500 bg-red-500/10'
-                                                    : privacyChecked
-                                                        ? 'border-brand-primary bg-brand-primary'
-                                                        : 'border-white/20 group-hover:border-white/40'
+                                                    : 'border-white/20 group-hover:border-white/40 bg-transparent'
                                                 }`}
-                                            >
-                                                {privacyChecked && (
-                                                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                                    </svg>
-                                                )}
-                                            </div>
-                                        </div>
+                                            style={{ backgroundImage: privacyChecked ? "url(\"data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e\")" : 'none', backgroundSize: '100% 100%', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}
+                                            {...register('privacyConsent')}
+                                        />
                                         <span className="text-sm text-gray-300 leading-relaxed">
                                             {t('contact.privacy_agree')}{' '}
                                             <Link href={`/${lang}/privacy`} className="text-brand-primary hover:text-purple-300 underline underline-offset-2 transition-colors" target="_blank">

@@ -9,29 +9,31 @@ import { useParams } from 'next/navigation';
 const COOKIE_CONSENT_KEY = 'cookie_consent';
 
 const CookieBanner = () => {
-    const [visible, setVisible] = useState(false);
+    // Start visible so crawlers/scanners can detect the banner in the DOM
+    const [hidden, setHidden] = useState(false);
     const { t } = useTranslation();
     const params = useParams();
     const lang = params?.lang || 'he';
 
     useEffect(() => {
         const consent = localStorage.getItem(COOKIE_CONSENT_KEY);
-        if (!consent) {
-            // Small delay so it doesn't flash on page load
-            const timer = setTimeout(() => setVisible(true), 1000);
-            return () => clearTimeout(timer);
+        if (consent) {
+            setHidden(true);
         }
     }, []);
 
     const acceptCookies = () => {
         localStorage.setItem(COOKIE_CONSENT_KEY, 'accepted');
-        setVisible(false);
+        setHidden(true);
     };
 
-    if (!visible) return null;
-
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-[90] p-4 animate-fade-in">
+        <div
+            id="cookie-consent-banner"
+            role="dialog"
+            aria-label="Cookie Consent"
+            className={`fixed bottom-0 left-0 right-0 z-[90] p-4 transition-all duration-500 ${hidden ? 'translate-y-full pointer-events-none opacity-0' : 'translate-y-0 opacity-100'}`}
+        >
             <div className="max-w-4xl mx-auto bg-[#1a0b2e]/95 backdrop-blur-xl border border-purple-500/20 rounded-2xl p-5 sm:p-6 shadow-[0_0_30px_rgba(168,85,247,0.15)]">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
 
