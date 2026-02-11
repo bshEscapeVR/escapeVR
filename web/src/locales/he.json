@@ -68,7 +68,9 @@
         "shabbat_title": "שמירת שבת",
         "shabbat_desc": "אין מענה טלפוני/אינטרנטי בשבת. נשמח לעמוד לשירותכם במוצאי שבת.",
         "book_now": "הזמינו מקום",
-        "book_click": "לחצו כאן לניווט להזמנה"
+        "book_click": "לחצו כאן לניווט להזמנה",
+        "privacy_agree": "קראתי ואני מסכים/ה ל",
+        "privacy_link": "מדיניות הפרטיות"
     },
     "validation": {
         "name_short": "השם קצר מדי",
@@ -76,7 +78,8 @@
         "phone_invalid": "מספר טלפון לא תקין",
         "message_short": "ההודעה קצרה מדי",
         "room_required": "חובה לבחור חדר",
-        "review_short": "הביקורת קצרה מדי (מינימום 10 תווים)"
+        "review_short": "הביקורת קצרה מדי (מינימום 10 תווים)",
+        "privacy_required": "יש לאשר את מדיניות הפרטיות"
     },
     "booking_page": {
         "loading": "טוען...",
@@ -138,6 +141,7 @@
         "link_rooms": "החדרים שלנו",
         "link_book": "הזמנת מקום",
         "link_contact": "צור קשר",
+        "link_privacy": "מדיניות פרטיות",
         "rooms_title": "החדרים",
         "room_1": "הוסטל המשוגעים",
         "room_2": "תעלומת הפירמידה",
@@ -171,6 +175,11 @@
         "err_name_short": "השם קצר מדי",
         "err_phone_invalid": "מספר טלפון לא תקין",
         "err_email_invalid": "כתובת אימייל לא תקינה"
+    },
+    "cookie_banner": {
+        "message": "אתר זה משתמש בעוגיות כדי לשפר את חוויית הגלישה שלכם.",
+        "learn_more": "למידע נוסף",
+        "accept": "אישור"
     },
     "contact_popup": {
         "title": "להזמנת חדר ותיאום שעה",

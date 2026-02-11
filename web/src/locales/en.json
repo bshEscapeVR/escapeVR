@@ -68,7 +68,9 @@
         "shabbat_title": "Shabbat Observance",
         "shabbat_desc": "No phone/internet service on Shabbat. We'll be happy to serve you after Shabbat.",
         "book_now": "Book Now",
-        "book_click": "Click to book"
+        "book_click": "Click to book",
+        "privacy_agree": "I have read and agree to the",
+        "privacy_link": "Privacy Policy"
     },
     "validation": {
         "name_short": "Name is too short",
@@ -76,7 +78,8 @@
         "phone_invalid": "Invalid phone number",
         "message_short": "Message is too short",
         "room_required": "Please select a room",
-        "review_short": "Review is too short (minimum 10 characters)"
+        "review_short": "Review is too short (minimum 10 characters)",
+        "privacy_required": "You must agree to the Privacy Policy"
     },
     "booking_page": {
         "loading": "Loading...",
@@ -138,6 +141,7 @@
         "link_rooms": "Our Rooms",
         "link_book": "Book Now",
         "link_contact": "Contact Us",
+        "link_privacy": "Privacy Policy",
         "rooms_title": "The Rooms",
         "room_1": "Abandoned Hostel",
         "room_2": "Pyramid Mystery",
@@ -171,6 +175,11 @@
         "err_name_short": "Name must be at least 2 characters",
         "err_phone_invalid": "Invalid phone number",
         "err_email_invalid": "Invalid email address"
+    },
+    "cookie_banner": {
+        "message": "This website uses cookies to improve your browsing experience.",
+        "learn_more": "Learn more",
+        "accept": "Accept"
     },
     "contact_popup": {
         "title": "Book a Room & Schedule",

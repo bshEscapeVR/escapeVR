@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const auth = require('../middleware/auth');
 const upload = require('../middleware/uploadMiddleware');
 const { FILE_LIMITS } = require('../middleware/uploadMiddleware');
 const multer = require('multer');
@@ -16,9 +17,9 @@ const formatFileSize = (bytes) => {
 
 /**
  * POST /v1/upload
- * Upload a single image or video file
+ * Upload a single image or video file (Admin only)
  */
-router.post('/', (req, res) => {
+router.post('/', auth, (req, res) => {
     const uploadSingle = upload.single('image');
 
     uploadSingle(req, res, (err) => {

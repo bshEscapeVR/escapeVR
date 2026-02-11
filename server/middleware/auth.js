@@ -1,25 +1,24 @@
 const jwt = require('jsonwebtoken');
 
 const auth = (req, res, next) => {
-    // קבלת הטוקן מה-Header
     const token = req.header('x-auth-token');
-    
-    // אם אין טוקן בכלל -> 401 (לא מורשה)
+
     if (!token) {
         return res.status(401).json({ message: 'No token, authorization denied' });
     }
 
+    // Fail fast if JWT_SECRET is not configured
+    if (!process.env.JWT_SECRET) {
+        console.error('CRITICAL: JWT_SECRET environment variable is not set');
+        return res.status(500).json({ message: 'Server configuration error' });
+    }
+
     try {
-        // אימות הטוקן
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secretkey123');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         req.user = decoded;
         next();
     } catch (e) {
-        // 👇 הוספתי כאן לוג כדי שנראה את השגיאה בטרמינל
-        console.error("Auth Middleware Error:", e.message); 
-        
-        
-        res.status(400).json({ message: 'Token is not valid' });
+        res.status(401).json({ message: 'Token is not valid' });
     }
 };
 

@@ -72,6 +72,7 @@ const Footer = () => {
                             <li><a href="#rooms" className="hover:text-brand-primary transition-colors">{t('footer.link_rooms')}</a></li>
                             <li><button onClick={() => openContact()} className="hover:text-brand-primary transition-colors">{t('footer.link_book')}</button></li>
                             <li><Link href={`/${language}/contact`} className="hover:text-brand-primary transition-colors">{t('footer.link_contact')}</Link></li>
+                            <li><Link href={`/${language}/privacy`} className="hover:text-brand-primary transition-colors">{t('footer.link_privacy')}</Link></li>
                         </ul>
                     </div>
 

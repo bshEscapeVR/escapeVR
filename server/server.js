@@ -1,89 +1,103 @@
-// server/server.js
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const mongoSanitize = require('express-mongo-sanitize');
 const mainRouter = require('./routes/index');
 const errorMiddleware = require('./middleware/errorMiddleware');
 const uploadRouter = require('./routes/upload');
 
+// === Verify required environment variables on startup ===
+const requiredEnvVars = ['JWT_SECRET', 'MONGO_URI'];
+for (const envVar of requiredEnvVars) {
+    if (!process.env[envVar]) {
+        console.error(`FATAL: ${envVar} environment variable is not set. Server cannot start.`);
+        process.exit(1);
+    }
+}
+
 const app = express();
 
-// 1. חובה עבור Render (כדי לזהות כתובות IP נכון מאחורי הפרוקסי)
+// 1. Trust proxy (required for Render / reverse proxy to identify client IPs correctly)
 app.set('trust proxy', 1);
 
-// 2. אבטחה (Helmet)
-// מאפשר טעינת תמונות ממקורות אחרים (כדי שהאתר יוכל להציג תמונות מהשרת/Cloudinary)
+// 2. Security headers (Helmet)
 app.use(
-  helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-  })
+    helmet({
+        crossOriginResourcePolicy: { policy: "cross-origin" },
+    })
 );
 
-// 3. הגבלת בקשות (Rate Limiting)
-// מונע הצפה של השרת. כרגע מוגדר ל-1000 בקשות ב-15 דקות (נדיב לפיתוח)
+// 3. Global rate limiting (500 requests per 15 minutes)
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, 
-    max: 1000, 
+    windowMs: 15 * 60 * 1000,
+    max: 500,
     standardHeaders: true,
     legacyHeaders: false,
 });
 app.use(limiter);
 
-// 4. הגדרות CORS חכמות (התיקון הקריטי)
+// 4. CORS configuration
 const corsOptions = {
     origin: (origin, callback) => {
-        // א. אפשר בקשות ללא origin (כמו Postman, שרת-לשרת, או גלישה ישירה ל-API)
+        // Allow requests with no origin (server-to-server, Postman, SSR)
         if (!origin) return callback(null, true);
 
-        // ב. טעינת רשימת הכתובות המאושרות מקובץ ה-.env
+        // Load allowed origins from .env
         const allowedOrigins = process.env.CORS_ORIGINS
             ? process.env.CORS_ORIGINS.split(',').map(url => url.trim())
-            : ['http://localhost:3000', 'http://localhost:5173']; // ברירת מחדל לפיתוח
+            : ['http://localhost:3000', 'http://localhost:5173'];
 
-        // ג. בדיקה: האם הכתובת נמצאת ברשימה הקבועה?
+        // Exact match from allowlist
         if (allowedOrigins.includes(origin)) {
             return callback(null, true);
         }
 
-        // ד. בדיקה: האם הכתובת היא דומיין של Vercel? (כולל כתובות Preview זמניות)
-        if (origin.endsWith('.vercel.app') || origin.includes('escapevr.co.il') ||origin.includes('localhost:3000')) {
-            console.log(`✅ CORS allowed origin: ${origin}`);
+        // Allow Vercel preview deployments and production domain
+        if (origin.endsWith('.vercel.app') || origin.includes('escapevr.co.il')) {
             return callback(null, true);
         }
 
-        // ה. אם שום דבר לא מתאים - חסום
-        console.error(`❌ CORS Blocked origin: ${origin}`);
+        // Block everything else
+        console.warn(`CORS blocked origin: ${origin}`);
         return callback(new Error('Not allowed by CORS'));
     },
-    credentials: true // חובה כדי לאפשר עוגיות/טוקנים
+    credentials: true
 };
 
 app.use(cors(corsOptions));
-app.use(express.json());
 
-// 5. חיבור למסד הנתונים
-mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/vr_escape')
+// 5. Body parsing & NoSQL injection prevention
+app.use(express.json({ limit: '1mb' }));
+app.use(mongoSanitize());
+
+// 6. Database connection
+mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('MongoDB Connected'))
-    .catch(err => console.error('MongoDB Connection Error:', err));
+    .catch(err => {
+        console.error('MongoDB Connection Error:', err);
+        process.exit(1);
+    });
 
-// 6. נתיבים (Routes)
-// גיבוי: הגשת קבצים מקומיים (אם נשארו כאלה לפני המעבר ל-Cloudinary)
+// 7. Health check (useful for Render & debugging)
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// 8. Routes
 app.use('/uploads', express.static('uploads'));
-
-// API Routes (v1)
 app.use('/v1/upload', uploadRouter);
 app.use('/v1', mainRouter);
 
-// 7. טיפול בשגיאות 404 (נתיב לא קיים)
+// 9. 404 handler
 app.all(/(.*)/, (req, res, next) => {
     const AppError = require('./utils/AppError');
     next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 
-// 8. טיפול בשגיאות כלליות
+// 10. Global error handler
 app.use(errorMiddleware);
 
 const PORT = process.env.PORT || 5000;

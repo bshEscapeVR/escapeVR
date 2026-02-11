@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { Phone, Mail, Send, Star, User, Hash, CheckCircle, AlertCircle, Flame, FileText } from 'lucide-react';
+import { Phone, Mail, Send, Star, User, Hash, CheckCircle, AlertCircle, Flame, FileText, Shield } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../context/SettingsContext';
 import { roomService, leadService, reviewService } from '../services';
+import Link from 'next/link';
 import SectionTitle from './ui/SectionTitle';
 
 // 1. ייבוא ספריות הולידציה
@@ -100,7 +101,8 @@ const ContactSection = () => {
         fullName: z.string().min(2, t('validation.name_short')),
         email: z.string().email(t('validation.email_invalid')),
         phone: z.string().regex(/^05\d-?\d{7}$/, t('validation.phone_invalid')).or(z.literal('')),
-        message: z.string().min(5, t('validation.message_short'))
+        message: z.string().min(5, t('validation.message_short')),
+        privacyConsent: z.literal(true, { errorMap: () => ({ message: t('validation.privacy_required') }) })
     });
 
     const reviewSchema = z.object({
@@ -108,7 +110,8 @@ const ContactSection = () => {
         email: z.string().email(t('validation.email_invalid')),
         roomId: z.string().min(1, t('validation.room_required')),
         rating: z.number().min(1).max(5),
-        content: z.string().min(10, t('validation.review_short'))
+        content: z.string().min(10, t('validation.review_short')),
+        privacyConsent: z.literal(true, { errorMap: () => ({ message: t('validation.privacy_required') }) })
     });
 
     // ערכי ברירת מחדל לטפסים - מוגדרים כקבוע לשימוש חוזר
@@ -119,7 +122,8 @@ const ContactSection = () => {
         message: '',
         content: '',
         roomId: '',
-        rating: 5
+        rating: 5,
+        privacyConsent: false
     };
 
     const {
@@ -135,6 +139,7 @@ const ContactSection = () => {
     });
 
     const currentRating = watch('rating');
+    const privacyChecked = watch('privacyConsent');
 
     useEffect(() => {
         const fetchRooms = async () => {
@@ -327,6 +332,44 @@ const ContactSection = () => {
                                         />
                                     </div>
                                 )}
+
+                                {/* Privacy Policy Consent */}
+                                <div className="mb-4">
+                                    <label className="flex items-start gap-3 cursor-pointer group">
+                                        <div className="relative mt-0.5 shrink-0">
+                                            <input
+                                                type="checkbox"
+                                                className="sr-only"
+                                                {...register('privacyConsent')}
+                                            />
+                                            <div className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center
+                                                ${errors.privacyConsent
+                                                    ? 'border-red-500 bg-red-500/10'
+                                                    : privacyChecked
+                                                        ? 'border-brand-primary bg-brand-primary'
+                                                        : 'border-white/20 group-hover:border-white/40'
+                                                }`}
+                                            >
+                                                {privacyChecked && (
+                                                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <span className="text-sm text-gray-300 leading-relaxed">
+                                            {t('contact.privacy_agree')}{' '}
+                                            <Link href={`/${lang}/privacy`} className="text-brand-primary hover:text-purple-300 underline underline-offset-2 transition-colors" target="_blank">
+                                                {t('contact.privacy_link')}
+                                            </Link>
+                                        </span>
+                                    </label>
+                                    {errors.privacyConsent && (
+                                        <p className="text-red-400 text-xs mt-1.5 flex items-center gap-1 ms-8">
+                                            <AlertCircle size={10} /> {errors.privacyConsent.message}
+                                        </p>
+                                    )}
+                                </div>
 
                                 <button
                                     type="submit"

@@ -1,11 +1,12 @@
-// server/routes/settings.js
 const express = require('express');
 const router = express.Router();
+const auth = require('../middleware/auth');
 const { getSettings, updateSettings } = require('../controllers/settingsController');
-// כאן אמור להיות גם מידלוויר לאבטחה (auth)
-// const auth = require('../middleware/auth');
 
+// Public - client needs settings for rendering
 router.get('/', getSettings);
-router.put('/', updateSettings); // אפשר להוסיף auth כאן
+
+// Admin only - update site settings
+router.put('/', auth, updateSettings);
 
 module.exports = router;
