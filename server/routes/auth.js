@@ -15,6 +15,16 @@ const loginLimiter = rateLimit({
     legacyHeaders: false,
 });
 
+// Helper: validate password strength
+const validatePassword = (password) => {
+    if (password.length < 8) return 'Password must be at least 8 characters';
+    if (!/[A-Z]/.test(password)) return 'Password must contain at least one uppercase letter';
+    if (!/[a-z]/.test(password)) return 'Password must contain at least one lowercase letter';
+    if (!/[0-9]/.test(password)) return 'Password must contain at least one number';
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) return 'Password must contain at least one special character (!@#$%^&*...)';
+    return null;
+};
+
 // Helper: sign JWT token securely
 const signToken = (adminId) => {
     if (!process.env.JWT_SECRET) {
@@ -81,8 +91,9 @@ router.put('/change-password', auth, async (req, res) => {
         return res.status(400).json({ message: 'Current and new passwords are required' });
     }
 
-    if (newPassword.length < 6) {
-        return res.status(400).json({ message: 'New password must be at least 6 characters' });
+    const passwordError = validatePassword(newPassword);
+    if (passwordError) {
+        return res.status(400).json({ message: passwordError });
     }
 
     try {
@@ -113,8 +124,9 @@ router.post('/register-initial', async (req, res) => {
         return res.status(400).json({ message: 'Username and password are required' });
     }
 
-    if (password.length < 6) {
-        return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+        return res.status(400).json({ message: passwordError });
     }
 
     try {
