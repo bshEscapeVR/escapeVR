@@ -17,34 +17,38 @@ const privacyContent = {
             },
             {
                 title: "2. מידע שאנו אוספים",
-                content: "אנו אוספים מידע שאתם מספקים לנו באופן ישיר בעת:\n• מילוי טופס יצירת קשר (שם, אימייל, טלפון, תוכן ההודעה)\n• ביצוע הזמנה (שם, טלפון, אימייל, תאריך ושעה מועדפים)\n• השארת ביקורת (שם, אימייל, דירוג, תוכן הביקורת)\n\nבנוסף, אנו אוספים מידע טכני באופן אוטומטי כגון כתובת IP, סוג דפדפן, זמני גישה ועמודים שנצפו, באמצעות כלי ניתוח כגון Google Analytics."
+                content: "אנו אוספים מידע שאתם מספקים לנו באופן ישיר בעת:\n• מילוי טופס יצירת קשר (שם, אימייל, טלפון, תוכן ההודעה)\n• ביצוע הזמנה (שם, טלפון, אימייל, מספר משתתפים, תאריך ושעה מועדפים)\n• השארת ביקורת (שם, אימייל, דירוג, תוכן הביקורת)\n\nבנוסף, אנו אוספים מידע טכני באופן אוטומטי כגון כתובת IP, סוג דפדפן, זמני גישה ועמודים שנצפו, באמצעות כלי ניתוח כגון Google Analytics."
             },
             {
                 title: "3. שימוש במידע",
-                content: "המידע שנאסף משמש אותנו למטרות הבאות:\n• טיפול בפניות ובקשות יצירת קשר\n• ניהול הזמנות ותיאום מועדי משחק\n• הצגת ביקורות באתר (בהסכמתכם)\n• שיפור השירותים והחוויה באתר\n• שליחת עדכונים ומבצעים (רק אם נתתם הסכמה מפורשת)"
+                content: "המידע שנאסף משמש אותנו למטרות הבאות:\n• טיפול בפניות ובקשות יצירת קשר\n• ניהול הזמנות ותיאום מועדי משחק\n• שליחת אישור הזמנה לכתובת האימייל שסיפקתם\n• הצגת ביקורות באתר (לאחר אישור)\n• שיפור השירותים והחוויה באתר"
             },
             {
                 title: "4. שיתוף מידע עם צדדים שלישיים",
-                content: "אנו לא מוכרים, סוחרים או מעבירים את המידע האישי שלכם לצדדים שלישיים, למעט:\n• ספקי שירות הנדרשים להפעלת האתר (אחסון, עיבוד תשלומים)\n• במקרים בהם נדרש על פי חוק או צו בית משפט\n• Google Analytics לצורך ניתוח סטטיסטי אנונימי של השימוש באתר"
+                content: "אנו לא מוכרים, סוחרים או מעבירים את המידע האישי שלכם לצדדים שלישיים, למעט:\n• Cloudinary – שירות אחסון תמונות וסרטונים המשמש להצגת תוכן באתר\n• Google Analytics – לצורך ניתוח סטטיסטי אנונימי של השימוש באתר\n• Gmail (Google) – לצורך משלוח הודעות דוא\"ל תפעוליות (אישורי הזמנה והתראות מערכת)\n• במקרים בהם נדרש על פי חוק או צו בית משפט"
             },
             {
-                title: "5. עוגיות (Cookies)",
-                content: "האתר משתמש בעוגיות לצורך:\n• שמירת העדפות שפה ותצוגה\n• ניתוח סטטיסטי של השימוש באתר (Google Analytics)\n• שיפור חוויית הגלישה\n\nתוכלו לשלוט בהגדרות העוגיות דרך הדפדפן שלכם. חסימת עוגיות מסוימות עלולה להשפיע על חוויית השימוש באתר."
+                title: "5. דוא\"ל תפעולי",
+                content: "בעת ביצוע הזמנה או שליחת פנייה באתר, ייתכן שנשלח לכם הודעת דוא\"ל הכוללת:\n• אישור הזמנה עם פרטי ההזמנה\n• מענה לפנייתכם\n\nמדובר בהודעות תפעוליות בלבד ולא בדיוור שיווקי. איננו שולחים ניוזלטרים או הודעות פרסומיות."
             },
             {
-                title: "6. אבטחת מידע",
-                content: "אנו נוקטים באמצעי אבטחה סבירים ומקובלים כדי להגן על המידע האישי שלכם מפני גישה לא מורשית, שינוי, חשיפה או השמדה. עם זאת, אין שיטת העברה או אחסון באינטרנט שהיא בטוחה ב-100%, ולכן איננו יכולים להבטיח אבטחה מוחלטת."
+                title: "6. עוגיות (Cookies)",
+                content: "האתר משתמש בעוגיות ואחסון מקומי (localStorage) לצורך:\n• שמירת העדפות שפה ותצוגה\n• שמירת הסכמה לשימוש בעוגיות\n• ניתוח סטטיסטי של השימוש באתר (Google Analytics)\n• שיפור חוויית הגלישה\n\nתוכלו לשלוט בהגדרות העוגיות דרך הדפדפן שלכם. חסימת עוגיות מסוימות עלולה להשפיע על חוויית השימוש באתר."
             },
             {
-                title: "7. זכויות המשתמש",
-                content: "בהתאם לחוק, עומדות לכם הזכויות הבאות:\n• לעיין במידע האישי שלכם המוחזק אצלנו\n• לבקש תיקון או מחיקה של מידע אישי\n• להתנגד לשימוש במידע שלכם לצורכי דיוור ישיר\n• לבקש העברת המידע שלכם\n\nלמימוש זכויות אלה, ניתן לפנות אלינו דרך פרטי הקשר המופיעים בתחתית עמוד זה."
+                title: "7. אבטחת מידע",
+                content: "אנו נוקטים באמצעי אבטחה סבירים ומקובלים כדי להגן על המידע האישי שלכם, לרבות:\n• הצפנת סיסמאות באמצעות bcrypt\n• תקשורת מוצפנת (HTTPS)\n• הגבלת ניסיונות התחברות\n• כותרות אבטחה (Helmet)\n• הגנה מפני מתקפות הזרקה (NoSQL injection)\n\nעם זאת, אין שיטת העברה או אחסון באינטרנט שהיא בטוחה ב-100%, ולכן איננו יכולים להבטיח אבטחה מוחלטת."
             },
             {
-                title: "8. שינויים במדיניות",
+                title: "8. זכויות המשתמש",
+                content: "בהתאם לחוק, עומדות לכם הזכויות הבאות:\n• לעיין במידע האישי שלכם המוחזק אצלנו\n• לבקש תיקון או מחיקה של מידע אישי\n• להתנגד לשימוש במידע שלכם\n• לבקש העברת המידע שלכם\n\nלמימוש זכויות אלה, ניתן לפנות אלינו דרך פרטי הקשר המופיעים בתחתית עמוד זה."
+            },
+            {
+                title: "9. שינויים במדיניות",
                 content: "אנו שומרים לעצמנו את הזכות לעדכן מדיניות פרטיות זו מעת לעת. שינויים מהותיים יפורסמו באתר. המשך השימוש באתר לאחר עדכון המדיניות מהווה הסכמה לשינויים."
             },
             {
-                title: "9. יצירת קשר",
+                title: "10. יצירת קשר",
                 content: "לכל שאלה או בקשה בנוגע למדיניות הפרטיות, ניתן לפנות אלינו דרך עמוד יצירת הקשר באתר או בטלפון המופיע באתר."
             }
         ]
@@ -55,38 +59,42 @@ const privacyContent = {
         sections: [
             {
                 title: "1. General",
-                content: "Welcome to the VR Escape Reality website (hereinafter: \"the Website\"). We are committed to protecting your privacy and safeguarding your personal information in accordance with applicable privacy laws. This policy explains how we collect, use, and protect your information."
+                content: "Welcome to the VR Escape Reality website (hereinafter: \"the Website\"). We are committed to protecting your privacy and safeguarding your personal information in accordance with the Israeli Privacy Protection Law, 5741-1981 and the Privacy Protection Regulations (Data Security), 5777-2017. This policy explains how we collect, use, and protect your information."
             },
             {
                 title: "2. Information We Collect",
-                content: "We collect information that you provide directly when:\n• Filling out the contact form (name, email, phone, message content)\n• Making a booking (name, phone, email, preferred date and time)\n• Leaving a review (name, email, rating, review content)\n\nAdditionally, we automatically collect technical information such as IP address, browser type, access times, and pages viewed, using analytics tools such as Google Analytics."
+                content: "We collect information that you provide directly when:\n• Filling out the contact form (name, email, phone, message content)\n• Making a booking (name, phone, email, number of participants, preferred date and time)\n• Leaving a review (name, email, rating, review content)\n\nAdditionally, we automatically collect technical information such as IP address, browser type, access times, and pages viewed, using analytics tools such as Google Analytics."
             },
             {
                 title: "3. Use of Information",
-                content: "The collected information is used for the following purposes:\n• Handling inquiries and contact requests\n• Managing bookings and scheduling game sessions\n• Displaying reviews on the website (with your consent)\n• Improving our services and website experience\n• Sending updates and promotions (only with your explicit consent)"
+                content: "The collected information is used for the following purposes:\n• Handling inquiries and contact requests\n• Managing bookings and scheduling game sessions\n• Sending booking confirmation to the email address you provided\n• Displaying reviews on the website (after approval)\n• Improving our services and website experience"
             },
             {
                 title: "4. Sharing Information with Third Parties",
-                content: "We do not sell, trade, or transfer your personal information to third parties, except:\n• Service providers required to operate the website (hosting, payment processing)\n• When required by law or court order\n• Google Analytics for anonymous statistical analysis of website usage"
+                content: "We do not sell, trade, or transfer your personal information to third parties, except:\n• Cloudinary – image and video hosting service used to display content on the website\n• Google Analytics – for anonymous statistical analysis of website usage\n• Gmail (Google) – for sending operational emails (booking confirmations and system notifications)\n• When required by law or court order"
             },
             {
-                title: "5. Cookies",
-                content: "The website uses cookies for:\n• Saving language and display preferences\n• Statistical analysis of website usage (Google Analytics)\n• Improving the browsing experience\n\nYou can control cookie settings through your browser. Blocking certain cookies may affect your experience on the website."
+                title: "5. Operational Emails",
+                content: "When making a booking or submitting an inquiry on the website, we may send you an email including:\n• Booking confirmation with your booking details\n• A response to your inquiry\n\nThese are operational messages only, not marketing communications. We do not send newsletters or promotional messages."
             },
             {
-                title: "6. Data Security",
-                content: "We take reasonable and accepted security measures to protect your personal information from unauthorized access, modification, disclosure, or destruction. However, no method of internet transmission or storage is 100% secure, and therefore we cannot guarantee absolute security."
+                title: "6. Cookies",
+                content: "The website uses cookies and local storage (localStorage) for:\n• Saving language and display preferences\n• Saving cookie consent preference\n• Statistical analysis of website usage (Google Analytics)\n• Improving the browsing experience\n\nYou can control cookie settings through your browser. Blocking certain cookies may affect your experience on the website."
             },
             {
-                title: "7. User Rights",
-                content: "In accordance with the law, you have the following rights:\n• To review your personal information held by us\n• To request correction or deletion of personal information\n• To object to the use of your information for direct marketing purposes\n• To request transfer of your information\n\nTo exercise these rights, please contact us through the contact details at the bottom of this page."
+                title: "7. Data Security",
+                content: "We take reasonable and accepted security measures to protect your personal information, including:\n• Password encryption using bcrypt\n• Encrypted communication (HTTPS)\n• Login attempt rate limiting\n• Security headers (Helmet)\n• Protection against injection attacks (NoSQL injection)\n\nHowever, no method of internet transmission or storage is 100% secure, and therefore we cannot guarantee absolute security."
             },
             {
-                title: "8. Changes to the Policy",
+                title: "8. User Rights",
+                content: "In accordance with the law, you have the following rights:\n• To review your personal information held by us\n• To request correction or deletion of personal information\n• To object to the use of your information\n• To request transfer of your information\n\nTo exercise these rights, please contact us through the contact details at the bottom of this page."
+            },
+            {
+                title: "9. Changes to the Policy",
                 content: "We reserve the right to update this privacy policy from time to time. Material changes will be published on the website. Continued use of the website after the policy update constitutes agreement to the changes."
             },
             {
-                title: "9. Contact Us",
+                title: "10. Contact Us",
                 content: "For any question or request regarding the privacy policy, you can contact us through the contact page on the website or by phone listed on the site."
             }
         ]
