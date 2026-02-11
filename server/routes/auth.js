@@ -72,6 +72,38 @@ router.post('/refresh', auth, (req, res) => {
     }
 });
 
+// @route   PUT /api/auth/change-password
+// @desc    Change password (requires current password)
+router.put('/change-password', auth, async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: 'Current and new passwords are required' });
+    }
+
+    if (newPassword.length < 6) {
+        return res.status(400).json({ message: 'New password must be at least 6 characters' });
+    }
+
+    try {
+        const admin = await Admin.findById(req.user.id);
+        if (!admin) return res.status(404).json({ message: 'Admin not found' });
+
+        const isMatch = await bcrypt.compare(currentPassword, admin.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Current password is incorrect' });
+        }
+
+        admin.password = newPassword;
+        await admin.save();
+
+        const token = signToken(admin._id);
+        res.json({ message: 'Password changed successfully', token });
+    } catch (err) {
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
 // @route   POST /api/auth/register-initial
 // @desc    One-time use - create first admin only if NO admins exist in the system
 router.post('/register-initial', async (req, res) => {
