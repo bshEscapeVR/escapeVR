@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Calendar from 'react-calendar';
 import { format } from 'date-fns';
-import { Plus, X, Phone, Save, Calendar as CalendarIcon, RefreshCw, AlertTriangle, Trash2, AlertCircle, RotateCcw, Trash, Eye, Users, Pencil, CheckCircle, Clock } from 'lucide-react';
+import { Plus, X, Phone, Save, Calendar as CalendarIcon, RefreshCw, AlertTriangle, Trash2, AlertCircle, RotateCcw, Trash, Eye, Users, Pencil, CheckCircle, Clock, Download } from 'lucide-react';
+import { exportBookingsToExcel } from '../../../utils/exportBookings';
 import { bookingService, roomService, pricingService } from '../../../services';
 import { useBooking } from '../../../context/BookingContext';
 import { useSettings } from '../../../context/SettingsContext';
@@ -750,6 +751,16 @@ const TabBookings = () => {
 
                     {viewMode === 'active' && (
                         <>
+                            {/* כפתור ייצוא לאקסל */}
+                            <button
+                                onClick={() => exportBookingsToExcel(bookings, rooms)}
+                                className="p-2 px-4 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium border border-green-500/30"
+                                title="ייצוא הזמנות לאקסל"
+                            >
+                                <Download size={18} />
+                                ייצוא לאקסל
+                            </button>
+
                             {/* כפתור צפייה בפופאפ לקוחות */}
                             <button
                                 onClick={handleOpenCustomerBookingModal}
