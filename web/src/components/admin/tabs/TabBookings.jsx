@@ -163,7 +163,7 @@ const TabBookings = () => {
 
             try {
                 const dateStr = format(selectedDate, 'yyyy-MM-dd');
-                const slots = await bookingService.getAvailableSlots(selectedRoomId, dateStr);
+                const slots = await bookingService.getAvailableSlots(selectedRoomId, dateStr, { admin: true });
                 setAvailableSlots(slots || []);
             } catch (err) {
                 console.error("Error fetching slots:", err);
@@ -300,7 +300,7 @@ const TabBookings = () => {
         setLoadingEditSlots(true);
         try {
             const dateStr = format(date, 'yyyy-MM-dd');
-            const slots = await bookingService.getAvailableSlots(roomId, dateStr);
+            const slots = await bookingService.getAvailableSlots(roomId, dateStr, { admin: true });
             // מוסיפים את השעה הנוכחית אם היא לא קיימת (כי היא תפוסה ע"י ההזמנה הנוכחית)
             let allSlots = slots || [];
             if (currentSlot && !allSlots.includes(currentSlot)) {
@@ -346,6 +346,14 @@ const TabBookings = () => {
     // שמירת עריכה
     const handleSaveEdit = async () => {
         if (!editFormData || !editingBooking) return;
+
+        // התראה אם התאריך בעבר
+        if (isPastDate(editFormData.date)) {
+            const confirmed = window.confirm(
+                `שים לב! התאריך שנבחר (${format(editFormData.date, 'dd/MM/yyyy')}) כבר עבר.\nהאם אתה בטוח שברצונך לשמור הזמנה לתאריך זה?`
+            );
+            if (!confirmed) return;
+        }
 
         // ולידציה בסיסית
         if (!editFormData.fullName || editFormData.fullName.length < 2) {
@@ -429,7 +437,24 @@ const TabBookings = () => {
         return rooms.find(r => r._id === editFormData.roomId);
     }, [rooms, editFormData?.roomId]);
 
+    // בדיקה אם תאריך הוא בעבר
+    const isPastDate = (date) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const check = new Date(date);
+        check.setHours(0, 0, 0, 0);
+        return check < today;
+    };
+
     const onManualSubmit = async (data) => {
+        // התראה אם התאריך בעבר
+        if (isPastDate(data.date)) {
+            const confirmed = window.confirm(
+                `שים לב! התאריך שנבחר (${format(data.date, 'dd/MM/yyyy')}) כבר עבר.\nהאם אתה בטוח שברצונך ליצור הזמנה לתאריך זה?`
+            );
+            if (!confirmed) return;
+        }
+
         // ולידציה נוספת לפי החדר הנבחר
         if (selectedRoom) {
             const min = selectedRoom.features?.minPlayers || 1;
@@ -531,7 +556,6 @@ const TabBookings = () => {
                                     <Calendar
                                         onChange={(date) => updateEditField('date', date)}
                                         value={editFormData.date}
-                                        minDate={new Date()}
                                         locale="he-IL"
                                         className="text-sm w-full rounded-lg border-none shadow-none"
                                     />
@@ -802,7 +826,7 @@ const TabBookings = () => {
 
                             <div className="booking-calendar-container">
                                 <label className="text-gray-400 text-xs font-bold uppercase mb-1 block">תאריך ההזמנה</label>
-                                <Calendar onChange={(date) => setValue('date', date)} value={selectedDate} minDate={new Date()} locale="he-IL" className="text-sm w-full rounded-lg border-none shadow-none" />
+                                <Calendar onChange={(date) => setValue('date', date)} value={selectedDate} locale="he-IL" className="text-sm w-full rounded-lg border-none shadow-none" />
                             </div>
                         </div>
 

@@ -44,7 +44,8 @@ const isJewishHoliday = (jsDate) => {
 // --- הלוגיקה הראשית ---
 
 exports.getAvailableSlots = asyncHandler(async (req, res, next) => {
-    const { roomId, date } = req.query; 
+    const { roomId, date, admin } = req.query;
+    const isAdmin = admin === 'true';
 
     if (!roomId || !date) {
         return next(new AppError('Please provide roomId and date', 400));
@@ -57,8 +58,8 @@ exports.getAvailableSlots = asyncHandler(async (req, res, next) => {
     // יום בשבוע (לפי ישראל)
     const dayOfWeek = israelRequestedDate.getDay();
 
-    // --- חסימה 1: יום שישי (5) סגור לחלוטין ---
-    if (dayOfWeek === 5) {
+    // --- חסימה 1: יום שישי (5) סגור לחלוטין (לא חל על אדמין) ---
+    if (!isAdmin && dayOfWeek === 5) {
         return res.status(200).json({ status: 'success', data: [], reason: 'friday' });
     }
 
@@ -66,8 +67,8 @@ exports.getAvailableSlots = asyncHandler(async (req, res, next) => {
     const isSaturday = dayOfWeek === 6;
     const MOTZASH_MIN_HOUR = 19; // שעת תחילת מוצ"ש
 
-    // --- חסימה 2: חגי ישראל ---
-    if (isJewishHoliday(requestedDate)) {
+    // --- חסימה 2: חגי ישראל (לא חל על אדמין) ---
+    if (!isAdmin && isJewishHoliday(requestedDate)) {
         return res.status(200).json({ status: 'success', data: [], reason: 'holiday' });
     }
 
@@ -87,7 +88,7 @@ exports.getAvailableSlots = asyncHandler(async (req, res, next) => {
         // התעלמות אם הטבלה עדיין לא קיימת
     }
 
-    if (blockedDateRecord && blockedDateRecord.isFullDay) {
+    if (!isAdmin && blockedDateRecord && blockedDateRecord.isFullDay) {
         return res.status(200).json({ status: 'success', data: [], reason: 'admin_blocked' });
     }
 
@@ -110,22 +111,24 @@ exports.getAvailableSlots = asyncHandler(async (req, res, next) => {
     // --- סינון שעות (Slots) ---
     let availableSlots = [...operatingHours];
 
-    // א. סינון שעות עבר (אם זה היום)
-    const now = new Date();
-    const israelNow = toIsraelDate(now);
-    
-    // בדיקה האם התאריך המבוקש הוא "היום" (לפי YYYY-MM-DD)
-    const isToday = israelNow.toISOString().split('T')[0] === israelRequestedDate.toISOString().split('T')[0];
+    // א. סינון שעות עבר (אם זה היום) - לא חל על אדמין
+    if (!isAdmin) {
+        const now = new Date();
+        const israelNow = toIsraelDate(now);
 
-    if (isToday) {
-        const currentHour = israelNow.getHours();
-        const currentMinute = israelNow.getMinutes();
+        // בדיקה האם התאריך המבוקש הוא "היום" (לפי YYYY-MM-DD)
+        const isToday = israelNow.toISOString().split('T')[0] === israelRequestedDate.toISOString().split('T')[0];
 
-        availableSlots = availableSlots.filter(slot => {
-            const [h, m] = slot.split(':').map(Number);
-            // משאירים רק שעות שעוד לא עברו
-            return (h > currentHour) || (h === currentHour && m > currentMinute);
-        });
+        if (isToday) {
+            const currentHour = israelNow.getHours();
+            const currentMinute = israelNow.getMinutes();
+
+            availableSlots = availableSlots.filter(slot => {
+                const [h, m] = slot.split(':').map(Number);
+                // משאירים רק שעות שעוד לא עברו
+                return (h > currentHour) || (h === currentHour && m > currentMinute);
+            });
+        }
     }
 
     // ב. סינון שעות שנחסמו ע"י המנהל (חסימה חלקית)
@@ -144,8 +147,8 @@ exports.getAvailableSlots = asyncHandler(async (req, res, next) => {
     const bookedSlots = existingBookings.map(b => b.timeSlot);
     availableSlots = availableSlots.filter(slot => !bookedSlots.includes(slot));
 
-    // ד. סינון מוצ"ש - מאפשרים רק שעות ערב (19:00+)
-    if (isSaturday) {
+    // ד. סינון מוצ"ש - מאפשרים רק שעות ערב (19:00+) - לא חל על אדמין
+    if (!isAdmin && isSaturday) {
         availableSlots = availableSlots.filter(slot => {
             const [h] = slot.split(':').map(Number);
             return h >= MOTZASH_MIN_HOUR;

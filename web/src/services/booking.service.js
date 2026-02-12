@@ -10,8 +10,8 @@ const bookingService = {
   },
 
   // בדיקת זמינות (סלוטים פנויים - עכשיו כולל גם שבת וחגים!)
-  getAvailableSlots: async (roomId, date) => {
-    const response = await httpService.get(`${ENDPOINT}/slots`, { roomId, date });
+  getAvailableSlots: async (roomId, date, { admin = false } = {}) => {
+    const response = await httpService.get(`${ENDPOINT}/slots`, { roomId, date, ...(admin && { admin: 'true' }) });
     return response.data;
   },
 
