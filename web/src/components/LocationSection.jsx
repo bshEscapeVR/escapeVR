@@ -46,7 +46,7 @@ const LocationSection = () => {
     const mapSrc = `https://maps.google.com/maps?q=${encodedAddress}&t=&z=17&ie=UTF8&iwloc=B&hl=${mapLang}&output=embed`;
 
     const wazeLink = "https://waze.com/ul/hsv8ukjjwk";
-    const googleMapsLink = "http://www.google.com/maps/place/%D7%97%D7%93%D7%A8+%D7%91%D7%A8%D7%99%D7%97%D7%94+VR+%D7%91%D7%99%D7%AA+%D7%A9%D7%9E%D7%A9%E2%80%AD/@31.7131223,34.9907936,17z/data=!3m1!4b1!4m6!3m5!1s0x1502c3c020df5e91:0xec0a654e0c9fdfc9!8m2!3d31.7131223!4d34.9882187!16s%2Fg%2F11xzjgv_zp?authuser=0&entry=ttu&g_ep=EgoyMDI2MDExMy4wIKXMDSoKLDEwMDc5MjA2OUgBUAM%3D";
+    const googleMapsLink = "https://www.google.com/maps/dir/?api=1&destination=Nahal+Nitzanim+8+Beit+Shemesh";
 
     return (
         <section className="py-20  relative">
