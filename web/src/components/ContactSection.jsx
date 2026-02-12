@@ -123,7 +123,8 @@ const ContactSection = () => {
         content: '',
         roomId: '',
         rating: 5,
-        privacyConsent: false
+        privacyConsent: false,
+        marketingConsent: false
     };
 
     const {
@@ -140,6 +141,7 @@ const ContactSection = () => {
 
     const currentRating = watch('rating');
     const privacyChecked = watch('privacyConsent');
+    const marketingChecked = watch('marketingConsent');
 
     useEffect(() => {
         const fetchRooms = async () => {
@@ -168,7 +170,8 @@ const ContactSection = () => {
                     phone: data.phone,
                     email: data.email,
                     interest: 'Contact Form Message',
-                    notes: data.message
+                    notes: data.message,
+                    marketingConsent: data.marketingConsent
                 });
             } else {
                 await reviewService.create({
@@ -176,7 +179,8 @@ const ContactSection = () => {
                     email: data.email,
                     rating: data.rating,
                     content: data.content,
-                    roomId: data.roomId
+                    roomId: data.roomId,
+                    marketingConsent: data.marketingConsent
                 });
             }
 
@@ -359,6 +363,21 @@ const ContactSection = () => {
                                             <AlertCircle size={10} /> {errors.privacyConsent.message}
                                         </p>
                                     )}
+                                </div>
+
+                                {/* Marketing Consent (opt-in) */}
+                                <div className="mb-4">
+                                    <label className="flex items-start gap-3 cursor-pointer group">
+                                        <input
+                                            type="checkbox"
+                                            className="mt-1 shrink-0 w-5 h-5 rounded border-2 appearance-none cursor-pointer transition-all duration-200 checked:bg-brand-primary checked:border-brand-primary border-white/20 group-hover:border-white/40 bg-transparent"
+                                            style={{ backgroundImage: marketingChecked ? "url(\"data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e\")" : 'none', backgroundSize: '100% 100%', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}
+                                            {...register('marketingConsent')}
+                                        />
+                                        <span className="text-sm text-gray-400 leading-relaxed">
+                                            {t('contact.marketing_consent')}
+                                        </span>
+                                    </label>
                                 </div>
 
                                 <button

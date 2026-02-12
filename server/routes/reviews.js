@@ -10,7 +10,8 @@ const reviewSchema = {
     email:      { type: 'string', required: true, max: 200, pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
     rating:     { type: 'number', required: true, min: 1, max: 5 },
     content:    { type: 'string', required: true, min: 10, max: 2000 },
-    roomId:     { type: 'objectId', required: true }
+    roomId:     { type: 'objectId', required: true },
+    marketingConsent: { type: 'boolean', required: false, default: false }
 };
 
 // Public

@@ -2,13 +2,21 @@
 const Lead = require('../models/Lead');
 const asyncHandler = require('../utils/asyncHandler');
 const { sendNewLeadNotification } = require('../utils/emailService');
+const { addContactToMailingList } = require('../utils/brevoService');
 
 // יצירת ליד חדש (פומבי - לטופס צור קשר)
 exports.createLead = asyncHandler(async (req, res) => {
-    const lead = await Lead.create(req.body);
+    const { marketingConsent, ...leadData } = req.body;
+    const lead = await Lead.create(leadData);
 
     // שליחת מייל למנהל (ברקע - לא חוסם את התגובה ללקוח)
     sendNewLeadNotification(lead).catch(err => console.error('Lead email error:', err));
+
+    // הוספה לרשימת תפוצה (רק אם הלקוח הסכים)
+    if (marketingConsent) {
+        addContactToMailingList({ email: lead.email, name: lead.fullName })
+            .catch(err => console.error('Brevo sync error:', err));
+    }
 
     res.status(201).json({ status: 'success', data: lead });
 });

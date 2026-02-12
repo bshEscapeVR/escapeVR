@@ -70,7 +70,8 @@
         "book_now": "הזמינו מקום",
         "book_click": "לחצו כאן לניווט להזמנה",
         "privacy_agree": "קראתי ואני מסכים/ה ל",
-        "privacy_link": "מדיניות הפרטיות"
+        "privacy_link": "מדיניות הפרטיות",
+        "marketing_consent": "אני מעוניין/ת לקבל עדכונים ומבצעים במייל"
     },
     "validation": {
         "name_short": "השם קצר מדי",

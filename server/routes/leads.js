@@ -10,7 +10,8 @@ const leadSchema = {
     email:    { type: 'string', required: true, max: 200, pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
     phone:    { type: 'string', required: false, max: 20 },
     interest: { type: 'string', required: false, max: 200 },
-    notes:    { type: 'string', required: false, max: 2000 }
+    notes:    { type: 'string', required: false, max: 2000 },
+    marketingConsent: { type: 'boolean', required: false, default: false }
 };
 
 // Public - contact form submission
