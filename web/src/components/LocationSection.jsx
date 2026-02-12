@@ -1,21 +1,20 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { MapPin, Bus, Car } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../context/SettingsContext';
 import SectionTitle from './ui/SectionTitle';
 
-// Waze Icon SVG
-const WazeIcon = ({ size = 20, className = "" }) => (
+// Fallback SVG icons (used if /icons/*.png don't load)
+const WazeFallbackIcon = ({ size = 20, className = "" }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
         <path d="M20.54 6.63C19.69 4.04 17.14 2 13.86 2c-3.29 0-6.18 2.03-7.21 4.96-.15.33-.15.71-.15 1.04 0 2.96 2.14 5.39 4.93 5.96.29.04.58.08.86.08 1.11 0 2.14-.33 3-.96.29.25.58.46.86.71.72.54 1.57.96 2.57 1.04.14 0 .29.04.43.04 1.86 0 3.43-1.17 4-2.88.14-.33.14-.67.14-1 .04-1.67-.71-3.21-2.14-4.32zm-12.54 3.87c-.71 0-1.29-.58-1.29-1.29s.58-1.29 1.29-1.29 1.29.58 1.29 1.29-.58 1.29-1.29 1.29zm5.71 0c-.71 0-1.29-.58-1.29-1.29s.58-1.29 1.29-1.29 1.29.58 1.29 1.29-.58 1.29-1.29 1.29z"/>
         <path d="M12 22c-1.43 0-2.79-.29-4.04-.79-.14-.04-.29-.08-.43-.17l-3.04 1.04 1.04-3.04c-.08-.14-.12-.29-.17-.43C4.29 17.36 4 16 4 14.57c0-1.29.25-2.5.71-3.64.14.17.29.33.43.5.43.5.93.92 1.5 1.29-.29.58-.43 1.21-.43 1.86 0 2.71 2.21 4.93 4.93 4.93.64 0 1.29-.12 1.86-.43.36.54.79 1.07 1.29 1.5.17.14.33.29.5.43-1.07.42-2.28.67-3.57.67l-.22.32z"/>
     </svg>
 );
 
-// Google Maps Icon SVG (colorful)
-const GoogleMapsIcon = ({ size = 20, className = "" }) => (
+const GoogleMapsFallbackIcon = ({ size = 20, className = "" }) => (
     <svg width={size} height={size} viewBox="0 0 48 48" className={className}>
         <path fill="#48b564" d="M35.76 26.36h.01c.73-1.31 1.3-2.63 1.68-3.89.38-1.27.55-2.44.55-3.45 0-1.23-.25-2.47-.75-3.68-.5-1.21-1.25-2.35-2.22-3.32a10.8 10.8 0 0 0-3.32-2.22 10.16 10.16 0 0 0-3.68-.75c-1.72 0-3.37.42-4.87 1.12v.01c-1.46.68-2.77 1.64-3.86 2.79l-.02.02c-1.09 1.15-1.96 2.52-2.55 4.01l-.03.07c-.59 1.52-.89 3.17-.89 4.92 0 1.76.31 3.42.91 4.96l.02.05c.6 1.52 1.47 2.9 2.57 4.06l9.43 10.68.02.02c.2.23.52.34.83.3.31-.04.58-.23.72-.51l6.44-15.17z"/>
         <path fill="#fcc60e" d="M28.15 19.86c0 2.27-1.84 4.11-4.12 4.11-2.27 0-4.11-1.84-4.11-4.11 0-2.27 1.84-4.11 4.11-4.11 2.28 0 4.12 1.84 4.12 4.11z"/>
@@ -24,6 +23,13 @@ const GoogleMapsIcon = ({ size = 20, className = "" }) => (
         <path fill="#5695f6" d="M37.99 19.02c0 .87-.14 1.79-.44 2.81-.29 1.02-.75 2.09-1.36 3.18l-.01.02-6.44 15.17c-.08.19-.18.36-.31.51l5.53 7.2c.29.38.84.47 1.24.21.21-.13.35-.34.4-.57l6.07-25.4c.06-.23.02-.48-.11-.69-.13-.2-.33-.35-.57-.4a6.9 6.9 0 0 0-4-.04z"/>
     </svg>
 );
+
+// Icon with image + SVG fallback
+const BrandIcon = ({ src, fallback: Fallback, alt, size = 22 }) => {
+    const [error, setError] = useState(false);
+    if (error) return <Fallback size={size} />;
+    return <img src={src} alt={alt} width={size} height={size} onError={() => setError(true)} className="object-contain" />;
+};
 
 const LocationSection = () => {
     const { t } = useTranslation();
@@ -99,11 +105,11 @@ const LocationSection = () => {
 
                             <div className="flex flex-col sm:flex-row gap-4">
                                 <a href={wazeLink} target="_blank" rel="noreferrer" className="flex-1 bg-[#33ccff] hover:bg-[#00a1df] text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-blue-500/20">
-                                    <WazeIcon size={22} />
+                                    <BrandIcon src="/icons/waze.png" fallback={WazeFallbackIcon} alt="Waze" size={22} />
                                     Waze
                                 </a>
                                 <a href={googleMapsLink} target="_blank" rel="noreferrer" className="flex-1 bg-[#4285F4] hover:bg-[#3367D6] text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-blue-500/20">
-                                    <GoogleMapsIcon size={22} />
+                                    <BrandIcon src="/icons/google-maps.png" fallback={GoogleMapsFallbackIcon} alt="Google Maps" size={22} />
                                     Google Maps
                                 </a>
                             </div>
