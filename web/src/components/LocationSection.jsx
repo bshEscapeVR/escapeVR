@@ -25,10 +25,10 @@ const GoogleMapsFallbackIcon = ({ size = 20, className = "" }) => (
 );
 
 // Icon with image + SVG fallback
-const BrandIcon = ({ src, fallback: Fallback, alt, size = 22 }) => {
+const BrandIcon = ({ src, fallback: Fallback, alt, size = 24 }) => {
     const [error, setError] = useState(false);
     if (error) return <Fallback size={size} />;
-    return <img src={src} alt={alt} width={size} height={size} onError={() => setError(true)} className="object-contain" />;
+    return <img src={src} alt={alt} width={size} height={size} onError={() => setError(true)} className="object-contain rounded-sm" />;
 };
 
 const LocationSection = () => {
