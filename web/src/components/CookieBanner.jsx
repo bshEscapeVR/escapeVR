@@ -9,16 +9,16 @@ import { useParams } from 'next/navigation';
 const COOKIE_CONSENT_KEY = 'cookie_consent';
 
 const CookieBanner = () => {
-    // Start visible so crawlers/scanners can detect the banner in the DOM
-    const [hidden, setHidden] = useState(false);
+    // Start hidden to prevent flash, then show if no consent exists
+    const [hidden, setHidden] = useState(true);
     const { t } = useTranslation();
     const params = useParams();
     const lang = params?.lang || 'he';
 
     useEffect(() => {
         const consent = localStorage.getItem(COOKIE_CONSENT_KEY);
-        if (consent) {
-            setHidden(true);
+        if (!consent) {
+            setHidden(false);
         }
     }, []);
 
