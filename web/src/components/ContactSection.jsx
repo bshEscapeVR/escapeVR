@@ -62,7 +62,7 @@ const FormSelect = ({ label, options, placeholder, error, ...props }) => (
 
 const ContactCard = ({ icon: Icon, title, content, subContent, action, colorClass = "text-brand-primary", bgIcon = "bg-brand-primary/10", borderColor = "border-white/10 hover:border-brand-primary/50" }) => (
     // 👇 הוספתי transform-gpu למניעת רעידות
-    <div className={`bg-[#1a0b2e] border ${borderColor} rounded-xl p-5 transition-all duration-300 group text-start shadow-lg transform-gpu hover:scale-[1.02]`}>
+    <div className={`bg-[#1c0e38] border ${borderColor} rounded-xl p-5 transition-all duration-300 group text-start shadow-lg transform-gpu hover:scale-[1.02]`}>
         <div className="flex justify-between items-start">
             <div>
                 <h4 className="text-white font-bold text-lg">{title}</h4>
@@ -214,13 +214,13 @@ const ContactSection = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
 
                     {/* === טופס === */}
-                    <div className="bg-[#130620] border border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col h-full order-2 lg:order-1 relative z-20">
+                    <div className="bg-gradient-to-b from-[#1c0e38] to-[#140a2e] border border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col h-full order-2 lg:order-1 relative z-20">
 
                         <div className="flex border-b border-white/10">
                             <button
                                 type="button"
                                 onClick={() => setActiveTab('contact')}
-                                className={`flex-1 py-4 text-sm font-bold transition-all relative ${activeTab === 'contact' ? 'text-white bg-[#1a0b2e]' : 'text-gray-500 hover:bg-white/5 hover:text-gray-300'}`}
+                                className={`flex-1 py-4 text-sm font-bold transition-all relative ${activeTab === 'contact' ? 'text-white bg-[#1c0e38]' : 'text-gray-500 hover:bg-white/5 hover:text-gray-300'}`}
                             >
                                 {t('contact.tab_contact')}
                                 {activeTab === 'contact' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 shadow-[0_0_10px_#3b82f6]"></div>}
@@ -228,7 +228,7 @@ const ContactSection = () => {
                             <button
                                 type="button"
                                 onClick={() => setActiveTab('review')}
-                                className={`flex-1 py-4 text-sm font-bold transition-all relative ${activeTab === 'review' ? 'text-white bg-[#1a0b2e]' : 'text-gray-500 hover:bg-white/5 hover:text-gray-300'}`}
+                                className={`flex-1 py-4 text-sm font-bold transition-all relative ${activeTab === 'review' ? 'text-white bg-[#1c0e38]' : 'text-gray-500 hover:bg-white/5 hover:text-gray-300'}`}
                             >
                                 {t('contact.tab_review')}
                                 {activeTab === 'review' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-500 shadow-[0_0_10px_#22c55e]"></div>}
@@ -418,7 +418,7 @@ const ContactSection = () => {
                             action={<a href={`/${lang}#rooms`} className="absolute inset-0 z-10"></a>}
                         />
 
-                        <div className="bg-[#1a0b2e] border border-orange-500/30 rounded-xl p-5 relative overflow-hidden text-start group transition-all duration-300 transform-gpu hover:scale-[1.02] shadow-lg">
+                        <div className="bg-[#1c0e38] border border-orange-500/30 rounded-xl p-5 relative overflow-hidden text-start group transition-all duration-300 transform-gpu hover:scale-[1.02] shadow-lg">
                             <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-orange-400 to-red-500 rtl:left-auto rtl:right-0"></div>
                             <div className="flex justify-between items-start pl-2 rtl:pl-0 rtl:pr-2">
                                 <div>
