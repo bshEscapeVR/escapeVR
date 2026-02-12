@@ -24,6 +24,17 @@ async function getSettingsFromServer() {
   }
 }
 
+// Cloudinary favicon resizer - converts any uploaded image to proper favicon size
+function toFaviconUrl(url, size) {
+  if (!url) return '/favicon.ico';
+  // Insert Cloudinary transformation for resize + PNG format
+  if (url.includes('res.cloudinary.com') && url.includes('/upload/')) {
+    return url.replace('/upload/', `/upload/w_${size},h_${size},c_fill,f_png/`);
+  }
+  // Non-Cloudinary URL - return as-is
+  return url;
+}
+
 // --- Dynamic Metadata Generation ---
 export async function generateMetadata({ params }) {
   const { lang } = await params;
@@ -62,11 +73,17 @@ export async function generateMetadata({ params }) {
         }
       ],
     },
-    icons: {
-      icon: settings?.general?.faviconUrl
-        ? `${settings.general.faviconUrl}?v=${Date.now()}`
-        : '/favicon.ico',
-    },
+    icons: settings?.general?.faviconUrl
+      ? {
+          icon: [
+            { url: toFaviconUrl(settings.general.faviconUrl, 32), sizes: '32x32', type: 'image/png' },
+            { url: toFaviconUrl(settings.general.faviconUrl, 16), sizes: '16x16', type: 'image/png' },
+          ],
+          apple: [
+            { url: toFaviconUrl(settings.general.faviconUrl, 180), sizes: '180x180', type: 'image/png' },
+          ],
+        }
+      : { icon: '/favicon.ico' },
   };
 }
 
