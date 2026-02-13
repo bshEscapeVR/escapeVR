@@ -102,7 +102,8 @@ const ContactSection = () => {
         email: z.string().email(t('validation.email_invalid')),
         phone: z.string().regex(/^05\d-?\d{7}$/, t('validation.phone_invalid')).or(z.literal('')),
         message: z.string().min(5, t('validation.message_short')),
-        privacyConsent: z.literal(true, { errorMap: () => ({ message: t('validation.privacy_required') }) })
+        privacyConsent: z.literal(true, { errorMap: () => ({ message: t('validation.privacy_required') }) }),
+        marketingConsent: z.boolean().optional()
     });
 
     const reviewSchema = z.object({
@@ -111,7 +112,8 @@ const ContactSection = () => {
         roomId: z.string().min(1, t('validation.room_required')),
         rating: z.number().min(1).max(5),
         content: z.string().min(10, t('validation.review_short')),
-        privacyConsent: z.literal(true, { errorMap: () => ({ message: t('validation.privacy_required') }) })
+        privacyConsent: z.literal(true, { errorMap: () => ({ message: t('validation.privacy_required') }) }),
+        marketingConsent: z.boolean().optional()
     });
 
     // ערכי ברירת מחדל לטפסים - מוגדרים כקבוע לשימוש חוזר
