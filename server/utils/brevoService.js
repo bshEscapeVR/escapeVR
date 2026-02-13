@@ -17,18 +17,18 @@ const addContactToMailingList = async ({ email, name }) => {
     if (!email) return null;
 
     const apiInstance = new Brevo.ContactsApi();
-    apiInstance.setApiKey(Brevo.ContactsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
+    apiInstance.authentications.apiKey.apiKey = process.env.BREVO_API_KEY;
 
     const contact = new Brevo.CreateContact();
     contact.email = email;
     contact.listIds = [BREVO_LIST_ID];
-    contact.updateEnabled = true; // update if contact already exists
+    contact.updateEnabled = true;
     if (name) {
         contact.attributes = { FIRSTNAME: name };
     }
 
     try {
-        await apiInstance.createContact(contact);
+        const result = await apiInstance.createContact(contact);
         console.log(`Brevo: contact added - ${email}`);
         return true;
     } catch (error) {
