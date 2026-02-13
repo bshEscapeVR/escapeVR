@@ -25,11 +25,11 @@ const privacyContent = {
             },
             {
                 title: "4. שיתוף מידע עם צדדים שלישיים",
-                content: "אנו לא מוכרים, סוחרים או מעבירים את המידע האישי שלכם לצדדים שלישיים, למעט:\n• ספקי שירותי ענן לצורך תפעול האתר (אחסון תוכן ומשלוח דוא\"ל)\n• Google Analytics לצורך ניתוח סטטיסטי אנונימי של השימוש באתר\n• במקרים בהם נדרש על פי חוק או צו בית משפט"
+                content: "אנו לא מוכרים, סוחרים או מעבירים את המידע האישי שלכם לצדדים שלישיים, למעט:\n• ספקי שירותי ענן לצורך תפעול האתר (אחסון תוכן ומשלוח דוא\"ל)\n• Google Analytics לצורך ניתוח סטטיסטי אנונימי של השימוש באתר\n• Brevo (Sendinblue) - שירות דיוור, אליו מועברים שם וכתובת אימייל בלבד, רק אם נתתם הסכמה מפורשת לקבלת עדכונים שיווקיים\n• במקרים בהם נדרש על פי חוק או צו בית משפט"
             },
             {
-                title: "5. דוא\"ל תפעולי",
-                content: "בעת ביצוע הזמנה או שליחת פנייה באתר, ייתכן שנשלח לכם הודעת דוא\"ל הכוללת:\n• אישור הזמנה עם פרטי ההזמנה\n• מענה לפנייתכם\n\nמדובר בהודעות תפעוליות בלבד ולא בדיוור שיווקי. איננו שולחים ניוזלטרים או הודעות פרסומיות."
+                title: "5. דוא\"ל",
+                content: "בעת ביצוע הזמנה או שליחת פנייה באתר, ייתכן שנשלח לכם הודעת דוא\"ל הכוללת:\n• אישור הזמנה עם פרטי ההזמנה\n• מענה לפנייתכם\n\nהודעות אלו הן תפעוליות בלבד.\n\nבנוסף, אם סימנתם הסכמה לקבלת עדכונים ומבצעים בטופס יצירת קשר או ביקורת, כתובת האימייל והשם שלכם יועברו לשירות Brevo (Sendinblue) לצורך שליחת דיוור שיווקי. תוכלו להסיר את עצמכם מרשימת התפוצה בכל עת באמצעות קישור ההסרה שמופיע בכל הודעת דיוור, או על ידי פנייה אלינו."
             },
             {
                 title: "6. עוגיות (Cookies)",
@@ -71,11 +71,11 @@ const privacyContent = {
             },
             {
                 title: "4. Sharing Information with Third Parties",
-                content: "We do not sell, trade, or transfer your personal information to third parties, except:\n• Cloud service providers for website operation (content hosting and email delivery)\n• Google Analytics for anonymous statistical analysis of website usage\n• When required by law or court order"
+                content: "We do not sell, trade, or transfer your personal information to third parties, except:\n• Cloud service providers for website operation (content hosting and email delivery)\n• Google Analytics for anonymous statistical analysis of website usage\n• Brevo (Sendinblue) - email marketing service, to which only your name and email address are transferred, and only if you have given explicit consent to receive marketing updates\n• When required by law or court order"
             },
             {
-                title: "5. Operational Emails",
-                content: "When making a booking or submitting an inquiry on the website, we may send you an email including:\n• Booking confirmation with your booking details\n• A response to your inquiry\n\nThese are operational messages only, not marketing communications. We do not send newsletters or promotional messages."
+                title: "5. Emails",
+                content: "When making a booking or submitting an inquiry on the website, we may send you an email including:\n• Booking confirmation with your booking details\n• A response to your inquiry\n\nThese are operational messages only.\n\nAdditionally, if you have opted in to receive updates and promotions via the contact or review form, your email address and name will be shared with Brevo (Sendinblue) for marketing emails. You can unsubscribe at any time using the unsubscribe link included in every marketing email, or by contacting us directly."
             },
             {
                 title: "6. Cookies",
