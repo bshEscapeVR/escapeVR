@@ -293,6 +293,7 @@ const sendBookingConfirmationToCustomer = async (booking, roomName, roomImage) =
 
             <!-- Footer -->
             <div style="background: #0f0518; padding: 18px; text-align: center; border-radius: 0 0 16px 16px; border-left: 1px solid rgba(168,85,247,0.1); border-right: 1px solid rgba(168,85,247,0.1); border-bottom: 1px solid rgba(168,85,247,0.1);">
+                <a href="https://www.escapevr.co.il" style="display: inline-block; color: #a855f7; font-size: 14px; font-weight: 600; text-decoration: none; margin-bottom: 8px;">www.escapevr.co.il</a>
                 <p style="margin: 0; color: #9ca3af; font-size: 12px;">EscapeVR - חוויית מציאות מדומה בלתי נשכחת</p>
             </div>
         </div>
