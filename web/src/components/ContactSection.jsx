@@ -92,7 +92,7 @@ const ContactSection = () => {
     const [rooms, setRooms] = useState([]);
 
     // שליפת נתונים דינמיים מההגדרות (עם פולבק לערכים קבועים)
-    const contactPhone = settings?.general?.contactPhone || "054-8530162";
+    const contactPhone = settings?.general?.contactPhone || "0000000000";
     const contactEmail = settings?.general?.contactEmail || "escapevr.bsh@gmail.com";
 
     // 2. הגדרת הולידציות (Zod)

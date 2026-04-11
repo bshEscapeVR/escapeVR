@@ -14,7 +14,7 @@ const ContactPopup = () => {
     const params = useParams();
     const lang = params?.lang || 'he';
 
-    const contactPhone = settings?.general?.contactPhone || "054-8530162";
+    const contactPhone = settings?.general?.contactPhone || "0000000000";
 
     if (!isOpen) return null;
 

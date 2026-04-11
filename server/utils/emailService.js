@@ -221,7 +221,7 @@ const sendBookingConfirmationToCustomer = async (booking, roomName, roomImage) =
     if (!booking.customer.email) return; // אין מייל ללקוח - לא שולחים
 
     const date = new Date(booking.date).toLocaleDateString('he-IL');
-    const contactPhone = process.env.BUSINESS_PHONE || '054-8530162';
+    const contactPhone = process.env.BUSINESS_PHONE || '000-0000000';
     const logoUrl = await getLogoUrl();
 
     const roomImageHtml = roomImage

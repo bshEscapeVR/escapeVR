@@ -104,7 +104,7 @@ const seedData = async () => {
         const settings = {
             general: {
                 siteName: { he: "VR Escape Reality", en: "VR Escape Reality" },
-                contactPhone: "054-8530162",
+                contactPhone: "000-0000000",
                 contactEmail: "escapevr.bsh@gmail.com",
                 showBanner: true,
                 bannerText: { he: "אתר בהרצה - 20% הנחה להזמנות הראשונות!", en: "Soft Launch - 20% OFF for first bookings!" }

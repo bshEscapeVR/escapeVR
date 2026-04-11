@@ -14,7 +14,7 @@ const Footer = () => {
     const currentYear = new Date().getFullYear();
 
     // שליפת נתונים דינמיים עם פולבק ל-JSON
-    const contactPhone = settings?.general?.contactPhone || "054-8530162";
+    const contactPhone = settings?.general?.contactPhone || "0000000000";
     const contactEmail = settings?.general?.contactEmail || "escapevr.bsh@gmail.com";
     const address = tDB(settings?.general?.contactAddress) || t('footer.address');
     const siteName = tDB(settings?.general?.siteName) || t('footer.site_name');
