@@ -26,7 +26,7 @@ const Navbar = () => {
 
   const navLinks = [
     { name: t('navbar.home'), href: `/${language}` },
-    { name: t('navbar.rooms'), href: `/${language}#rooms` },
+    { name: t('navbar.rooms'), href: `/${language}/rooms` },
     { name: t('navbar.pricing'), href: `/${language}/pricing` },
     { name: t('navbar.contact'), href: `/${language}/contact` },
   ];

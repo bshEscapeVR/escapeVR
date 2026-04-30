@@ -4,7 +4,12 @@ const mongoose = require('mongoose');
 const Room = require('./models/Room');
 const SiteSettings = require('./models/SiteSettings');
 
-mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/vr_escape')
+if (!process.env.MONGO_URI) {
+    console.error('❌  MONGO_URI is not set in .env');
+    process.exit(1);
+}
+
+mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('MongoDB Connected for Seeding...'))
     .catch(err => {
         console.error(err);
@@ -104,7 +109,7 @@ const seedData = async () => {
         const settings = {
             general: {
                 siteName: { he: "VR Escape Reality", en: "VR Escape Reality" },
-                contactPhone: "000-0000000",
+                contactPhone: "053-4167771",
                 contactEmail: "escapevr.bsh@gmail.com",
                 showBanner: true,
                 bannerText: { he: "אתר בהרצה - 20% הנחה להזמנות הראשונות!", en: "Soft Launch - 20% OFF for first bookings!" }

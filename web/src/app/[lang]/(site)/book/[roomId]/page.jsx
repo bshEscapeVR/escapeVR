@@ -76,7 +76,7 @@ export default function BookingPage() {
 
                     {/* Back button */}
                     <button
-                        onClick={() => router.push(`/${lang}#rooms`)}
+                        onClick={() => router.push(`/${lang}/rooms`)}
                         className="flex items-center gap-2 text-gray-400 hover:text-brand-primary mb-8 transition-colors group"
                     >
                         <ArrowRight

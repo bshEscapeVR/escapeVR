@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { Star, Quote } from 'lucide-react';
-import { useTranslation } from 'react-i18next'; // 👈 ייבוא עבור ה-JSON
-import { useSettings } from '../context/SettingsContext'; // עבור זיהוי השפה הנוכחית לתאריך
+import { useTranslation } from 'react-i18next';
+import { useSettings } from '../context/SettingsContext';
 import getApi from '../api/axios';
 import SectionTitle from './ui/SectionTitle';
 import ReviewSkeleton from './ui/ReviewSkeleton';
@@ -79,11 +79,13 @@ const TestimonialsSection = () => {
                                 {/* פרטי הכותב */}
                                 <div className="mt-auto border-t border-white/5 pt-4">
                                     <h4 className="font-bold text-brand-secondary">{review.authorName}</h4>
-                                    
-                                    {/* תאריך מפורמט לפי השפה */}
-                                    <span className="text-xs text-gray-500 block mt-1">
-                                        {new Date(review.createdAt).toLocaleDateString(language === 'en' ? 'en-US' : 'he-IL')}
-                                    </span>
+
+                                    {/* שם החדר שנבחר בביקורת */}
+                                    {review.roomId?.title && (
+                                        <span className="text-xs text-gray-500 block mt-1">
+                                            {review.roomId.title[language] || review.roomId.title.he}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         ))}
