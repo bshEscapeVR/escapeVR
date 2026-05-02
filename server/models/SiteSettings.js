@@ -88,23 +88,13 @@ const SiteSettingsSchema = new mongoose.Schema({
 
     // הגדרות הזמנות
     booking: {
-        // Per-day operating window, keyed by day-of-week index (0 = Sunday … 6 = Saturday).
-        // Format: { "0": { open: "10:00", close: "22:00" }, "1": { ... }, ... }
-        //   open  → first slot start time (inclusive, "HH:MM")
-        //   close → last slot start time  (inclusive, "HH:MM"); sessions end at close + 60 min
-        //
-        // The slot generator produces a 15-minute interval grid from open to close.
-        // When a day has no entry the controller falls back to DEFAULT_OPEN / DEFAULT_CLOSE.
-        //
-        // Migration note: the previous schema stored arrays of fixed slot strings
-        // (e.g. ["10:00","11:30"]). The controller detects that legacy format and
-        // ignores it, using the hardcoded defaults until the admin reconfigures.
+        // Per-day allowed slot list, keyed by day-of-week index (0 = Sunday … 6 = Saturday).
+        // Format: { "0": ["10:00","11:30","13:00",...], "1": [...], ... }
+        // Each array contains "HH:MM" strings — the exact start times offered to users.
+        // When a day has no entry the controller falls back to generateIntervals(DEFAULT_OPEN, DEFAULT_CLOSE).
         weeklyHours: {
             type: Map,
-            of: new mongoose.Schema(
-                { open: String, close: String },
-                { _id: false }
-            ),
+            of:   [String],
             default: new Map(),
         },
     },

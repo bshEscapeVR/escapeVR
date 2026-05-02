@@ -20,9 +20,9 @@ const SLOT_INTERVAL_MIN     = 15;   // Time-picker increments (every 15 minutes)
 const LARGE_GROUP_THRESHOLD = 4;    // Groups > 4 require both physical stations
 const MOTZASH_MIN_HOUR      = 19;   // Saturday: only slots starting at 19:00+
 
-// Defaults when SiteSettings has no weeklyHours entry for a day.
-const DEFAULT_OPEN  = '10:00'; // first slot start
-const DEFAULT_CLOSE = '22:00'; // last  slot start (session ends at 23:00)
+// Default operating window — used when a day has no entry in SiteSettings.weeklyHours.
+const DEFAULT_OPEN  = '10:00';
+const DEFAULT_CLOSE = '22:00';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Private helpers
@@ -312,29 +312,28 @@ exports.getAvailableSlots = asyncHandler(async (req, res, next) => {
         return res.json({ status: 'success', data: [], reason: 'admin_blocked' });
     }
 
-    // ── 4. Load operating window → generate 15-minute candidates ────────────
-    let openStr  = DEFAULT_OPEN;
-    let closeStr = DEFAULT_CLOSE;
+    // ── 4. Load allowed slots for this day ───────────────────────────────────
+    let candidates;
 
     try {
         const settings = await SiteSettings.findOne().lean();
-        const dayKey   = String(dayOfWeek);
+        // .lean() returns the Map as a plain object — access by string key directly.
+        const dayCfg = settings?.booking?.weeklyHours?.[String(dayOfWeek)];
 
-        // SiteSettings.findOne().lean() returns weeklyHours as a plain object,
-        // not a Mongoose Map. Access it directly.
-        const dayCfg = settings?.booking?.weeklyHours?.[dayKey];
-
-        // Accept only the new { open, close } format.
-        // Legacy array format (old schema) is silently ignored — defaults apply.
-        if (dayCfg && !Array.isArray(dayCfg) && dayCfg.open && dayCfg.close) {
-            openStr  = dayCfg.open;
-            closeStr = dayCfg.close;
+        if (Array.isArray(dayCfg) && dayCfg.length > 0) {
+            // Primary format: admin-defined array of "HH:MM" slot strings.
+            candidates = [...dayCfg].sort();
+        } else if (dayCfg && dayCfg.open && dayCfg.close) {
+            // Backwards-compat: legacy { open, close } objects still in DB.
+            candidates = generateIntervals(dayCfg.open, dayCfg.close);
+        } else {
+            // No config for this day → 15-min grid from DEFAULT_OPEN to DEFAULT_CLOSE.
+            candidates = generateIntervals(DEFAULT_OPEN, DEFAULT_CLOSE);
         }
     } catch (err) {
         console.error('Error fetching SiteSettings:', err);
+        candidates = generateIntervals(DEFAULT_OPEN, DEFAULT_CLOSE);
     }
-
-    let candidates = generateIntervals(openStr, closeStr);
 
     // ── 5. Cheap in-memory filters (no extra DB calls needed) ────────────────
 

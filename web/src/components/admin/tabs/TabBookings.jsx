@@ -12,6 +12,7 @@ import NeonButton from '../../../components/ui/NeonButton';
 import Spinner from '../../../components/ui/Spinner';
 import BookingModal from '../../../components/BookingModal';
 import WeeklyScheduleEditor from '../../../components/admin/WeeklyScheduleEditor';
+import DayTimeline from '../../../components/admin/DayTimeline';
 import 'react-calendar/dist/Calendar.css';
 import '../../../BookingCalendarOverride.css';
 
@@ -117,6 +118,35 @@ const TabBookings = () => {
         return rooms.find(r => r._id === selectedRoomId);
     }, [rooms, selectedRoomId]);
 
+    // האם קיימת הזמנה פעילה בשעה הנבחרת ביום הנבחר — בדיקה בזיכרון ללא API נוסף
+    const selectedTimeSlot = watch('timeSlot');
+    const conflictAtSlot = useMemo(() => {
+        if (!selectedTimeSlot || !selectedDate || !bookings.length) return false;
+        const dateStr = format(new Date(selectedDate), 'yyyy-MM-dd');
+        return bookings.some((b) => {
+            if (!b.date || b.status === 'cancelled') return false;
+            try {
+                return (
+                    format(new Date(b.date), 'yyyy-MM-dd') === dateStr &&
+                    b.timeSlot === selectedTimeSlot
+                );
+            } catch { return false; }
+        });
+    }, [bookings, selectedDate, selectedTimeSlot]);
+
+    // כמויות משתתפים תקינות — לפי כרטיסי מחיר פעילים (מקור האמת, כולל קבוצות גדולות 5–8)
+    // fallback לטווח החדר אם המחירון עדיין לא נטען
+    const participantOptions = useMemo(() => {
+        const active = pricingPlans
+            .filter((p) => p.isActive)
+            .map((p) => p.players)
+            .sort((a, b) => a - b);
+        if (active.length > 0) return active;
+        const min = selectedRoom?.features?.minPlayers || 1;
+        const max = selectedRoom?.features?.maxPlayers || 10;
+        return Array.from({ length: max - min + 1 }, (_, i) => i + min);
+    }, [pricingPlans, selectedRoom]);
+
     // חישוב מחיר דינמי לפי כרטיסי המחיר (מקור האמת היחיד)
     useEffect(() => {
         if (!participants || pricingPlans.length === 0) {
@@ -136,12 +166,12 @@ const TabBookings = () => {
         }
     }, [participants, pricingPlans]);
 
-    // עדכון משתתפים כשמשנים חדר
+    // עדכון משתתפים כשמשנים חדר — כופה ערך תקין לפי המחירון
     useEffect(() => {
-        if (selectedRoom) {
+        if (selectedRoom && participantOptions.length > 0) {
             const currentParticipants = watch('participants');
-            const min = selectedRoom.features?.minPlayers || 1;
-            const max = selectedRoom.features?.maxPlayers || 10;
+            const min = participantOptions[0];
+            const max = participantOptions[participantOptions.length - 1];
 
             if (currentParticipants < min) {
                 setValue('participants', min);
@@ -149,7 +179,7 @@ const TabBookings = () => {
                 setValue('participants', max);
             }
         }
-    }, [selectedRoom, setValue, watch]);
+    }, [selectedRoom, participantOptions, setValue, watch]);
 
     // טעינת שעות פנויות כשמשנים חדר או תאריך
     useEffect(() => {
@@ -456,14 +486,10 @@ const TabBookings = () => {
             if (!confirmed) return;
         }
 
-        // ולידציה נוספת לפי החדר הנבחר
-        if (selectedRoom) {
-            const min = selectedRoom.features?.minPlayers || 1;
-            const max = selectedRoom.features?.maxPlayers || 10;
-            if (data.participants < min || data.participants > max) {
-                alert(`מספר משתתפים חייב להיות בין ${min} ל-${max}`);
-                return;
-            }
+        // ולידציה נוספת לפי כמויות המחירון
+        if (participantOptions.length > 0 && !participantOptions.includes(data.participants)) {
+            alert(`מספר משתתפים אינו תקין לפי המחירון הפעיל`);
+            return;
         }
 
         // מחיר סופי - אם הוזן מחיר ידני, משתמשים בו. אחרת המחיר האוטומטי
@@ -516,9 +542,9 @@ const TabBookings = () => {
         </div>
     );
 
-    // מגבלות החדר הנבחר
-    const minPlayers = selectedRoom?.features?.minPlayers || 1;
-    const maxPlayers = selectedRoom?.features?.maxPlayers || 10;
+    // מגבלות טווח המשתתפים — נגזר מ-participantOptions
+    const minPlayers = participantOptions[0] ?? selectedRoom?.features?.minPlayers ?? 1;
+    const maxPlayers = participantOptions[participantOptions.length - 1] ?? selectedRoom?.features?.maxPlayers ?? 10;
 
     return (
         <div className="animate-fade-in space-y-6">
@@ -886,23 +912,32 @@ const TabBookings = () => {
                                 )}
                             </div>
 
+                            {/* ציר תפוסה יומית */}
+                            <div className="md:col-span-2">
+                                <DayTimeline bookings={bookings} selectedDate={selectedDate} />
+                            </div>
+
                             {/* בחירת משתתפים דינמית */}
                             <div className="w-full">
                                 <label className="text-gray-400 text-xs font-bold uppercase mb-1 block">
                                     כמות משתתפים ({minPlayers}-{maxPlayers})
                                 </label>
                                 <div className="flex gap-2 flex-wrap">
-                                    {selectedRoom && [...Array(maxPlayers - minPlayers + 1).keys()].map(i => {
-                                        const num = i + minPlayers;
+                                    {selectedRoom && participantOptions.map(num => {
+                                        const isBlockedLarge = conflictAtSlot && num > 4;
                                         return (
                                             <button
                                                 key={num}
                                                 type="button"
-                                                onClick={() => setValue('participants', num)}
+                                                disabled={isBlockedLarge}
+                                                onClick={() => !isBlockedLarge && setValue('participants', num)}
+                                                title={isBlockedLarge ? 'שעה זו כבר תפוסה — לא ניתן להזמין קבוצה גדולה' : undefined}
                                                 className={`w-10 h-10 rounded-xl border flex items-center justify-center font-bold transition-all
-                                                    ${participants === num
-                                                        ? 'bg-brand-primary border-brand-primary text-white shadow-lg shadow-brand-primary/30'
-                                                        : 'border-white/10 bg-white/5 text-gray-400 hover:bg-white/10'
+                                                    ${isBlockedLarge
+                                                        ? 'opacity-30 cursor-not-allowed border-white/5 bg-white/5 text-gray-600'
+                                                        : participants === num
+                                                            ? 'bg-brand-primary border-brand-primary text-white shadow-lg shadow-brand-primary/30'
+                                                            : 'border-white/10 bg-white/5 text-gray-400 hover:bg-white/10'
                                                     }`}
                                             >
                                                 {num}
@@ -910,6 +945,11 @@ const TabBookings = () => {
                                         );
                                     })}
                                 </div>
+                                {conflictAtSlot && (
+                                    <p className="text-amber-400 text-xs mt-2 flex items-center gap-1">
+                                        <AlertCircle size={10}/> שעה זו כבר תפוסה — קבוצה גדולה (5+) אינה זמינה
+                                    </p>
+                                )}
                                 {errors.participants && (
                                     <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
                                         <AlertCircle size={10}/> {errors.participants.message}

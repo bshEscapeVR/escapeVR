@@ -18,8 +18,11 @@ const DAYS = [
 // שעת תחילת מוצ"ש המינימלית
 const MOTZASH_MIN_HOUR = 19;
 
-// שעות ברירת מחדל
-const DEFAULT_HOURS = ["10:00", "11:30", "13:00", "14:30", "16:00", "17:30", "19:00", "20:30", "22:00"];
+// ברירת מחדל: כל רבע שעה, 10:00–22:00 (49 slots)
+const DEFAULT_HOURS = Array.from({ length: 49 }, (_, i) => {
+    const total = 10 * 60 + i * 15;
+    return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+});
 
 const WeeklyScheduleEditor = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -43,7 +46,11 @@ const WeeklyScheduleEditor = () => {
                 const hours = {};
                 for (const day of DAYS) {
                     const dayKey = String(day.index);
-                    hours[dayKey] = settings.booking.weeklyHours[dayKey] || [...DEFAULT_HOURS];
+                    const stored = settings.booking.weeklyHours[dayKey];
+                    // Guard: only use stored value if it's a non-empty array of strings
+                    hours[dayKey] = Array.isArray(stored) && stored.length > 0
+                        ? stored
+                        : [...DEFAULT_HOURS];
                 }
                 setWeeklyHours(hours);
             } else {
