@@ -70,6 +70,18 @@ const BookingSchema = new mongoose.Schema(
             default: 'website',
         },
 
+        // ── Payment ──────────────────────────────────────────────────────────
+        payment: {
+            status: {
+                type: String,
+                enum: ['unpaid', 'paid', 'failed'],
+                default: 'unpaid',
+            },
+            // Unique token embedded in the uPay IPN callback URL for lookup
+            ref: { type: String, default: null },
+            transactionId: { type: String, default: null },
+        },
+
         isDeleted: { type: Boolean, default: false },
         deletedAt: { type: Date,    default: null  },
     },
@@ -125,5 +137,6 @@ BookingSchema.pre('save', async function () {
 BookingSchema.index({ startTime: 1, endTime: 1 });
 BookingSchema.index({ date: 1, status: 1, isDeleted: 1 });
 BookingSchema.index({ status: 1, isDeleted: 1 });
+BookingSchema.index({ 'payment.ref': 1 }, { sparse: true });
 
 module.exports = mongoose.model('Booking', BookingSchema);

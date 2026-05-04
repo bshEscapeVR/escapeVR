@@ -9,7 +9,8 @@ const authRouter = require('./auth');
 const leadsRouter = require('./leads');
 const reviewsRouter = require('./reviews');
 const statsRouter = require('./stats');
-const pricingRouter = require('./pricing');
+const pricingRouter  = require('./pricing');
+const paymentRouter  = require('./payment');
 
 // Routes
 router.use('/rooms', roomsRouter);
@@ -20,5 +21,6 @@ router.use('/leads', leadsRouter);
 router.use('/reviews', reviewsRouter);
 router.use('/stats', statsRouter);
 router.use('/pricing', pricingRouter);
+router.use('/payments', paymentRouter);
 
 module.exports = router;

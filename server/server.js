@@ -70,6 +70,7 @@ app.use(cors(corsOptions));
 
 // 5. Body parsing & NoSQL injection prevention
 app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: false })); // required for uPay IPN callbacks
 
 // Custom mongo sanitization (express-mongo-sanitize is incompatible with Express 5)
 app.use((req, res, next) => {
