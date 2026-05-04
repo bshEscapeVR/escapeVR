@@ -11,7 +11,7 @@ import { Users, Clock } from 'lucide-react';
 const DAY_START_MIN = 10 * 60; // 10:00
 const DAY_END_MIN   = 22 * 60; // 22:00
 const DAY_SPAN_MIN  = DAY_END_MIN - DAY_START_MIN; // 720 min = 100%
-const SESSION_MIN   = 60;
+const SESSION_MIN   = 75; // 1h 15m per session
 const HOUR_LABELS   = Array.from({ length: 13 }, (_, i) => i + 10); // [10…22]
 
 // ─────────────────────────────────────────────────────────────────────────────

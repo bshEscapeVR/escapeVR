@@ -44,7 +44,7 @@ const BookingSchema = new mongoose.Schema(
         // Required by the new overlap query in getAvailableSlots / createBooking.
         // Null on old documents until migrate.js runs.
         startTime: { type: Date }, // Israel wall-clock start time converted to UTC
-        endTime:   { type: Date }, // always startTime + 60 minutes
+        endTime:   { type: Date }, // always startTime + 75 minutes (1h 15m)
 
         customer: {
             fullName: { type: String, required: true },

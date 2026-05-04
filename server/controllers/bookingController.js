@@ -14,7 +14,7 @@ const { sendNewBookingAdminNotification, sendBookingConfirmationToCustomer } = r
 // ─────────────────────────────────────────────────────────────────────────────
 const ISRAEL_TZ             = 'Asia/Jerusalem';
 const TOTAL_STATIONS        = 2;    // Physical VR stations / rooms in the venue
-const BOOKING_DURATION_MIN  = 60;   // Every session lasts exactly 60 minutes
+const BOOKING_DURATION_MIN  = 75;   // Every session lasts exactly 75 minutes (1h 15m)
 const BOOKING_DURATION_MS   = BOOKING_DURATION_MIN * 60 * 1000;
 const SLOT_INTERVAL_MIN     = 15;   // Time-picker increments (every 15 minutes)
 const LARGE_GROUP_THRESHOLD = 4;    // Groups > 4 require both physical stations
@@ -86,7 +86,7 @@ const minutesToTimeStr = (mins) => {
  * Generate every 15-minute slot string from `openStr` through `closeStr` (inclusive).
  *
  * `open`  = first slot start time.
- * `close` = last  slot start time — a session starting here ends at close + 60 min.
+ * `close` = last  slot start time — a session starting here ends at close + 75 min.
  *
  * Example: open="10:00", close="22:00" → ["10:00","10:15", … ,"22:00"] (49 slots)
  */
@@ -177,7 +177,7 @@ const isTransactionUnsupported = (err) =>
 async function _reserveBooking({
     session,           // mongoose ClientSession or null (fallback mode)
     startTime,         // UTC Date — booking window start
-    endTime,           // UTC Date — booking window end (startTime + 60 min)
+    endTime,           // UTC Date — booking window end (startTime + 75 min)
     startOfDay,        // UTC Date — midnight of the booking date
     endOfDay,          // UTC Date — end of booking date
     israelDateStr,     // "YYYY-MM-DD" in Israel TZ
@@ -548,66 +548,110 @@ exports.updateBooking = asyncHandler(async (req, res, next) => {
     const { id } = req.params;
     const { roomId, date, timeSlot, customer, participantsCount, totalPrice, status } = req.body;
 
-    const existingBooking = await Booking.findById(id);
-    if (!existingBooking) {
-        return next(new AppError('Booking not found', 404));
+    // ── 1. Load & guard ───────────────────────────────────────────────────────
+    const existing = await Booking.findById(id);
+    if (!existing)          return next(new AppError('Booking not found', 404));
+    if (existing.isDeleted) return next(new AppError('Cannot edit a deleted booking', 400));
+
+    // ── 2. Resolve effective values ───────────────────────────────────────────
+    const newDate     = date             ? new Date(date)              : existing.date;
+    const newTimeSlot = timeSlot         || existing.timeSlot;
+    const newPCount   = participantsCount
+        ? parseInt(participantsCount, 10)
+        : existing.details.participantsCount;
+
+    if (isNaN(newPCount) || newPCount < 1 || newPCount > 8) {
+        return next(new AppError('participantsCount must be between 1 and 8', 400));
     }
-    if (existingBooking.isDeleted) {
-        return next(new AppError('Cannot edit a deleted booking', 400));
-    }
 
-    // Use the virtual for backwards-compatible single-room reading
-    const existingRoomId = existingBooking.primaryRoomId;
-
-    const newDate     = date     ? new Date(date) : existingBooking.date;
-    const newTimeSlot = timeSlot || existingBooking.timeSlot;
-    const newRoomId   = roomId   || existingRoomId;
-
-    const dateChanged = date     && new Date(date).toDateString() !== existingBooking.date.toDateString();
-    const slotChanged = timeSlot && timeSlot !== existingBooking.timeSlot;
-    const roomChanged = roomId   && roomId   !== existingRoomId?.toString();
-
-    if (dateChanged || slotChanged || roomChanged) {
-        // Simple conflict check for admin edits — no transaction needed here
-        // because admin changes are infrequent and always deliberate.
-        const conflicting = await Booking.findOne({
-            _id:       { $ne: id },
-            roomId:    newRoomId,
-            date:      newDate,
-            timeSlot:  newTimeSlot,
-            status:    { $ne: 'cancelled' },
-            isDeleted: { $ne: true },
-        });
-        if (conflicting) {
-            return next(new AppError('Slot already booked', 409));
-        }
-    }
+    // ── 3. Detect schedule-affecting changes ──────────────────────────────────
+    const dateChanged   = !!date             && newDate.toDateString()  !== existing.date.toDateString();
+    const slotChanged   = !!timeSlot         && timeSlot                !== existing.timeSlot;
+    const pCountChanged = !!participantsCount && newPCount              !== existing.details.participantsCount;
+    const scheduleChanged = dateChanged || slotChanged || pCountChanged;
 
     const updateData = {};
-    if (roomId)   updateData.roomId   = roomId;
-    if (date)     updateData.date     = new Date(date);
-    if (timeSlot) updateData.timeSlot = timeSlot;
+
+    // ── 4. Re-validate availability + re-assign stations when needed ──────────
+    //
+    // Any change to date, time, or participant count can alter how many physical
+    // stations are required or which window they occupy. We re-run the full
+    // station-counting check (same algorithm as createBooking) while excluding
+    // the booking being edited so it doesn't count against itself.
+    if (scheduleChanged) {
+        const israelDateStr  = toIsraelDateStr(newDate);
+        const newStartTime   = israelTimeToUTC(israelDateStr, newTimeSlot);
+        const newEndTime     = new Date(newStartTime.getTime() + BOOKING_DURATION_MS);
+        const stationsNeeded = newPCount > LARGE_GROUP_THRESHOLD ? 2 : 1;
+
+        const startOfDay = new Date(israelDateStr + 'T00:00:00Z');
+        const endOfDay   = new Date(israelDateStr + 'T23:59:59.999Z');
+
+        // Fetch the day's bookings excluding self
+        const dayBookings = await Booking.find({
+            _id:       { $ne: id },
+            date:      { $gte: startOfDay, $lte: endOfDay },
+            status:    { $ne: 'cancelled' },
+            isDeleted: { $ne: true },
+        }).lean();
+
+        const normalised   = dayBookings
+            .map(b => normalizeBookingTimes(b, israelDateStr))
+            .filter(Boolean);
+        const stationsUsed = countStationsUsed(normalised, newStartTime, newEndTime);
+
+        if (TOTAL_STATIONS - stationsUsed < stationsNeeded) {
+            return next(new AppError(
+                stationsNeeded === 2
+                    ? 'Not enough rooms available for a large group at this time'
+                    : 'Slot is no longer available',
+                409
+            ));
+        }
+
+        // Re-assign physical station IDs from the shared pool
+        const allRooms = await Room.find({ isActive: true }, '_id').lean();
+        const roomIdsInUse = new Set(
+            normalised
+                .filter(b => b.startTime < newEndTime && b.endTime > newStartTime)
+                .flatMap(b => (b.roomIds || []).map(rid => rid.toString()))
+        );
+        const assignedRoomIds = allRooms
+            .map(r => r._id)
+            .filter(id => !roomIdsInUse.has(id.toString()))
+            .slice(0, stationsNeeded);
+
+        updateData.startTime = newStartTime;
+        updateData.endTime   = newEndTime;
+        updateData.roomIds   = assignedRoomIds;
+        // Keep deprecated roomId in sync: prefer the chosen experience room, fall back to station 0
+        updateData.roomId    = roomId || existing.primaryRoomId || assignedRoomIds[0];
+    }
+
+    // ── 5. Simple field updates ───────────────────────────────────────────────
+    if (date)     updateData.date     = newDate;
+    if (timeSlot) updateData.timeSlot = newTimeSlot;
+    // roomId here is the experience/theme room (not a physical station) — only
+    // update the deprecated field when no schedule change already handled it.
+    if (roomId && !scheduleChanged) updateData.roomId = roomId;
     if (status)   updateData.status   = status;
 
-    // Re-compute startTime/endTime when the time slot changes
-    if (timeSlot || date) {
-        const targetDateStr = toIsraelDateStr(newDate);
-        const targetSlot    = newTimeSlot;
-        updateData.startTime = israelTimeToUTC(targetDateStr, targetSlot);
-        updateData.endTime   = new Date(updateData.startTime.getTime() + BOOKING_DURATION_MS);
+    if (customer) {
+        updateData.customer = {
+            ...(existing.customer.toObject?.() ?? existing.customer),
+            ...customer,
+        };
     }
 
-    if (customer) {
-        updateData.customer = { ...existingBooking.customer.toObject?.() ?? existingBooking.customer, ...customer };
-    }
     if (participantsCount || totalPrice) {
         updateData.details = {
-            ...existingBooking.details.toObject?.() ?? existingBooking.details,
-            ...(participantsCount && { participantsCount }),
+            ...(existing.details.toObject?.() ?? existing.details),
+            ...(participantsCount && { participantsCount: newPCount }),
             ...(totalPrice        && { totalPrice }),
         };
     }
 
+    // ── 6. Persist & respond ──────────────────────────────────────────────────
     const updatedBooking = await Booking.findByIdAndUpdate(id, updateData, {
         new: true, runValidators: true,
     })

@@ -8,7 +8,7 @@
  *   2. For every Booking that has a `roomId` but no `roomIds`, backfills:
  *        • roomIds  → [roomId]
  *        • startTime → UTC datetime reconstructed from date + timeSlot (Israel TZ)
- *        • endTime   → startTime + 60 minutes
+ *        • endTime   → startTime + 75 minutes
  *
  * Safe to run multiple times — already-migrated documents are skipped.
  *
@@ -22,7 +22,7 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 
 const ISRAEL_TZ = 'Asia/Jerusalem';
-const DURATION_MS = 60 * 60 * 1000; // 60 minutes in milliseconds
+const DURATION_MS = 75 * 60 * 1000; // 75 minutes in milliseconds (1h 15m)
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Helper: reconstruct a UTC Date from a stored `date` + `timeSlot` ("HH:MM")
