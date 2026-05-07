@@ -41,7 +41,7 @@ exports.initiatePayment = asyncHandler(async (req, res) => {
             ipnurl:                 `${serverUrl}/v1/payments/ipn?ref=${paymentRef}`,
             paymentdetails:         `הזמנה ${booking.bookingId} - חדר בריחה VR`,
             maxpayments:            '2',
-            livesystem:             '0', // sandbox — החזר ל-'1' לפני deploy
+            livesystem:             '1',
             commissionreduction:    '',
             createinvoiceandreceipt:'0',
             createinvoice:          '0',
