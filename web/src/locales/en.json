@@ -63,6 +63,7 @@
         "success": "Sent Successfully!",
         "error": "Error Sending",
         "google_prompt_title": "Thanks for your review!",
+        "google_prompt_title_before": "Want to share your experience on Google too?",
         "google_prompt_desc": "We'd love it if you shared it on Google too - it helps other adventurers find us.",
         "google_btn": "Write a review on Google",
         "copy_review": "Copy your review",

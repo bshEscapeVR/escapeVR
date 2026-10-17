@@ -420,10 +420,10 @@ const ContactSection = () => {
                                 </button>
                             </form>
 
-                            {/* הזמנה לשתף את הביקורת גם בגוגל */}
-                            {activeTab === 'review' && submittedReview && (
+                            {/* הזמנה לשתף ביקורת גם בגוגל - מוצג תמיד בטאב הביקורות, כפתור ההעתקה רק אחרי שליחה */}
+                            {activeTab === 'review' && (
                                 <div className="mt-6 p-5 rounded-xl border border-[#4285F4]/30 bg-[#4285F4]/10 text-start animate-fade-in">
-                                    <p className="text-white font-bold mb-1">{t('contact.google_prompt_title')}</p>
+                                    <p className="text-white font-bold mb-1">{submittedReview ? t('contact.google_prompt_title') : t('contact.google_prompt_title_before')}</p>
                                     <p className="text-gray-300 text-sm mb-4">{t('contact.google_prompt_desc')}</p>
                                     <div className="flex flex-col sm:flex-row gap-3">
                                         <a
@@ -434,6 +434,7 @@ const ContactSection = () => {
                                         >
                                             <ExternalLink size={18} /> {t('contact.google_btn')}
                                         </a>
+                                        {submittedReview && (
                                         <button
                                             type="button"
                                             onClick={copyReview}
@@ -441,6 +442,7 @@ const ContactSection = () => {
                                         >
                                             {copied ? <><CheckCircle size={18} /> {t('contact.copied')}</> : <><Copy size={18} /> {t('contact.copy_review')}</>}
                                         </button>
+                                        )}
                                     </div>
                                 </div>
                             )}
