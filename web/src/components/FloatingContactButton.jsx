@@ -23,8 +23,9 @@ const FloatingContactButton = () => {
             title={t('navbar.contact')}
             className="fixed bottom-8 left-8 md:bottom-10 md:left-12 z-[80] w-14 h-14 md:w-16 md:h-16 group"
         >
-            {/* גל מתרחב - גדל ונעלם, ואז מתחיל גל חדש */}
+            {/* גלים מתרחבים - גל חדש יוצא באמצע הגל הקודם, כך שתמיד יש גל בתנועה */}
             <span className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-500 to-cyan-400 animate-pulse-ring" />
+            <span className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-500 to-cyan-400 animate-pulse-ring [animation-delay:0.8s]" />
 
             {/* הכפתור עצמו */}
             <span className="relative flex items-center justify-center w-full h-full rounded-full bg-gradient-to-br from-purple-600 to-cyan-500 shadow-lg shadow-purple-500/40 group-hover:scale-110 transition-transform">
