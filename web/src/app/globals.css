@@ -22,11 +22,24 @@
   --animate-float-reverse: float-reverse 5s ease-in-out infinite;
   --animate-spin-slow: spin-slow 12s linear infinite;
   --animate-wiggle: wiggle 3s ease-in-out infinite;
+  --animate-zoom-in: zoomIn 0.25s ease-out forwards;
 }
 
 @keyframes glow {
   0% { box-shadow: 0 0 5px #a855f7; }
   100% { box-shadow: 0 0 20px #a855f7, 0 0 10px #a855f7; }
+}
+
+/* הגדלה מהמרכז לכל הכיוונים (כרטיס ביקורת מורחב) */
+@keyframes zoomIn {
+  0% { opacity: 0; transform: scale(0.85); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* הסתרת פס גלילה (קרוסלות) */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
 }
 
 @keyframes fadeIn {

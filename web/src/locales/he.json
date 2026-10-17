@@ -123,7 +123,13 @@
     "testimonials": {
         "title": "מה אומרים ההרפתקנים שלנו",
         "subtitle": "חוויות אמיתיות מהרפתקנים שבחרו להתנתק מהמציאות",
-        "google_review": "ביקורת מ-Google"
+        "google_review": "ביקורת מ-Google",
+        "read_more": "קרא עוד",
+        "close": "סגור",
+        "prev": "הקודם",
+        "next": "הבא",
+        "all_reviews": "לכל הביקורות ({{count}})",
+        "all_reviews_title": "כל הביקורות"
     },
     "pricing": {
         "title": "מחירון",
