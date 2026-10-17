@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { Plus, X, Phone, Save, Calendar as CalendarIcon, RefreshCw, AlertTriangle, Trash2, AlertCircle, RotateCcw, Trash, Eye, Users, Pencil, CheckCircle, Clock, Download } from 'lucide-react';
 import { exportBookingsToExcel } from '../../../utils/exportBookings';
 import { bookingService, roomService, pricingService } from '../../../services';
+import { calcTotalPrice, getPricedPlayerCounts } from '../../../utils/pricing';
 import { useBooking } from '../../../context/BookingContext';
 import { useSettings } from '../../../context/SettingsContext';
 import NeonButton from '../../../components/ui/NeonButton';
@@ -138,10 +139,7 @@ const TabBookings = () => {
     // כמויות משתתפים תקינות — לפי כרטיסי מחיר פעילים (מקור האמת, כולל קבוצות גדולות 5–8)
     // fallback לטווח החדר אם המחירון עדיין לא נטען
     const participantOptions = useMemo(() => {
-        const active = pricingPlans
-            .filter((p) => p.isActive)
-            .map((p) => p.players)
-            .sort((a, b) => a - b);
+        const active = getPricedPlayerCounts(pricingPlans); // כולל פריסת כרטיסי טווח (6-8 => 6,7,8)
         if (active.length > 0) return active;
         const min = selectedRoom?.features?.minPlayers || 1;
         const max = selectedRoom?.features?.maxPlayers || 10;
@@ -155,16 +153,8 @@ const TabBookings = () => {
             return;
         }
 
-        // חיפוש כרטיס מחיר מתאים לפי מספר המשתתפים
-        const matchingPlan = pricingPlans.find(plan => plan.players === participants && plan.isActive);
-
-        if (matchingPlan) {
-            // המחיר הסופי = מחיר לאדם * מספר משתתפים
-            setCalculatedPrice(matchingPlan.newPrice * participants);
-        } else {
-            // אם אין כרטיס מחיר מתאים, מציגים 0 (המנהל צריך להוסיף כרטיס)
-            setCalculatedPrice(0);
-        }
+        // מחיר לאדם * מספר משתתפים; 0 אם אין כרטיס מתאים (המנהל צריך להוסיף כרטיס)
+        setCalculatedPrice(calcTotalPrice(pricingPlans, participants));
     }, [participants, pricingPlans]);
 
     // עדכון משתתפים כשמשנים חדר — כופה ערך תקין לפי המחירון
@@ -300,8 +290,7 @@ const TabBookings = () => {
         const savedPrice = booking.details?.totalPrice || 0;
 
         // חישוב המחיר האוטומטי לפי כמות המשתתפים
-        const matchingPlan = pricingPlans.find(plan => plan.players === participantsCount && plan.isActive);
-        const autoPrice = matchingPlan ? matchingPlan.newPrice * participantsCount : 0;
+        const autoPrice = calcTotalPrice(pricingPlans, participantsCount);
 
         // אם המחיר השמור שונה מהאוטומטי - זה מחיר סופי שהמנהל הזין
         const hasFinalPrice = savedPrice > 0 && autoPrice > 0 && savedPrice !== autoPrice;
@@ -367,12 +356,7 @@ const TabBookings = () => {
     useEffect(() => {
         if (!editFormData?.participants || pricingPlans.length === 0) return;
 
-        const matchingPlan = pricingPlans.find(plan => plan.players === editFormData.participants && plan.isActive);
-        if (matchingPlan) {
-            setEditCalculatedPrice(matchingPlan.newPrice * editFormData.participants);
-        } else {
-            setEditCalculatedPrice(0);
-        }
+        setEditCalculatedPrice(calcTotalPrice(pricingPlans, editFormData.participants));
     }, [editFormData?.participants, pricingPlans]);
 
     // שמירת עריכה

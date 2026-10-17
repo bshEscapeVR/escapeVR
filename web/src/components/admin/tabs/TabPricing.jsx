@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Plus, Edit, Trash2, Save, Users, Tag, DollarSign, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, Users, Tag, DollarSign, ArrowUp, ArrowDown, AlertTriangle } from 'lucide-react';
 import { pricingService } from '../../../services';
 import NeonButton from '../../../components/ui/NeonButton';
 import Spinner from '../../../components/ui/Spinner';
+import { isRangePlan, formatPlanPlayers, getMissingPlayerCounts } from '../../../utils/pricing';
 
 const TabPricing = () => {
     const [plans, setPlans] = useState([]);
@@ -13,6 +14,7 @@ const TabPricing = () => {
 
     const initialPlanState = {
         players: 2,
+        maxPlayers: null, // null = כרטיס לכמות אחת; מספר = כרטיס טווח
         oldPrice: 0,
         newPrice: 0,
         discount: 0,
@@ -21,6 +23,7 @@ const TabPricing = () => {
     };
 
     const [formData, setFormData] = useState(initialPlanState);
+    const [isRange, setIsRange] = useState(false);
 
     useEffect(() => {
         fetchPlans();
@@ -40,6 +43,7 @@ const TabPricing = () => {
 
     const handleEdit = (plan) => {
         setFormData(plan);
+        setIsRange(isRangePlan(plan));
         setIsEditing(true);
     };
 
@@ -47,6 +51,7 @@ const TabPricing = () => {
         // קבע order לפי הכרטיס האחרון
         const maxOrder = plans.length > 0 ? Math.max(...plans.map(p => p.order || 0)) : -1;
         setFormData({ ...initialPlanState, order: maxOrder + 1 });
+        setIsRange(false);
         setIsEditing(true);
     };
 
@@ -67,6 +72,11 @@ const TabPricing = () => {
                 return;
             }
 
+            if (isRange && (!formData.maxPlayers || formData.maxPlayers <= formData.players)) {
+                alert("בכרטיס טווח, סוף הטווח חייב להיות גדול ממספר השחקנים ההתחלתי");
+                return;
+            }
+
             if (formData.newPrice <= 0) {
                 alert("יש להזין מחיר תקין");
                 return;
@@ -76,7 +86,11 @@ const TabPricing = () => {
             const calculatedDiscount = formData.oldPrice > 0
                 ? Math.round((1 - formData.newPrice / formData.oldPrice) * 100)
                 : 0;
-            const dataToSave = { ...formData, discount: calculatedDiscount };
+            const dataToSave = {
+                ...formData,
+                maxPlayers: isRange ? formData.maxPlayers : null, // כרטיס לכמות אחת - מנקים את סוף הטווח
+                discount: calculatedDiscount
+            };
 
             if (formData._id) {
                 await pricingService.update(formData._id, dataToSave);
@@ -126,12 +140,21 @@ const TabPricing = () => {
 
     // --- מסך רשימה ---
     if (!isEditing) {
+        const missingCounts = getMissingPlayerCounts(plans);
         return (
             <div className="animate-fade-in">
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-bold text-white">ניהול מחירון</h2>
                     <NeonButton onClick={handleCreate} icon={Plus}>הוסף כרטיס מחיר</NeonButton>
                 </div>
+
+                {/* אזהרה על כמויות שחקנים ללא מחיר (לא ניתן יהיה לבחור אותן בהזמנה) */}
+                {missingCounts.length > 0 && (
+                    <div className="mb-6 p-4 rounded-xl border border-yellow-500/30 bg-yellow-500/10 text-yellow-300 text-sm flex items-start gap-2">
+                        <AlertTriangle size={18} className="shrink-0 mt-0.5" />
+                        <span>אין מחיר מוגדר ל-{missingCounts.join(', ')} שחקנים. כמויות אלו לא יופיעו לבחירה ביצירת הזמנה.</span>
+                    </div>
+                )}
 
                 {plans.length === 0 ? (
                     <div className="text-center py-16 bg-[#1a0b2e] border border-white/10 rounded-xl">
@@ -152,7 +175,7 @@ const TabPricing = () => {
                                             <Users className="text-brand-neon" size={24} />
                                         </div>
                                         <div>
-                                            <h3 className="text-xl font-bold text-white">{plan.players} שחקנים</h3>
+                                            <h3 className="text-xl font-bold text-white">{formatPlanPlayers(plan)} שחקנים</h3>
                                             {!plan.isActive && <span className="text-xs text-red-400">לא פעיל</span>}
                                         </div>
                                     </div>
@@ -196,10 +219,12 @@ const TabPricing = () => {
                                             </span>
                                         </div>
                                     )}
-                                    <div className="flex items-center justify-between pt-2 border-t border-white/5">
-                                        <span className="text-gray-400 text-sm">סה"כ:</span>
-                                        <span className="text-white font-bold">₪{plan.totalPrice || plan.newPrice * plan.players}</span>
-                                    </div>
+                                    {!isRangePlan(plan) && (
+                                        <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                                            <span className="text-gray-400 text-sm">סה"כ:</span>
+                                            <span className="text-white font-bold">₪{plan.totalPrice || plan.newPrice * plan.players}</span>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Action buttons */}
@@ -252,14 +277,50 @@ const TabPricing = () => {
                     <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                         <Users size={18} /> כמות שחקנים
                     </h3>
-                    <input
-                        type="number"
-                        min="1"
-                        max="20"
-                        className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white text-2xl text-center font-bold"
-                        value={formData.players}
-                        onChange={e => setFormData({ ...formData, players: Number(e.target.value) })}
-                    />
+
+                    {/* סוג כרטיס */}
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                        {[{ value: false, label: 'כמות אחת' }, { value: true, label: 'טווח שחקנים' }].map(opt => (
+                            <button
+                                key={opt.label}
+                                type="button"
+                                onClick={() => setIsRange(opt.value)}
+                                className={`py-2 rounded-lg text-sm font-bold border transition-colors ${isRange === opt.value ? 'bg-brand-primary/20 border-brand-primary text-white' : 'border-white/10 text-gray-400 hover:bg-white/5'}`}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className={`grid ${isRange ? 'grid-cols-2' : 'grid-cols-1'} gap-4`}>
+                        <div>
+                            {isRange && <label className="text-xs text-gray-400 block mb-2">מ-</label>}
+                            <input
+                                type="number"
+                                min="1"
+                                max="20"
+                                className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white text-2xl text-center font-bold"
+                                value={formData.players}
+                                onChange={e => setFormData({ ...formData, players: Number(e.target.value) })}
+                            />
+                        </div>
+                        {isRange && (
+                            <div>
+                                <label className="text-xs text-gray-400 block mb-2">עד</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max="20"
+                                    className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white text-2xl text-center font-bold"
+                                    value={formData.maxPlayers || ''}
+                                    onChange={e => setFormData({ ...formData, maxPlayers: Number(e.target.value) || null })}
+                                />
+                            </div>
+                        )}
+                    </div>
+                    {isRange && (
+                        <p className="text-xs text-gray-500 mt-3">אותו מחיר לאדם לכל כמות בטווח. בהזמנה יוצעו כל הכמויות בטווח.</p>
+                    )}
                 </div>
 
                 {/* מחירים */}
@@ -298,21 +359,25 @@ const TabPricing = () => {
                         </div>
                     </div>
 
-                    {/* חישובים אוטומטיים */}
-                    <div className="mt-6 p-4 bg-black/30 rounded-lg border border-white/5">
-                        <div className={`grid ${formData.oldPrice > 0 ? 'grid-cols-2' : 'grid-cols-1'} gap-4 text-center`}>
-                            {formData.oldPrice > 0 && (
-                                <div>
-                                    <p className="text-gray-400 text-sm mb-1">אחוז הנחה</p>
-                                    <p className="text-2xl font-bold text-emerald-400">{calculatedDiscount}%</p>
-                                </div>
-                            )}
-                            <div>
-                                <p className="text-gray-400 text-sm mb-1">סה"כ ל-{formData.players} שחקנים</p>
-                                <p className="text-2xl font-bold text-cyan-400">₪{totalPrice}</p>
+                    {/* חישובים אוטומטיים (בכרטיס טווח אין סך כולל - מוצג רק אחוז הנחה אם יש) */}
+                    {(!isRange || formData.oldPrice > 0) && (
+                        <div className="mt-6 p-4 bg-black/30 rounded-lg border border-white/5">
+                            <div className={`grid ${formData.oldPrice > 0 && !isRange ? 'grid-cols-2' : 'grid-cols-1'} gap-4 text-center`}>
+                                {formData.oldPrice > 0 && (
+                                    <div>
+                                        <p className="text-gray-400 text-sm mb-1">אחוז הנחה</p>
+                                        <p className="text-2xl font-bold text-emerald-400">{calculatedDiscount}%</p>
+                                    </div>
+                                )}
+                                {!isRange && (
+                                    <div>
+                                        <p className="text-gray-400 text-sm mb-1">סה"כ ל-{formData.players} שחקנים</p>
+                                        <p className="text-2xl font-bold text-cyan-400">₪{totalPrice}</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
-                    </div>
+                    )}
                 </div>
 
                 {/* הגדרות */}

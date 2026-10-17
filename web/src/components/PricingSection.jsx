@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useContact } from '../context/ContactContext';
 import { useSettings } from '../context/SettingsContext';
 import SectionTitle from './ui/SectionTitle';
+import { formatPlanPlayers, isRangePlan } from '../utils/pricing';
 import getApi from '../api/axios';
 
 // Skeleton loader for pricing card
@@ -34,7 +35,7 @@ const PricingCardSkeleton = () => (
     </div>
 );
 
-const PricingCard = ({ players, oldPrice, newPrice, totalPrice, discount, features, onBook, t }) => {
+const PricingCard = ({ players, isRange, oldPrice, newPrice, totalPrice, discount, features, onBook, t }) => {
     // הצג מחיר ישן והנחה רק אם יש מחיר מקורי
     const showDiscount = oldPrice > 0 && discount > 0;
 
@@ -75,10 +76,14 @@ const PricingCard = ({ players, oldPrice, newPrice, totalPrice, discount, featur
                 <span className="text-gray-400 text-sm mr-1">{t('pricing.per_person')}</span>
             </div>
 
-            {/* Total Price */}
-            <p className="text-gray-400 text-sm text-center mb-6">
-                ({t('pricing.total')} ₪{totalPrice} {t('pricing.for')} {players} {t('pricing.players')})
-            </p>
+            {/* Total Price - רק בכרטיס לכמות אחת (בטווח הסך משתנה לפי מספר המשתתפים) */}
+            {isRange ? (
+                <div className="mb-6" />
+            ) : (
+                <p className="text-gray-400 text-sm text-center mb-6">
+                    ({t('pricing.total')} ₪{totalPrice} {t('pricing.for')} {players} {t('pricing.players')})
+                </p>
+            )}
 
             {/* Features List */}
             <ul className="space-y-3 mb-8 flex-grow">
@@ -195,7 +200,8 @@ const PricingSection = () => {
                             {firstRow.map((plan) => (
                                 <PricingCard
                                     key={plan._id}
-                                    players={plan.players}
+                                    players={formatPlanPlayers(plan)}
+                                    isRange={isRangePlan(plan)}
                                     oldPrice={plan.oldPrice}
                                     newPrice={plan.newPrice}
                                     totalPrice={plan.totalPrice || plan.newPrice * plan.players}
@@ -213,7 +219,8 @@ const PricingSection = () => {
                                 {secondRow.map((plan) => (
                                     <PricingCard
                                         key={plan._id}
-                                        players={plan.players}
+                                        players={formatPlanPlayers(plan)}
+                                        isRange={isRangePlan(plan)}
                                         oldPrice={plan.oldPrice}
                                         newPrice={plan.newPrice}
                                         totalPrice={plan.totalPrice || plan.newPrice * plan.players}

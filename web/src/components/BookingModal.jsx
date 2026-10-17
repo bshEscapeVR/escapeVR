@@ -10,6 +10,7 @@ import { useSettings } from '../context/SettingsContext';
 import NeonButton from './ui/NeonButton';
 import BookingModalSkeleton from './ui/BookingModalSkeleton';
 import { bookingService, roomService, pricingService } from '../services';
+import { calcTotalPrice } from '../utils/pricing';
 import 'react-calendar/dist/Calendar.css';
 import '../BookingCalendarOverride.css';
 
@@ -118,15 +119,8 @@ const BookingModal = () => {
         return;
     }
 
-    // חיפוש כרטיס מחיר מתאים לפי מספר המשתתפים
-    const matchingPlan = pricingPlans.find(plan => plan.players === participants && plan.isActive);
-
-    if (matchingPlan) {
-        // המחיר הסופי = מחיר לאדם * מספר משתתפים
-        setTotalPrice(matchingPlan.newPrice * participants);
-    } else {
-        setTotalPrice(0);
-    }
+    // המחיר הסופי = מחיר לאדם * מספר משתתפים (כולל כרטיסי טווח)
+    setTotalPrice(calcTotalPrice(pricingPlans, participants));
   }, [participants, pricingPlans]);
 
   // טעינת שעות פנויות

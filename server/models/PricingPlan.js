@@ -3,12 +3,21 @@ const mongoose = require('mongoose');
 const BilingualSchema = require('./Schemas/BilingualSchema');
 
 const PricingPlanSchema = new mongoose.Schema({
-    // כמות שחקנים
+    // כמות שחקנים (בכרטיס טווח - תחילת הטווח)
     players: {
         type: Number,
         required: true,
         min: 1,
         max: 20
+    },
+
+    // סוף טווח שחקנים (אופציונלי) - כרטיס "6-8 שחקנים" באותו מחיר לאדם.
+    // ריק = כרטיס רגיל לכמות אחת
+    maxPlayers: {
+        type: Number,
+        min: 1,
+        max: 20,
+        default: null
     },
 
     // מחיר מקורי לאדם
@@ -51,9 +60,14 @@ const PricingPlanSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-// וירטואל: חישוב מחיר כולל
+// וירטואל: האם זה כרטיס טווח
+PricingPlanSchema.virtual('isRange').get(function() {
+    return this.maxPlayers > this.players;
+});
+
+// וירטואל: חישוב מחיר כולל (בכרטיס טווח אין סך כולל קבוע)
 PricingPlanSchema.virtual('totalPrice').get(function() {
-    return this.newPrice * this.players;
+    return this.isRange ? null : this.newPrice * this.players;
 });
 
 // וירטואל: חישוב אחוז הנחה אם לא הוגדר
