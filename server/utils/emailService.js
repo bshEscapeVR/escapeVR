@@ -24,7 +24,7 @@ const getLogoUrl = async () => {
 };
 
 // שליחת מייל כללית
-const sendEmail = async ({ to, subject, html }) => {
+const sendEmail = async ({ to, subject, html, replyTo }) => {
     // אם לא הוגדרו משתני סביבה - לא לשלוח (מונע קריסה בפיתוח)
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
         console.warn('⚠️ Email not configured (EMAIL_USER / EMAIL_PASS missing). Skipping email.');
@@ -37,7 +37,8 @@ const sendEmail = async ({ to, subject, html }) => {
         from: `"EscapeVR" <${process.env.EMAIL_USER}>`,
         to,
         subject,
-        html
+        html,
+        ...(replyTo && { replyTo })
     };
 
     try {
@@ -70,6 +71,7 @@ const sendNewLeadNotification = async (lead) => {
 
     await sendEmail({
         to: adminEmail,
+        replyTo: lead.email ? `"${lead.fullName}" <${lead.email}>` : undefined, // "השב" במייל יגיע ישירות ללקוח
         subject: `📩 הודעה חדשה מטופס צור קשר - ${lead.fullName}`,
         html: `
         <div dir="rtl" style="font-family: 'Rubik', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -132,6 +134,7 @@ const sendNewBookingAdminNotification = async (booking, roomName, roomImage) => 
 
     await sendEmail({
         to: adminEmail,
+        replyTo: booking.customer.email ? `"${booking.customer.fullName}" <${booking.customer.email}>` : undefined,
         subject: `🎮 הזמנה חדשה ${booking.bookingId} - ${roomName}`,
         html: `
         <div dir="rtl" style="font-family: 'Rubik', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
