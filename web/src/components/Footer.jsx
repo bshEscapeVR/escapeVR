@@ -96,13 +96,15 @@ const Footer = () => {
                             </li>
                             <li className="flex items-center gap-3">
                                 <Phone size={18} className="text-brand-secondary" />
-                                <span dir="ltr" className="hover:text-white transition-colors">
+                                <a href={`tel:${contactPhone.replace(/[^\d+]/g, '')}`} dir="ltr" className="hover:text-white transition-colors">
                                     {contactPhone}
-                                </span>
+                                </a>
                             </li>
                             <li className="flex items-center gap-3">
                                 <Mail size={18} className="text-brand-secondary" />
-                                <span>{contactEmail}</span>
+                                <a href={`mailto:${contactEmail}`} className="hover:text-white transition-colors">
+                                    {contactEmail}
+                                </a>
                             </li>
                         </ul>
                     </div>
