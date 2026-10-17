@@ -80,6 +80,13 @@ const TestimonialsSection = () => {
                                 <div className="mt-auto border-t border-white/5 pt-4">
                                     <h4 className="font-bold text-brand-secondary">{review.authorName}</h4>
 
+                                    {/* ביקורת מגוגל - ייחוס לגוגל (נדרש לפי תנאי השימוש של Google) */}
+                                    {review.source === 'google' && (
+                                        <a href={review.externalUrl} target="_blank" rel="noreferrer" className="text-xs text-gray-500 hover:text-gray-300 block mt-1">
+                                            {t('testimonials.google_review', 'ביקורת מ-Google')}
+                                        </a>
+                                    )}
+
                                     {/* שם החדר שנבחר בביקורת */}
                                     {review.roomId?.title && (
                                         <span className="text-xs text-gray-500 block mt-1">

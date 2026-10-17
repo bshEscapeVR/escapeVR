@@ -35,21 +35,11 @@ const LocationSection = () => {
     const { t } = useTranslation();
     
     // מקבלים את language שכבר מטופל ובטוח לשימוש (לא יגרום לשגיאות)
-    const { language, settings, t: tDB } = useSettings(); 
+    const { language } = useSettings();
 
-    // 1. הגדרת שפה למפה
+    // הטמעת מפה רשמית של העסק בגוגל מפות - השפה מוחלפת לפי שפת האתר
     const mapLang = language === 'he' ? 'iw' : 'en';
-    
-    // 2. שם המקום שיופיע על הנעץ
-    const placeName = language === 'he' 
-        ? (tDB(settings?.general?.siteName) || "חדר בריחה VR") 
-        : "VR Escape Reality";
-
-    // חיפוש לפי כתובת מדויקת
-    const address = "נחל ניצנים 8, בית שמש";
-    const encodedAddress = encodeURIComponent(address);
-
-    const mapSrc = `https://maps.google.com/maps?q=${encodedAddress}&t=&z=17&ie=UTF8&iwloc=B&hl=${mapLang}&output=embed`;
+    const mapSrc = `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d6788.2029985870495!2d34.99079362551599!3d31.7131222741263!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1502c3c020df5e91%3A0xec0a654e0c9fdfc9!2z15fXk9eoINeR16jXmdeX15QgVlIg15HXmdeqINep157XqQ!5e0!3m2!1s${mapLang}!2sil!4v1786464322750!5m2!1s${mapLang}!2sil`;
 
     const wazeLink = "https://waze.com/ul/hsv8ukjjwk";
     const googleMapsLink = "https://www.google.com/maps/dir/?api=1&destination=Nahal+Nitzanim+8+Beit+Shemesh";
@@ -82,7 +72,7 @@ const LocationSection = () => {
                                 style={{border:0}}
                                 allowFullScreen=""
                                 loading="lazy"
-                                referrerPolicy="no-referrer-when-downgrade"
+                                referrerPolicy="strict-origin-when-cross-origin"
                                 title="Google Maps Location"
                             ></iframe>
                         </div>

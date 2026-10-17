@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Star, Check, X, Trash2, Quote, Calendar } from 'lucide-react';
+import { Star, Check, X, Trash2, Quote, Calendar, RefreshCw, ExternalLink } from 'lucide-react';
 import { reviewService } from '../../../services';
 import Spinner from '../../../components/ui/Spinner';
 import { format } from 'date-fns';
@@ -9,6 +9,8 @@ import { format } from 'date-fns';
 const TabReviews = () => {
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [syncing, setSyncing] = useState(false);
+    const [syncMessage, setSyncMessage] = useState(null);
 
     useEffect(() => {
         fetchReviews();
@@ -38,6 +40,21 @@ const TabReviews = () => {
         }
     };
 
+    const syncGoogle = async () => {
+        setSyncing(true);
+        setSyncMessage(null);
+        try {
+            const { added } = await reviewService.syncGoogle();
+            setSyncMessage({ ok: true, text: added ? `נוספו ${added} ביקורות חדשות מגוגל` : 'אין ביקורות חדשות בגוגל' });
+            if (added) fetchReviews();
+        } catch (err) {
+            console.error(err);
+            setSyncMessage({ ok: false, text: 'הסנכרון מגוגל נכשל' });
+        } finally {
+            setSyncing(false);
+        }
+    };
+
     const deleteReview = async (id) => {
         if (!window.confirm("האם למחוק את הביקורת לצמיתות?")) return;
         try {
@@ -57,9 +74,24 @@ const TabReviews = () => {
 
     return (
         <div className="animate-fade-in">
-            <div className="mb-6">
-                <h2 className="text-2xl font-bold text-white mb-2">ניהול ביקורות לקוחות</h2>
-                <p className="text-gray-400 text-sm">כאן תוכל לאשר ביקורות כדי שיופיעו באתר, או למחוק תוכן לא הולם.</p>
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                <div>
+                    <h2 className="text-2xl font-bold text-white mb-2">ניהול ביקורות לקוחות</h2>
+                    <p className="text-gray-400 text-sm">כאן תוכל לאשר ביקורות כדי שיופיעו באתר, או למחוק תוכן לא הולם. ביקורות חדשות מגוגל מפות נמשכות אוטומטית.</p>
+                </div>
+                <div className="flex flex-col items-stretch sm:items-end gap-2 shrink-0">
+                    <button
+                        onClick={syncGoogle}
+                        disabled={syncing}
+                        className="px-4 py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2 bg-[#4285F4] hover:bg-[#3367D6] text-white transition-colors disabled:opacity-60"
+                    >
+                        <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} />
+                        {syncing ? 'מסנכרן...' : 'סנכרן ביקורות מגוגל'}
+                    </button>
+                    {syncMessage && (
+                        <span className={`text-xs ${syncMessage.ok ? 'text-green-400' : 'text-red-400'}`}>{syncMessage.text}</span>
+                    )}
+                </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4">
@@ -85,8 +117,18 @@ const TabReviews = () => {
                                         <h3 className="font-bold text-lg text-white">{review.authorName}</h3>
                                         <span className="text-xs text-gray-500 bg-white/5 px-2 py-0.5 rounded-md flex items-center gap-1">
                                             <Calendar size={10} />
-                                            {format(new Date(review.createdAt), 'dd/MM/yyyy')}
+                                            {format(new Date(review.publishedAt || review.createdAt), 'dd/MM/yyyy')}
                                         </span>
+                                        {review.source === 'google' && (
+                                            <a
+                                                href={review.externalUrl}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="text-xs text-[#8ab4f8] bg-[#4285F4]/10 border border-[#4285F4]/30 px-2 py-0.5 rounded-md flex items-center gap-1 hover:bg-[#4285F4]/20"
+                                            >
+                                                Google <ExternalLink size={10} />
+                                            </a>
+                                        )}
                                     </div>
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <div className="flex text-yellow-400">

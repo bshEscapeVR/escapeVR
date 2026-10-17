@@ -22,6 +22,12 @@ const reviewService = {
     return response.data;
   },
 
+  // סנכרון ידני של ביקורות מגוגל מפות
+  syncGoogle: async () => {
+    const response = await httpService.post(`${ENDPOINT}/sync-google`);
+    return response.data;
+  },
+
   // מחיקת ביקורת
   remove: async (id) => {
     return await httpService.delete(`${ENDPOINT}/${id}`);

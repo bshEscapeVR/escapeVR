@@ -115,7 +115,8 @@
     },
     "testimonials": {
         "title": "What Our Adventurers Say",
-        "subtitle": "Real experiences from adventurers who chose to escape reality"
+        "subtitle": "Real experiences from adventurers who chose to escape reality",
+        "google_review": "Review from Google"
     },
     "pricing": {
         "title": "Pricing",
