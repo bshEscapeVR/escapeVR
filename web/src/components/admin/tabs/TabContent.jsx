@@ -193,7 +193,7 @@ const TabContent = ({ settings, update }) => {
                         label="חניה"
                         value={settings.content?.location?.parking}
                         onChange={(val) => handleContentChange('location', 'parking', val)}
-                        placeholder="השאר ריק לברירת מחדל: חניה זמינה במקום (כחול לבן / חניון תת קרקעי)"
+                        placeholder="השאר ריק לברירת מחדל: חניה זמינה במקום (כחול לבן)"
                     />
                 </div>
             </div>
