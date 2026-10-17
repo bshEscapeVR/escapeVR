@@ -26,6 +26,7 @@ const FloatingContactButton = () => {
             {/* גלים מתרחבים - גל חדש יוצא באמצע הגל הקודם, כך שתמיד יש גל בתנועה */}
             <span className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-500 to-cyan-400 animate-pulse-ring" />
             <span className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-500 to-cyan-400 animate-pulse-ring [animation-delay:0.8s]" />
+            <span className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-500 to-cyan-400 animate-pulse-ring [animation-delay:1.6s]" />
 
             {/* הכפתור עצמו */}
             <span className="relative flex items-center justify-center w-full h-full rounded-full bg-gradient-to-br from-purple-600 to-cyan-500 shadow-lg shadow-purple-500/40 group-hover:scale-110 transition-transform">
