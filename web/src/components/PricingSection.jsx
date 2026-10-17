@@ -141,17 +141,12 @@ const PricingSection = () => {
         fetchPricing();
     }, []);
 
-    // חישוב הפריסה בהתאם למספר הכרטיסים
-    const getGridLayout = () => {
-        const count = pricingPlans.length;
-        if (count <= 3) {
-            return { firstRow: pricingPlans, secondRow: [] };
-        }
-        // אם יש יותר מ-3, שים 3 בשורה הראשונה והשאר בשורה השנייה
-        return { firstRow: pricingPlans.slice(0, 3), secondRow: pricingPlans.slice(3) };
-    };
-
-    const { firstRow, secondRow } = getGridLayout();
+    // רוחב הרשת לפי מספר הכרטיסים - רשת אחת רציפה, כל הכרטיסים באותו גודל
+    const gridLayout = pricingPlans.length === 1
+        ? 'max-w-xs mx-auto'
+        : pricingPlans.length === 2
+            ? 'md:grid-cols-2 max-w-2xl mx-auto'
+            : 'md:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto';
 
     return (
         <section className="pt-8 pb-20 relative">
@@ -194,45 +189,22 @@ const PricingSection = () => {
                         <PricingCardSkeleton />
                     </div>
                 ) : (
-                    <>
-                        {/* First Row - up to 3 cards */}
-                        <div className={`grid grid-cols-1 ${firstRow.length === 1 ? 'max-w-xs mx-auto' : firstRow.length === 2 ? 'md:grid-cols-2 max-w-2xl mx-auto' : 'md:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto'} gap-6 mb-8`}>
-                            {firstRow.map((plan) => (
-                                <PricingCard
-                                    key={plan._id}
-                                    players={formatPlanPlayers(plan)}
-                                    isRange={isRangePlan(plan)}
-                                    oldPrice={plan.oldPrice}
-                                    newPrice={plan.newPrice}
-                                    totalPrice={plan.totalPrice || plan.newPrice * plan.players}
-                                    discount={plan.discount || plan.calculatedDiscount || 0}
-                                    features={defaultFeatures}
-                                    onBook={() => openContact()}
-                                    t={t}
-                                />
-                            ))}
-                        </div>
-
-                        {/* Second Row - remaining cards */}
-                        {secondRow.length > 0 && (
-                            <div className={`grid grid-cols-1 ${secondRow.length === 1 ? 'max-w-xs mx-auto' : 'md:grid-cols-2 max-w-2xl mx-auto'} gap-6`}>
-                                {secondRow.map((plan) => (
-                                    <PricingCard
-                                        key={plan._id}
-                                        players={formatPlanPlayers(plan)}
-                                        isRange={isRangePlan(plan)}
-                                        oldPrice={plan.oldPrice}
-                                        newPrice={plan.newPrice}
-                                        totalPrice={plan.totalPrice || plan.newPrice * plan.players}
-                                        discount={plan.discount || plan.calculatedDiscount || 0}
-                                        features={defaultFeatures}
-                                        onBook={() => openContact()}
-                                        t={t}
-                                    />
-                                ))}
-                            </div>
-                        )}
-                    </>
+                    <div className={`grid grid-cols-1 ${gridLayout} gap-6`}>
+                        {pricingPlans.map((plan) => (
+                            <PricingCard
+                                key={plan._id}
+                                players={formatPlanPlayers(plan)}
+                                isRange={isRangePlan(plan)}
+                                oldPrice={plan.oldPrice}
+                                newPrice={plan.newPrice}
+                                totalPrice={plan.totalPrice || plan.newPrice * plan.players}
+                                discount={plan.discount || plan.calculatedDiscount || 0}
+                                features={defaultFeatures}
+                                onBook={() => openContact()}
+                                t={t}
+                            />
+                        ))}
+                    </div>
                 )}
 
             </div>
