@@ -8,6 +8,7 @@ import { useSettings } from '../context/SettingsContext';
 import { roomService, leadService, reviewService } from '../services';
 import Link from 'next/link';
 import SectionTitle from './ui/SectionTitle';
+import EmailLink from './ui/EmailLink';
 
 // קישור לכתיבת ביקורת על העסק בגוגל מפות (לפי ה-Place ID של העסק)
 const GOOGLE_WRITE_REVIEW_URL = 'https://search.google.com/local/writereview?placeid=ChIJkV7fIMDDAhURyd-fDE5lCuw';
@@ -464,7 +465,7 @@ const ContactSection = () => {
 
                         <ContactCard
                             title={t('contact.label_email')}
-                            content={{ text: contactEmail, className: "text-cyan-400 break-all" }}
+                            content={{ text: <EmailLink email={contactEmail} className="text-cyan-400 break-all" />, className: "text-cyan-400" }}
                             icon={Mail}
                             colorClass="text-cyan-400" bgIcon="bg-cyan-500/10" borderColor="border-white/10 hover:border-cyan-500/50"
                         />

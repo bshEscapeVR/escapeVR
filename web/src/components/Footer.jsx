@@ -6,6 +6,7 @@ import { Facebook, Instagram, Phone, Mail, MapPin } from 'lucide-react'; // הו
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../context/SettingsContext';
 import { useContact } from '../context/ContactContext';
+import EmailLink from './ui/EmailLink';
 
 const Footer = () => {
     const { t } = useTranslation();
@@ -102,9 +103,7 @@ const Footer = () => {
                             </li>
                             <li className="flex items-center gap-3">
                                 <Mail size={18} className="text-brand-secondary" />
-                                <a href={`mailto:${contactEmail}`} className="hover:text-white transition-colors">
-                                    {contactEmail}
-                                </a>
+                                <EmailLink email={contactEmail} className="hover:text-white transition-colors" />
                             </li>
                         </ul>
                     </div>
