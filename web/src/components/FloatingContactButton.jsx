@@ -23,7 +23,7 @@ const FloatingContactButton = () => {
             title={t('navbar.contact')}
             className="fixed bottom-8 left-8 md:bottom-10 md:left-12 z-[80] w-14 h-14 md:w-16 md:h-16 group"
         >
-            {/* הילה פועמת - גדלה וקטנה */}
+            {/* גל מתרחב - גדל ונעלם, ואז מתחיל גל חדש */}
             <span className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-500 to-cyan-400 animate-pulse-ring" />
 
             {/* הכפתור עצמו */}

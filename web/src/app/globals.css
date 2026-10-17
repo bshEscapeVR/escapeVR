@@ -23,7 +23,7 @@
   --animate-spin-slow: spin-slow 12s linear infinite;
   --animate-wiggle: wiggle 3s ease-in-out infinite;
   --animate-zoom-in: zoomIn 0.25s ease-out forwards;
-  --animate-pulse-ring: pulseRing 1.2s ease-in-out infinite;
+  --animate-pulse-ring: pulseRing 1.6s ease-out infinite;
 }
 
 @keyframes glow {
@@ -37,10 +37,10 @@
   100% { opacity: 1; transform: scale(1); }
 }
 
-/* הילה פועמת סביב כפתור צור קשר הצף */
+/* גל מתרחב סביב כפתור צור קשר הצף - גדל ונעלם, ואז מתחיל גל חדש */
 @keyframes pulseRing {
-  0%, 100% { transform: scale(1); opacity: 0.6; }
-  50% { transform: scale(1.6); opacity: 0.2; }
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(1.8); opacity: 0; }
 }
 
 /* הסתרת פס גלילה (קרוסלות) */
