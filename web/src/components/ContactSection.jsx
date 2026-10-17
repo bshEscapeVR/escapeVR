@@ -2,12 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { Phone, Mail, Send, Star, User, Hash, CheckCircle, AlertCircle, Flame, FileText, Shield } from 'lucide-react';
+import { Phone, Mail, Send, Star, User, Hash, CheckCircle, AlertCircle, Flame, FileText, Shield, ExternalLink, Copy } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../context/SettingsContext';
 import { roomService, leadService, reviewService } from '../services';
 import Link from 'next/link';
 import SectionTitle from './ui/SectionTitle';
+
+// קישור לכתיבת ביקורת על העסק בגוגל מפות (לפי ה-Place ID של העסק)
+const GOOGLE_WRITE_REVIEW_URL = 'https://search.google.com/local/writereview?placeid=ChIJkV7fIMDDAhURyd-fDE5lCuw';
 
 // 1. ייבוא ספריות הולידציה
 import { useForm } from 'react-hook-form';
@@ -89,6 +92,8 @@ const ContactSection = () => {
 
     const [activeTab, setActiveTab] = useState('contact');
     const [status, setStatus] = useState('idle');
+    const [submittedReview, setSubmittedReview] = useState(null); // תוכן הביקורת שנשלחה - להעתקה לגוגל
+    const [copied, setCopied] = useState(false);
     const [rooms, setRooms] = useState([]);
 
     // שליפת נתונים דינמיים מההגדרות (עם פולבק לערכים קבועים)
@@ -161,7 +166,18 @@ const ContactSection = () => {
     useEffect(() => {
         reset(defaultFormValues);
         setStatus('idle');
+        setSubmittedReview(null);
     }, [activeTab, reset]);
+
+    const copyReview = async () => {
+        try {
+            await navigator.clipboard.writeText(submittedReview);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2500);
+        } catch (err) {
+            console.error('Copy failed:', err);
+        }
+    };
 
     const onSubmit = async (data) => {
         setStatus('loading');
@@ -184,6 +200,8 @@ const ContactSection = () => {
                     roomId: data.roomId,
                     marketingConsent: data.marketingConsent
                 });
+                // מוצג לכל מי ששלח ביקורת, ללא תלות בדירוג (מדיניות גוגל אוסרת סינון לפי דירוג)
+                setSubmittedReview(data.content);
             }
 
             setStatus('success');
@@ -401,6 +419,31 @@ const ContactSection = () => {
                                     {status === 'idle' && (activeTab === 'contact' ? t('contact.btn_send') : t('contact.btn_post'))}
                                 </button>
                             </form>
+
+                            {/* הזמנה לשתף את הביקורת גם בגוגל */}
+                            {activeTab === 'review' && submittedReview && (
+                                <div className="mt-6 p-5 rounded-xl border border-[#4285F4]/30 bg-[#4285F4]/10 text-start animate-fade-in">
+                                    <p className="text-white font-bold mb-1">{t('contact.google_prompt_title')}</p>
+                                    <p className="text-gray-300 text-sm mb-4">{t('contact.google_prompt_desc')}</p>
+                                    <div className="flex flex-col sm:flex-row gap-3">
+                                        <a
+                                            href={GOOGLE_WRITE_REVIEW_URL}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex-1 bg-[#4285F4] hover:bg-[#3367D6] text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors"
+                                        >
+                                            <ExternalLink size={18} /> {t('contact.google_btn')}
+                                        </a>
+                                        <button
+                                            type="button"
+                                            onClick={copyReview}
+                                            className="flex-1 border border-white/20 hover:bg-white/10 text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors"
+                                        >
+                                            {copied ? <><CheckCircle size={18} /> {t('contact.copied')}</> : <><Copy size={18} /> {t('contact.copy_review')}</>}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
