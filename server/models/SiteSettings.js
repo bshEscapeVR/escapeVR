@@ -75,6 +75,13 @@ const SiteSettingsSchema = new mongoose.Schema({
             subtitle: BilingualSchema,  // תת כותרת ("נשמח לשמוע מכם")
             talkTitle: BilingualSchema, // כותרת צד טופס ("דברו איתנו")
             talkDesc: BilingualSchema   // תיאור צד טופס
+        },
+
+        // --- Location Section (מיקום ודרכי הגעה) ---
+        location: {
+            address: BilingualSchema,   // כתובת + הנחיות הגעה
+            transport: BilingualSchema, // קווי תחבורה ציבורית
+            parking: BilingualSchema    // מידע על חניה
         }
     },
 

@@ -35,7 +35,13 @@ const LocationSection = () => {
     const { t } = useTranslation();
     
     // מקבלים את language שכבר מטופל ובטוח לשימוש (לא יגרום לשגיאות)
-    const { language } = useSettings();
+    const { language, settings, t: tDB } = useSettings();
+
+    // טקסטים מהדשבורד (אם הוגדרו), אחרת ברירת המחדל מקובץ התרגום
+    const location = settings?.content?.location;
+    const addressText = tDB(location?.address) || t('location.value_address');
+    const transportText = tDB(location?.transport) || t('location.value_transport');
+    const parkingText = tDB(location?.parking) || t('location.value_parking');
 
     // הטמעת מפה רשמית של העסק בגוגל מפות - השפה מוחלפת לפי שפת האתר
     const mapLang = language === 'he' ? 'iw' : 'en';
@@ -59,7 +65,7 @@ const LocationSection = () => {
                             </h3>
                             <div className="text-center md:text-end">
                                 <p className="text-white font-bold text-sm">{t('location.label_address')}</p>
-                                <p className="text-gray-300 text-sm">{t('location.value_address')}</p>
+                                <p className="text-gray-300 text-sm">{addressText}</p>
                             </div>
                         </div>
 
@@ -83,13 +89,13 @@ const LocationSection = () => {
                                     <h4 className="text-brand-secondary font-bold flex items-center gap-2 mb-2">
                                         <Bus size={18} /> {t('location.label_transport')}
                                     </h4>
-                                    <p className="text-gray-400 text-sm">{t('location.value_transport')}</p>
+                                    <p className="text-gray-400 text-sm">{transportText}</p>
                                 </div>
                                 <div>
                                     <h4 className="text-green-400 font-bold flex items-center gap-2 mb-2">
                                         <Car size={18} /> {t('location.label_parking')}
                                     </h4>
-                                    <p className="text-gray-400 text-sm">{t('location.value_parking')}</p>
+                                    <p className="text-gray-400 text-sm">{parkingText}</p>
                                 </div>
                             </div>
 

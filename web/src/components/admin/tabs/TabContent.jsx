@@ -2,7 +2,7 @@
 
 import React from 'react';
 import BilingualInput from '../../../components/admin/ui/BilingualInput';
-import { Layout, Info, Phone, MapPin, Grid3X3, Tag } from 'lucide-react';
+import { Layout, Info, Phone, MapPin, Grid3X3, Tag, Navigation } from 'lucide-react';
 
 // רכיב Input פשוט לשדות שאינם דו-לשוניים (כמו טלפון/מייל)
 const SimpleInput = ({ label, value, onChange, dir = "ltr" }) => (
@@ -167,7 +167,38 @@ const TabContent = ({ settings, update }) => {
                 </div>
             </div>
 
-            {/* --- 5. CONTACT INFO --- */}
+            {/* --- 5. LOCATION SECTION --- */}
+            <div className="bg-[#1a0b2e]/50 border border-white/10 p-4 md:p-6 rounded-2xl">
+                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2 pb-4 border-b border-white/5">
+                    <Navigation className="text-green-400" size={24} />
+                    מיקום ודרכי הגעה (ליד המפה)
+                </h3>
+
+                <div className="space-y-4">
+                    <BilingualInput
+                        label="כתובת והנחיות הגעה"
+                        value={settings.content?.location?.address}
+                        onChange={(val) => handleContentChange('location', 'address', val)}
+                        placeholder="השאר ריק לברירת מחדל: בית שמש, נחל ניצנים 8 (הכניסה בחניה מתחת לחסד)"
+                    />
+
+                    <BilingualInput
+                        label="תחבורה ציבורית"
+                        value={settings.content?.location?.transport}
+                        onChange={(val) => handleContentChange('location', 'transport', val)}
+                        placeholder="השאר ריק לברירת מחדל: קווים פנימיים המגיעים בסמוך למקום: 2, 3, 4, 22, 23, 26"
+                    />
+
+                    <BilingualInput
+                        label="חניה"
+                        value={settings.content?.location?.parking}
+                        onChange={(val) => handleContentChange('location', 'parking', val)}
+                        placeholder="השאר ריק לברירת מחדל: חניה זמינה במקום (כחול לבן / חניון תת קרקעי)"
+                    />
+                </div>
+            </div>
+
+            {/* --- 6. CONTACT INFO --- */}
             <div className="bg-[#1a0b2e]/50 border border-white/10 p-4 md:p-6 rounded-2xl">
                 <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2 pb-4 border-b border-white/5">
                     <Phone className="text-brand-primary" size={24} />
