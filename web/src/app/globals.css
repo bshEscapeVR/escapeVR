@@ -39,8 +39,8 @@
 
 /* הילה פועמת סביב כפתור צור קשר הצף */
 @keyframes pulseRing {
-  0%, 100% { transform: scale(1); opacity: 0.45; }
-  50% { transform: scale(1.35); opacity: 0.15; }
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.6); opacity: 0.2; }
 }
 
 /* הסתרת פס גלילה (קרוסלות) */

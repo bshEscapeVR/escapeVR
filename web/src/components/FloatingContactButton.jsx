@@ -21,10 +21,10 @@ const FloatingContactButton = () => {
             href={`/${language}/contact`}
             aria-label={t('navbar.contact')}
             title={t('navbar.contact')}
-            className="fixed bottom-5 left-5 z-[80] w-14 h-14 md:w-16 md:h-16 group"
+            className="fixed bottom-8 left-8 md:bottom-10 md:left-12 z-[80] w-14 h-14 md:w-16 md:h-16 group"
         >
             {/* הילה פועמת - גדלה וקטנה */}
-            <span className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-500 to-cyan-400 opacity-40 animate-pulse-ring" />
+            <span className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-500 to-cyan-400 animate-pulse-ring" />
 
             {/* הכפתור עצמו */}
             <span className="relative flex items-center justify-center w-full h-full rounded-full bg-gradient-to-br from-purple-600 to-cyan-500 shadow-lg shadow-purple-500/40 group-hover:scale-110 transition-transform">
