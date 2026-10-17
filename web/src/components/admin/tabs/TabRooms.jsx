@@ -188,22 +188,22 @@ const TabRooms = () => {
                         <div>
                             <label className="text-xs text-gray-400 block mb-1">זמן (דקות)</label>
                             <input type="number" className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-white"
-                                value={formData.features.durationMinutes} onChange={e => updateFeature('durationMinutes', Number(e.target.value))} />
+                                value={formData.features.durationMinutes || ''} onChange={e => updateFeature('durationMinutes', Number(e.target.value))} />
                         </div>
                         <div>
                             <label className="text-xs text-gray-400 block mb-1">רמת קושי (1-5)</label>
                             <input type="number" min="1" max="5" className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-white"
-                                value={formData.features.difficultyLevel} onChange={e => updateFeature('difficultyLevel', Number(e.target.value))} />
+                                value={formData.features.difficultyLevel || ''} onChange={e => updateFeature('difficultyLevel', Number(e.target.value))} />
                         </div>
                         <div>
                             <label className="text-xs text-gray-400 block mb-1">מינימום שחקנים</label>
                             <input type="number" className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-white"
-                                value={formData.features.minPlayers} onChange={e => updateFeature('minPlayers', Number(e.target.value))} />
+                                value={formData.features.minPlayers || ''} onChange={e => updateFeature('minPlayers', Number(e.target.value))} />
                         </div>
                         <div>
                             <label className="text-xs text-gray-400 block mb-1">מקסימום שחקנים</label>
                             <input type="number" className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-white"
-                                value={formData.features.maxPlayers} onChange={e => updateFeature('maxPlayers', Number(e.target.value))} />
+                                value={formData.features.maxPlayers || ''} onChange={e => updateFeature('maxPlayers', Number(e.target.value))} />
                         </div>
                     </div>
                     <div className="mt-4 flex items-center gap-2">
@@ -220,12 +220,12 @@ const TabRooms = () => {
                         <div>
                             <label className="text-xs text-gray-400 block mb-1">מחיר בסיס (למינימום)</label>
                             <input type="number" className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-white"
-                                value={formData.pricing.basePrice} onChange={e => updatePricing('basePrice', Number(e.target.value))} />
+                                value={formData.pricing.basePrice || ''} onChange={e => updatePricing('basePrice', Number(e.target.value))} />
                         </div>
                         <div>
                             <label className="text-xs text-gray-400 block mb-1">תוספת לכל אדם נוסף</label>
                             <input type="number" className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-white"
-                                value={formData.pricing.personPenalty} onChange={e => updatePricing('personPenalty', Number(e.target.value))} />
+                                value={formData.pricing.personPenalty || ''} placeholder="0" onChange={e => updatePricing('personPenalty', Number(e.target.value))} />
                         </div>
                     </div>
                 </div>

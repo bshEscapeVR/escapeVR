@@ -300,7 +300,7 @@ const TabPricing = () => {
                                 min="1"
                                 max="20"
                                 className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white text-2xl text-center font-bold"
-                                value={formData.players}
+                                value={formData.players || ''}
                                 onChange={e => setFormData({ ...formData, players: Number(e.target.value) })}
                             />
                         </div>
@@ -338,7 +338,7 @@ const TabPricing = () => {
                                     type="number"
                                     min="0"
                                     className="w-full bg-black/20 border border-white/10 rounded-lg p-3 pr-8 text-white text-lg"
-                                    value={formData.newPrice}
+                                    value={formData.newPrice || ''}
                                     onChange={e => setFormData({ ...formData, newPrice: Number(e.target.value) })}
                                 />
                             </div>

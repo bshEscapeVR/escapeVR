@@ -144,7 +144,8 @@ const TabWelcomePopup = () => {
                             type="number"
                             min="0"
                             max="30"
-                            value={formData.delaySeconds}
+                            value={formData.delaySeconds || ''}
+                            placeholder="0"
                             onChange={(e) => setFormData(prev => ({ ...prev, delaySeconds: Number(e.target.value) }))}
                             className="w-24 bg-black/30 border border-white/10 rounded-lg p-3 text-white text-center text-lg font-bold focus:outline-none focus:border-brand-primary"
                         />
