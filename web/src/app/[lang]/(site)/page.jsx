@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Hero from '../../../components/Hero';
+import RoomsGrid from '../../../components/RoomsGrid';
 import AboutSection from '../../../components/AboutSection';
 import TestimonialsSection from '../../../components/TestimonialsSection';
 import LocationSection from '../../../components/LocationSection';
@@ -12,6 +13,7 @@ export default function HomePage() {
     <div className="min-h-screen text-brand-text font-sans selection:bg-brand-neon selection:text-white">
       <main>
         <Hero />
+        <RoomsGrid />
         <AboutSection />
         <TestimonialsSection />
         <LocationSection />
