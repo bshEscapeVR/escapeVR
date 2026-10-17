@@ -28,7 +28,7 @@ const AllReviewsModal = ({ isOpen, onClose, reviews, language }) => {
                 {/* כותרת */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
                     <h3 className="text-xl md:text-2xl font-bold text-white">
-                        {t('testimonials.all_reviews_title')} <span className="text-gray-500 text-base">({reviews.length})</span>
+                        {t('testimonials.all_reviews_title')}
                     </h3>
                     <button
                         type="button"

@@ -158,7 +158,7 @@ const TestimonialsSection = () => {
                                     onClick={() => setIsModalOpen(true)}
                                     className="px-6 py-3 rounded-full font-bold text-white border border-brand-primary/50 hover:bg-brand-primary/20 transition-colors"
                                 >
-                                    {t('testimonials.all_reviews', { count: reviews.length })}
+                                    {t('testimonials.all_reviews')}
                                 </button>
                             </div>
                         )}

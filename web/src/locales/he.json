@@ -128,7 +128,7 @@
         "close": "סגור",
         "prev": "הקודם",
         "next": "הבא",
-        "all_reviews": "לכל הביקורות ({{count}})",
+        "all_reviews": "לכל הביקורות",
         "all_reviews_title": "כל הביקורות"
     },
     "pricing": {

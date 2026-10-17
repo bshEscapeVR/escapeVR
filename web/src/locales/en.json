@@ -128,7 +128,7 @@
         "close": "Close",
         "prev": "Previous",
         "next": "Next",
-        "all_reviews": "All reviews ({{count}})",
+        "all_reviews": "All reviews",
         "all_reviews_title": "All Reviews"
     },
     "pricing": {
