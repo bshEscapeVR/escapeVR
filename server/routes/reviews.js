@@ -19,6 +19,7 @@ router.post('/', validate(reviewSchema), reviewController.createReview);
 router.get('/', reviewController.getAllReviews);
 
 // Admin only
+router.post('/sync-google', auth, reviewController.syncGoogle);
 router.patch('/:id', auth, reviewController.toggleApproval);
 router.delete('/:id', auth, reviewController.deleteReview);
 

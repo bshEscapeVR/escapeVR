@@ -2,6 +2,8 @@
 const Review = require('../models/Review');
 const asyncHandler = require('../utils/asyncHandler');
 const { addContactToMailingList } = require('../utils/brevoService');
+const { syncGoogleReviews } = require('../utils/googleReviewsService');
+const AppError = require('../utils/AppError');
 
 // יצירת ביקורת (פומבי)
 exports.createReview = asyncHandler(async (req, res) => {
@@ -41,4 +43,15 @@ exports.toggleApproval = asyncHandler(async (req, res) => {
 exports.deleteReview = asyncHandler(async (req, res) => {
     await Review.findByIdAndDelete(req.params.id);
     res.status(204).json({ status: 'success', data: null });
+});
+
+// סנכרון ידני של ביקורות מגוגל מפות (אדמין)
+exports.syncGoogle = asyncHandler(async (req, res, next) => {
+    try {
+        const result = await syncGoogleReviews();
+        res.status(200).json({ status: 'success', data: result });
+    } catch (err) {
+        console.error('Google reviews sync error:', err.message);
+        return next(new AppError('סנכרון הביקורות מגוגל נכשל', 502));
+    }
 });

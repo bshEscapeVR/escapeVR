@@ -7,6 +7,7 @@ const rateLimit = require('express-rate-limit');
 const mainRouter = require('./routes/index');
 const errorMiddleware = require('./middleware/errorMiddleware');
 const uploadRouter = require('./routes/upload');
+const { startGoogleReviewsSync } = require('./utils/googleReviewsService');
 
 // === Verify required environment variables on startup ===
 const requiredEnvVars = ['JWT_SECRET', 'MONGO_URI'];
@@ -91,7 +92,10 @@ app.use((req, res, next) => {
 
 // 6. Database connection
 mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log('MongoDB Connected'))
+    .then(() => {
+        console.log('MongoDB Connected');
+        startGoogleReviewsSync();
+    })
     .catch(err => {
         console.error('MongoDB Connection Error:', err);
         process.exit(1);
