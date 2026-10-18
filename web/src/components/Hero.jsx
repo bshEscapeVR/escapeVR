@@ -6,12 +6,19 @@ import { useTranslation } from 'react-i18next';
 import { useSettings } from '../context/SettingsContext';
 import { useContact } from '../context/ContactContext';
 import TrailerModal from './TrailerModal';
+import useSiteStats from '../hooks/useSiteStats';
+
+// ערך סטטיסטיקה - skeleton קטן עד שהנתונים נטענים
+const StatValue = ({ value }) => value
+    ? <span className="text-white font-bold text-xl">{value}</span>
+    : <span className="h-7 w-10 bg-white/10 animate-pulse rounded" />;
 
 const Hero = () => {
     const { t } = useTranslation(); // תרגום סטטי (JSON)
     const { t: tDB, settings, getImg, loading } = useSettings(); // תרגום דינמי (DB)
     const { openContact } = useContact();
     const [isTrailerOpen, setIsTrailerOpen] = useState(false);
+    const stats = useSiteStats();
 
     return (
         <div className="relative min-h-[120vh] pt-20 pb-20 flex items-center justify-center">
@@ -93,21 +100,21 @@ const Hero = () => {
                     </button>
                 </div>
 
-                {/* Stats Grid - טקסטים מה-JSON */}
+                {/* Stats Grid - ערכים מחושבים מהחדרים והמחירון, תוויות מה-JSON */}
                 <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto">
                     <div className="bg-black/50 backdrop-blur-sm p-4 rounded-2xl border border-brand-primary/30 flex flex-col items-center">
                         <Users className="text-brand-neon mb-2" size={28} />
-                        <span className="text-white font-bold text-xl">2-6</span>
+                        <StatValue value={stats.players} />
                         <span className="text-gray-400 text-xs uppercase tracking-wide">{t('hero.stats_players')}</span>
                     </div>
                     <div className="bg-black/50 backdrop-blur-sm p-4 rounded-2xl border border-brand-primary/30 flex flex-col items-center">
                         <Clock className="text-blue-400 mb-2" size={28} />
-                        <span className="text-white font-bold text-xl">60</span>
+                        <StatValue value={stats.minutes} />
                         <span className="text-gray-400 text-xs uppercase tracking-wide">{t('hero.stats_minutes')}</span>
                     </div>
                     <div className="bg-black/50 backdrop-blur-sm p-4 rounded-2xl border border-brand-primary/30 flex flex-col items-center">
                         <Zap className="text-yellow-400 mb-2" size={28} />
-                        <span className="text-white font-bold text-xl">3</span>
+                        <StatValue value={stats.worlds} />
                         <span className="text-gray-400 text-xs uppercase tracking-wide">{t('hero.stats_worlds')}</span>
                     </div>
                 </div>
