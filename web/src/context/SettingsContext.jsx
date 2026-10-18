@@ -56,9 +56,11 @@ export const SettingsProvider = ({ children, lang, initialSettings }) => {
                 return path;
             }
 
-            // Regular images - inject f_auto,q_auto for optimization
+            // Regular images - inject q_auto (quality optimization, original format).
+            // No f_auto: content filters (e.g. Etrog) block Cloudinary's auto-format responses,
+            // which left room images blank for filtered visitors.
             if (!path.includes('f_auto') && !path.includes('q_auto')) {
-                return path.replace('/upload/', '/upload/f_auto,q_auto/');
+                return path.replace('/upload/', '/upload/q_auto/');
             }
             return path;
         }
