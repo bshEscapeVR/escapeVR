@@ -8,7 +8,8 @@ const TrailerModal = ({ isOpen, onClose, videoUrl }) => {
     // Check if URL is a YouTube link
     const getYouTubeEmbed = (url) => {
         if (!url) return null;
-        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+        // כולל קישורי Shorts ו-Live (youtube.com/shorts/ID, youtube.com/live/ID)
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|shorts\/|live\/|watch\?v=|&v=)([^#&?]*).*/;
         const match = url.match(regExp);
         if (match && match[2].length === 11) {
             return `https://www.youtube.com/embed/${match[2]}?autoplay=1`;
