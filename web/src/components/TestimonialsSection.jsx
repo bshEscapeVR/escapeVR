@@ -13,6 +13,9 @@ import AllReviewsModal from './reviews/AllReviewsModal';
 // פריט בקרוסלה: 1 בטלפון, 2 בטאבלט, 3 במחשב
 const SLIDE_CLASS = 'shrink-0 basis-full md:basis-1/2 lg:basis-1/3 px-3 snap-start';
 
+// זמן בין מעברים אוטומטיים (מילישניות)
+const AUTOPLAY_MS = 6000;
+
 const TestimonialsSection = () => {
     // t = תרגום סטטי מה-JSON
     const { t } = useTranslation();
@@ -28,6 +31,7 @@ const TestimonialsSection = () => {
     const trackRef = useRef(null);
     const [page, setPage] = useState(0);
     const [pageCount, setPageCount] = useState(1);
+    const [isHovered, setIsHovered] = useState(false);
 
     useEffect(() => {
         const fetchReviews = async () => {
@@ -69,14 +73,27 @@ const TestimonialsSection = () => {
         };
     }, [reviews, updatePages]);
 
-    const goToPage = (target) => {
+    const goToPage = useCallback((target) => {
         const el = trackRef.current;
         if (!el) return;
         const next = Math.max(0, Math.min(pageCount - 1, target));
         const isRtl = getComputedStyle(el).direction === 'rtl';
         const offset = next * el.clientWidth;
         el.scrollTo({ left: isRtl ? -offset : offset, behavior: 'smooth' });
-    };
+    }, [pageCount]);
+
+    // מעבר אוטומטי לעמוד הבא (ובסוף - חזרה להתחלה).
+    // נעצר כשהעכבר מעל הקרוסלה, כשהמודל פתוח, כשהטאב מוסתר, או כשהמשתמש ביקש להפחית תנועה.
+    // כל מעבר ידני משנה את page ולכן מאפס את הטיימר.
+    useEffect(() => {
+        if (pageCount <= 1 || isHovered || isModalOpen) return;
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        const id = setInterval(() => {
+            if (document.hidden) return;
+            goToPage(page >= pageCount - 1 ? 0 : page + 1);
+        }, AUTOPLAY_MS);
+        return () => clearInterval(id);
+    }, [page, pageCount, isHovered, isModalOpen, goToPage]);
 
     const closeModal = useCallback(() => setIsModalOpen(false), []);
 
@@ -113,8 +130,12 @@ const TestimonialsSection = () => {
                     </div>
                 ) : (
                     <>
-                        {/* קרוסלה - זזה רק בלחיצה על החיצים / החלקה, בלי תנועה אוטומטית */}
-                        <div className="relative md:px-14">
+                        {/* קרוסלה - זזה אוטומטית, וגם בלחיצה על החיצים / החלקה */}
+                        <div
+                            className="relative md:px-14"
+                            onPointerEnter={(e) => e.pointerType === 'mouse' && setIsHovered(true)}
+                            onPointerLeave={(e) => e.pointerType === 'mouse' && setIsHovered(false)}
+                        >
                             {hasMultiplePages && (
                                 <>
                                     <button type="button" onClick={leftAction} disabled={leftDisabled} aria-label={isRtlLang ? t('testimonials.next') : t('testimonials.prev')} className={`${arrowClass} left-0`}>
