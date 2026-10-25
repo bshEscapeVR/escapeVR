@@ -8,6 +8,12 @@ const PageSeoSchema = new mongoose.Schema({
     ogImage: String
 }, { _id: false });
 
+// שאלה ותשובה בודדת בשאלות הנפוצות
+const FaqItemSchema = new mongoose.Schema({
+    question: BilingualSchema,
+    answer: BilingualSchema
+});
+
 const SiteSettingsSchema = new mongoose.Schema({
     // טאב כללי ותמונות
     general: {
@@ -113,6 +119,14 @@ const SiteSettingsSchema = new mongoose.Schema({
         icon: { type: String, default: 'sparkles' },
         title: BilingualSchema,
         content: BilingualSchema
+    },
+
+    // שאלות נפוצות (סקשן בדף הבית + קישור בתפריט)
+    faq: {
+        enabled: { type: Boolean, default: true },
+        title: BilingualSchema,    // אופציונלי - ברירת מחדל מקובץ התרגום
+        subtitle: BilingualSchema, // אופציונלי
+        items: [FaqItemSchema]
     }
 
 }, { timestamps: true });
