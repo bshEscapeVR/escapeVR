@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Settings, Save, Image, FileText, Youtube, BarChart, LogOut, Calendar, MessageSquare, TrendingUp, ExternalLink, Layout, DollarSign, Sparkles } from 'lucide-react';
+import { Settings, Save, Image, FileText, Youtube, BarChart, LogOut, Calendar, MessageSquare, TrendingUp, ExternalLink, Layout, DollarSign, Sparkles, HelpCircle } from 'lucide-react';
 import { settingsService, authService } from '../../../../../services';
 import NeonButton from '../../../../../components/ui/NeonButton';
 import Spinner from '../../../../../components/ui/Spinner';
@@ -18,6 +18,7 @@ import TabLeads from '../../../../../components/admin/tabs/TabLeads';
 import TabRooms from '../../../../../components/admin/tabs/TabRooms';
 import TabPricing from '../../../../../components/admin/tabs/TabPricing';
 import TabWelcomePopup from '../../../../../components/admin/tabs/TabWelcomePopup';
+import TabFaq from '../../../../../components/admin/tabs/TabFaq';
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -37,6 +38,7 @@ export default function DashboardPage() {
         { id: 'reviews', label: 'ביקורות', icon: <MessageSquare size={15} /> },
         { id: 'seo', label: 'SEO', icon: <BarChart size={15} /> },
         { id: 'content', label: 'תוכן', icon: <FileText size={15} /> },
+        { id: 'faq', label: 'שאלות נפוצות', icon: <HelpCircle size={15} /> },
         { id: 'images', label: 'תמונות', icon: <Image size={15} /> },
         { id: 'trailer', label: 'טריילר', icon: <Youtube size={15} /> },
         { id: 'welcome', label: 'פופאפ כניסה', icon: <Sparkles size={15} /> },
@@ -165,12 +167,13 @@ export default function DashboardPage() {
                     {/* Settings tabs */}
                     {activeTab === 'seo' && <TabSEO settings={settings} update={updateSettingsState} />}
                     {activeTab === 'content' && <TabContent settings={settings} update={updateSettingsState} />}
+                    {activeTab === 'faq' && <TabFaq settings={settings} update={updateSettingsState} />}
                     {activeTab === 'images' && <TabImages settings={settings} update={updateSettingsState} />}
                     {activeTab === 'trailer' && <TabTrailer settings={settings} update={updateSettingsState} />}
                     {activeTab === 'welcome' && <TabWelcomePopup />}
 
                     {/* Global save button (only for settings tabs) */}
-                    {['seo', 'images', 'content', 'trailer'].includes(activeTab) && (
+                    {['seo', 'images', 'content', 'faq', 'trailer'].includes(activeTab) && (
                         <div className="mt-12 pt-8 border-t border-white/5 flex justify-end sticky bottom-0 bg-[#1a0b2e]/95 py-4 -mb-4 z-20 rounded-b-2xl">
                             <NeonButton onClick={handleSave} disabled={isSaving} icon={Save}>
                                 {isSaving ? 'שומר...' : 'שמור שינויים'}

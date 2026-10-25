@@ -5,6 +5,7 @@ import Hero from '../../../components/Hero';
 import RoomsGrid from '../../../components/RoomsGrid';
 import AboutSection from '../../../components/AboutSection';
 import TestimonialsSection from '../../../components/TestimonialsSection';
+import FaqSection from '../../../components/FaqSection';
 import LocationSection from '../../../components/LocationSection';
 import Footer from '../../../components/Footer';
 
@@ -16,6 +17,7 @@ export default function HomePage() {
         <RoomsGrid />
         <AboutSection />
         <TestimonialsSection />
+        <FaqSection />
         <LocationSection />
       </main>
 

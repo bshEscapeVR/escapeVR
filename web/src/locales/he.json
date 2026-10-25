@@ -3,6 +3,7 @@
         "home": "בית",
         "rooms": "חדרי בריחה",
         "pricing": "מחירון",
+        "faq": "שאלות נפוצות",
         "contact": "צור קשר",
         "book_btn": "הזמן הרפתקה",
         "site_name": "VR Escape Reality",
@@ -130,6 +131,10 @@
         "next": "הבא",
         "all_reviews": "לכל הביקורות",
         "all_reviews_title": "כל הביקורות"
+    },
+    "faq": {
+        "title": "שאלות נפוצות",
+        "subtitle": "כל מה שרציתם לדעת לפני שאתם נכנסים למציאות המדומה"
     },
     "pricing": {
         "title": "מחירון",

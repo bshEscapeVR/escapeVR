@@ -3,6 +3,7 @@
         "home": "Home",
         "rooms": "Escape Rooms",
         "pricing": "Pricing",
+        "faq": "FAQ",
         "contact": "Contact Us",
         "book_btn": "Book Your Adventure",
         "site_name": "VR Escape Reality",
@@ -130,6 +131,10 @@
         "next": "Next",
         "all_reviews": "All reviews",
         "all_reviews_title": "All Reviews"
+    },
+    "faq": {
+        "title": "Frequently Asked Questions",
+        "subtitle": "Everything you want to know before stepping into virtual reality"
     },
     "pricing": {
         "title": "Pricing",

@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { useContact } from '../context/ContactContext';
 import { useSettings } from '../context/SettingsContext';
 import { authService } from '../services';
+import { getVisibleFaqItems } from './FaqSection';
 
 const Navbar = () => {
   const { t, i18n } = useTranslation();
@@ -28,6 +29,10 @@ const Navbar = () => {
     { name: t('navbar.home'), href: `/${language}` },
     { name: t('navbar.rooms'), href: `/${language}/rooms` },
     { name: t('navbar.pricing'), href: `/${language}/pricing` },
+    // קישור לשאלות נפוצות בדף הבית - רק אם יש שאלות להציג
+    ...(getVisibleFaqItems(settings?.faq, tDB).length > 0
+      ? [{ name: t('navbar.faq'), href: `/${language}#faq` }]
+      : []),
     { name: t('navbar.contact'), href: `/${language}/contact` },
   ];
 
@@ -169,7 +174,7 @@ const Navbar = () => {
         
         <div className="mt-8">
             <button 
-                onClick={() => { openBooking(); setIsOpen(false); }} 
+                onClick={() => { openContact(); setIsOpen(false); }}
                 className="w-full bg-brand-neon text-white px-6 py-4 rounded-xl font-bold text-lg shadow-lg"
             >
             {t('navbar.book_btn')}
