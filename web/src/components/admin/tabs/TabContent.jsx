@@ -179,7 +179,7 @@ const TabContent = ({ settings, update }) => {
                         label="כתובת והנחיות הגעה"
                         value={settings.content?.location?.address}
                         onChange={(val) => handleContentChange('location', 'address', val)}
-                        placeholder="השאר ריק לברירת מחדל: בית שמש, נחל ניצנים 8 (הכניסה בחניה מתחת לחסד)"
+                        placeholder="השאר ריק לברירת מחדל: בית שמש, נחל ניצנים 8 (הכניסה בחניה מתחת ליש חסד)"
                     />
 
                     <BilingualInput

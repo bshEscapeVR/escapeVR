@@ -11,7 +11,17 @@ import { useSettings } from '../context/SettingsContext';
 import NeonButton from './ui/NeonButton';
 import BookingModalSkeleton from './ui/BookingModalSkeleton';
 import { bookingService, roomService, pricingService } from '../services';
-import { calcTotalPrice } from '../utils/pricing';
+import { calcTotalPrice, findPlanForPlayers } from '../utils/pricing';
+
+// סדר העולמות ברשימת הבחירה בחלון ההזמנה (לפי ה-slug של החדר). עולם שלא ברשימה יופיע אחריהם.
+// הראשון ברשימה הוא העולם שאנחנו ממליצים עליו למי שמגיע בפעם הראשונה.
+const BOOKING_ROOM_ORDER = ['captain-nemo', 'pyramid-mystery', 'abandoned-hostel'];
+const RECOMMENDED_ROOM_SLUG = BOOKING_ROOM_ORDER[0];
+
+const bookingRoomRank = (room) => {
+    const index = BOOKING_ROOM_ORDER.indexOf(room.slug);
+    return index === -1 ? BOOKING_ROOM_ORDER.length : index;
+};
 import 'react-calendar/dist/Calendar.css';
 import '../BookingCalendarOverride.css';
 
@@ -50,9 +60,9 @@ const BookingModal = () => {
   // 2. הגדרת סכמת הולידציה (Rules)
   const schema = z.object({
       roomId: z.string().min(1, t('booking_modal.err_room_required')),
-      date: z.date(),
+      date: z.date({ error: t('booking_modal.err_date_required') }),
       timeSlot: z.string().min(1, t('booking_modal.err_time_required')),
-      participants: z.number().min(1),
+      participants: z.number({ error: t('booking_modal.err_participants_required') }).min(1),
       fullName: z.string().min(2, t('booking_modal.err_name_short')),
       // ולידציה למספר ישראלי תקין (מתחיל ב-05, מכיל 10 ספרות, עם או בלי מקף)
       phone: z.string().regex(/^05\d-?\d{7}$/, t('booking_modal.err_phone_invalid')),
@@ -69,11 +79,12 @@ const BookingModal = () => {
       formState: { errors } 
   } = useForm({
       resolver: zodResolver(schema),
+      // הכל מתחיל ריק - הלקוח בוחר עולם, תאריך, שעה ומספר משתתפים בעצמו
       defaultValues: {
           roomId: '',
-          date: new Date(),
+          date: null,
           timeSlot: '',
-          participants: 2,
+          participants: null,
           fullName: '',
           phone: '',
           email: ''
@@ -94,22 +105,26 @@ const BookingModal = () => {
             roomService.getAll(),
             pricingService.getAll()
         ]).then(([roomsData, pricingData]) => {
-            setRooms(roomsData);
+            // sort יציב: עולמות שלא ב-BOOKING_ROOM_ORDER שומרים על הסדר שהגיע מהשרת
+            setRooms([...roomsData].sort((a, b) => bookingRoomRank(a) - bookingRoomRank(b)));
             setPricingPlans(pricingData);
+            // עולם נבחר מראש רק כשנכנסים מדף של חדר; אחרת הלקוח בוחר בעצמו (עם המלצה)
             if (preSelectedRoomId) {
                 setValue('roomId', preSelectedRoomId);
-            } else if (roomsData.length > 0 && !selectedRoomId) {
-                setValue('roomId', roomsData[0]._id);
             }
         }).catch(console.error);
     }
   }, [isOpen, preSelectedRoomId]);
 
   const selectedRoom = rooms.find(r => r._id === selectedRoomId);
+  const recommendedRoom = rooms.find(r => r.slug === RECOMMENDED_ROOM_SLUG);
 
-  // בדיקת מינימום משתתפים כשמשנים חדר
+  // מחיר לשחקן לפי כרטיס המחירון של מספר המשתתפים שנבחר
+  const pricePerPlayer = findPlanForPlayers(pricingPlans, participants)?.newPrice ?? null;
+
+  // בדיקת מינימום משתתפים כשמשנים חדר (רק אם כבר נבחר מספר משתתפים)
   useEffect(() => {
-    if (!selectedRoom) return;
+    if (!selectedRoom || !participants) return;
 
     if (participants < selectedRoom.features.minPlayers) {
         setValue('participants', selectedRoom.features.minPlayers);
@@ -129,8 +144,9 @@ const BookingModal = () => {
 
   // טעינת שעות היום, כל שעה עם מספר המשתתפים המקסימלי שאפשר להזמין בה
   // (שעות לא נעלמות - שעה שלא מתאימה לגודל הקבוצה מוצגת באפור עם הסבר)
+  // השעות לא תלויות בעולם שנבחר (שני החדרים והמשקפות משותפים לכל העולמות) - מספיק תאריך
   useEffect(() => {
-    if (!selectedRoomId || !selectedDate) return;
+    if (!selectedDate) return;
 
     const fetchSlots = async () => {
         const dateStr = format(selectedDate, 'yyyy-MM-dd');
@@ -148,11 +164,13 @@ const BookingModal = () => {
     };
 
     fetchSlots();
-  }, [selectedRoomId, selectedDate]);
+  }, [selectedDate]);
 
-  // מינימום ומקסימום משתתפים של העולם שנבחר
-  const roomMin = selectedRoom?.features?.minPlayers || 1;
-  const roomMax = selectedRoom?.features?.maxPlayers || 8;
+  // מינימום ומקסימום משתתפים: של העולם שנבחר, ולפני בחירת עולם - הטווח של כל העולמות
+  const roomMin = selectedRoom?.features?.minPlayers
+      ?? (rooms.length ? Math.min(...rooms.map(r => r.features?.minPlayers || 1)) : 1);
+  const roomMax = selectedRoom?.features?.maxPlayers
+      ?? (rooms.length ? Math.max(...rooms.map(r => r.features?.maxPlayers || 8)) : 8);
 
   // המקסימום בשעה שנבחרה (null = לא נבחרה שעה)
   const selectedSlotMax = availableSlots.find(s => s.time === selectedSlot)?.maxPlayers ?? null;
@@ -246,28 +264,37 @@ const BookingModal = () => {
                             className="w-full bg-[#0f0518] border border-white/10 rounded-lg p-3 text-white outline-none focus:border-brand-primary appearance-none"
                             {...register('roomId')} // חיבור ל-Hook Form
                         >
+                            <option value="" disabled className="text-gray-400 bg-[#1a0b2e]">
+                                {t('booking_modal.choose_room')}
+                            </option>
                             {rooms.map(r => (
                                 <option key={r._id} value={r._id} className="text-white bg-[#1a0b2e]">
-                                    {tDB(r.title)}
+                                    {tDB(r.title)}{r.slug === RECOMMENDED_ROOM_SLUG ? ` ⭐ ${t('booking_modal.recommended_tag')}` : ''}
                                 </option>
                             ))}
                         </select>
                         <div className="absolute top-4 left-4 pointer-events-none rtl:right-auto rtl:left-4 ltr:right-4 ltr:left-auto text-gray-500 text-xs">▼</div>
                     </div>
+                    {recommendedRoom && (
+                        <p className="text-xs text-yellow-300/90 mt-2">
+                            💡 {t('booking_modal.recommended_hint', { room: tDB(recommendedRoom.title) })}
+                        </p>
+                    )}
                     {errors.roomId && <p className="text-red-400 text-xs mt-1">{errors.roomId.message}</p>}
                 </div>
 
                 {selectedRoom && (
-                    <>
-                        <img src={getImg(selectedRoom.images?.main)} alt="" className="rounded-lg h-32 w-full object-cover mb-2 border border-white/10" />
-                        <div className="space-y-3 text-sm text-gray-300 bg-white/5 p-4 rounded-xl">
-                            <div className="flex justify-between border-b border-white/5 pb-2"><span>{t('booking_modal.label_participants')}</span> <span>{participants}</span></div>
-                            <div className="flex justify-between border-b border-white/5 pb-2"><span>{t('booking_modal.label_date')}</span> <span>{format(selectedDate, 'dd/MM/yyyy')}</span></div>
-                            <div className="flex justify-between border-b border-white/5 pb-2"><span>{t('booking_modal.label_time')}</span> <span className="text-brand-primary font-bold">{selectedSlot || '--:--'}</span></div>
-                            <div className="flex justify-between text-lg font-bold text-white pt-1"><span>{t('booking_modal.label_total')}</span> <span>₪{totalPrice}</span></div>
-                        </div>
-                    </>
+                    <img src={getImg(selectedRoom.images?.main)} alt="" className="rounded-lg h-32 w-full object-cover mb-2 border border-white/10" />
                 )}
+
+                {/* סיכום ההזמנה - תמיד מוצג, כל שדה מתמלא כשהלקוח בוחר ("—" עד אז) */}
+                <div className="space-y-3 text-sm text-gray-300 bg-white/5 p-4 rounded-xl">
+                    <div className="flex justify-between border-b border-white/5 pb-2"><span>{t('booking_modal.label_participants')}</span> <span>{participants || '—'}</span></div>
+                    <div className="flex justify-between border-b border-white/5 pb-2"><span>{t('booking_modal.label_date')}</span> <span>{selectedDate ? format(selectedDate, 'dd/MM/yyyy') : '—'}</span></div>
+                    <div className="flex justify-between border-b border-white/5 pb-2"><span>{t('booking_modal.label_time')}</span> <span className="text-brand-primary font-bold" dir="ltr">{selectedSlot || '--:--'}</span></div>
+                    <div className="flex justify-between border-b border-white/5 pb-2"><span>{t('booking_modal.label_per_player')}</span> <span>{participants && pricePerPlayer !== null ? `₪${pricePerPlayer}` : '—'}</span></div>
+                    <div className="flex justify-between text-lg font-bold text-white pt-1"><span>{t('booking_modal.label_total')}</span> <span>{participants && totalPrice ? `₪${totalPrice}` : '—'}</span></div>
+                </div>
             </div>
 
             {/* צד שמאל/ימין - הטופס */}
@@ -283,6 +310,7 @@ const BookingModal = () => {
                                 locale="he-IL"
                                 className="text-sm w-full"
                              />
+                             {errors.date && <p className="text-red-400 text-xs mt-2 flex items-center gap-1"><AlertCircle size={10}/> {errors.date.message}</p>}
                         </div>
 
                         <div className="w-full">
@@ -316,7 +344,12 @@ const BookingModal = () => {
                                             )}
                                         </button>
                                     );
-                                }) : <p className="text-xs text-gray-500 col-span-3 text-center py-4">{t('booking_modal.no_slots')}</p>}
+                                }) : (
+                                    // לפני בחירת תאריך - מבקשים לבחור תאריך (לא "אין תורים", שמטעה)
+                                    <p className="text-xs text-gray-500 col-span-3 sm:col-span-4 md:col-span-5 text-center py-4">
+                                        {selectedDate ? t('booking_modal.no_slots') : t('booking_modal.choose_date_first')}
+                                    </p>
+                                )}
                             </div>
                             {slotNotice && <p className="text-yellow-300 text-xs mt-2 flex items-center gap-1"><AlertCircle size={12}/> {slotNotice}</p>}
                             {errors.timeSlot && <p className="text-red-400 text-xs mt-2 flex items-center gap-1"><AlertCircle size={10}/> {errors.timeSlot.message}</p>}
@@ -324,12 +357,11 @@ const BookingModal = () => {
                     </div>
                 </div>
 
-                {selectedRoom && (
                 <div className="mb-6">
                     <h3 className="flex items-center gap-2 font-bold mb-3 text-brand-primary"><Users size={18}/> {t('booking_modal.title_how_many')}</h3>
                     <div className="flex gap-2 flex-wrap">
-                         {[...Array(selectedRoom.features.maxPlayers - selectedRoom.features.minPlayers + 1).keys()].map(i => {
-                            const num = i + selectedRoom.features.minPlayers;
+                         {[...Array(roomMax - roomMin + 1).keys()].map(i => {
+                            const num = i + roomMin;
                             // אחרי בחירת שעה - כמויות שלא נכנסות בשעה הזו באפור
                             const notAvailable = selectedSlotMax !== null && num > selectedSlotMax;
                             return (
@@ -349,13 +381,19 @@ const BookingModal = () => {
                             );
                         })}
                     </div>
+                    {/* מחיר לשחקן + סה"כ ליד בחירת המשתתפים (בטלפון סיכום ההזמנה רחוק מכאן) */}
+                    {participants && pricePerPlayer !== null && (
+                        <p className="text-sm text-gray-300 mt-3">
+                            {t('booking_modal.price_line', { price: pricePerPlayer, total: totalPrice, count: participants })}
+                        </p>
+                    )}
                     {selectedSlotMax !== null && selectedSlotMax < roomMax && (
                         <p className="text-yellow-300/90 text-xs mt-2 flex items-center gap-1">
                             <AlertCircle size={12}/> {t('booking_modal.slot_limited_selected', { time: selectedSlot, max: selectedSlotMax })}
                         </p>
                     )}
+                    {errors.participants && <p className="text-red-400 text-xs mt-2 flex items-center gap-1"><AlertCircle size={10}/> {errors.participants.message}</p>}
                 </div>
-                )}
 
                 <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3">
                     <div className="flex gap-3">
