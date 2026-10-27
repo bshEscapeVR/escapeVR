@@ -119,6 +119,31 @@ const TabBookings = () => {
         return rooms.find(r => r._id === selectedRoomId);
     }, [rooms, selectedRoomId]);
 
+    // מספר ההזמנות הפעילות בכל יום ("yyyy-MM-dd" → כמות) — לסימון על הלוח
+    const bookingCountByDate = useMemo(() => {
+        const counts = {};
+        bookings.forEach((b) => {
+            if (!b.date || b.status === 'cancelled') return;
+            try {
+                const key = format(new Date(b.date), 'yyyy-MM-dd');
+                counts[key] = (counts[key] || 0) + 1;
+            } catch { /* תאריך לא תקין - מדלגים */ }
+        });
+        return counts;
+    }, [bookings]);
+
+    // תג קטן על כל יום בלוח עם מספר ההזמנות בו
+    const bookingCountTile = ({ date, view }) => {
+        if (view !== 'month') return null;
+        const count = bookingCountByDate[format(date, 'yyyy-MM-dd')];
+        if (!count) return null;
+        return (
+            <span className="block mx-auto mt-0.5 w-4 h-4 leading-4 rounded-full bg-cyan-500 text-[10px] font-bold text-white text-center">
+                {count}
+            </span>
+        );
+    };
+
     // כמה משתתפים אפשר עוד להזמין בשעה הנבחרת (מהשרת: חדרים, משקפות, חדר גדול) — null = לא נבחרה שעה
     const selectedTimeSlot = watch('timeSlot');
     const selectedSlotMax = availableSlots.find((s) => s.time === selectedTimeSlot)?.maxPlayers ?? null;
@@ -591,6 +616,7 @@ const TabBookings = () => {
                                         onChange={(date) => updateEditField('date', date)}
                                         value={editFormData.date}
                                         locale="he-IL"
+                                        tileContent={bookingCountTile}
                                         className="text-sm w-full rounded-lg border-none shadow-none"
                                     />
                                 </div>
@@ -903,7 +929,7 @@ const TabBookings = () => {
 
                             <div className="booking-calendar-container">
                                 <label className="text-gray-400 text-xs font-bold uppercase mb-1 block">תאריך ההזמנה</label>
-                                <Calendar onChange={(date) => setValue('date', date)} value={selectedDate} locale="he-IL" className="text-sm w-full rounded-lg border-none shadow-none" />
+                                <Calendar onChange={(date) => setValue('date', date)} value={selectedDate} locale="he-IL" tileContent={bookingCountTile} className="text-sm w-full rounded-lg border-none shadow-none" />
                             </div>
                         </div>
 

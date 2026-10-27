@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Settings, Save, Image, FileText, Youtube, BarChart, LogOut, Calendar, MessageSquare, TrendingUp, ExternalLink, Layout, DollarSign, Sparkles, HelpCircle, Clock } from 'lucide-react';
+import { Settings, Save, Image, FileText, Youtube, BarChart, LogOut, Calendar, MessageSquare, TrendingUp, ExternalLink, Layout, DollarSign, Sparkles, HelpCircle, Clock, CalendarDays } from 'lucide-react';
 import { settingsService, authService } from '../../../../../services';
 import NeonButton from '../../../../../components/ui/NeonButton';
 import Spinner from '../../../../../components/ui/Spinner';
@@ -20,6 +20,7 @@ import TabPricing from '../../../../../components/admin/tabs/TabPricing';
 import TabWelcomePopup from '../../../../../components/admin/tabs/TabWelcomePopup';
 import TabFaq from '../../../../../components/admin/tabs/TabFaq';
 import TabHours from '../../../../../components/admin/tabs/TabHours';
+import TabCalendar from '../../../../../components/admin/tabs/TabCalendar';
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -33,6 +34,7 @@ export default function DashboardPage() {
 
     const tabs = [
         { id: 'bookings', label: 'הזמנות', icon: <Calendar size={15} /> },
+        { id: 'calendar', label: 'יומן', icon: <CalendarDays size={15} /> },
         { id: 'hours', label: 'שעות והזמנה', icon: <Clock size={15} /> },
         { id: 'rooms', label: 'חדרים', icon: <Layout size={15} /> },
         { id: 'pricing', label: 'מחירון', icon: <DollarSign size={15} /> },
@@ -161,6 +163,7 @@ export default function DashboardPage() {
 
                     {/* Management tabs */}
                     {activeTab === 'bookings' && <TabBookings />}
+                    {activeTab === 'calendar' && <TabCalendar />}
                     {activeTab === 'rooms' && <TabRooms />}
                     {activeTab === 'pricing' && <TabPricing />}
                     {activeTab === 'leads' && <TabLeads />}

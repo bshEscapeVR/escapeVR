@@ -305,14 +305,32 @@ const TimelineBar = ({ label, bookings: barBookings, onSelect }) => (
 );
 
 // ─────────────────────────────────────────────────────────────────────────────
+//  DayTimelineLegend — colour legend (exported for the weekly calendar header)
+// ─────────────────────────────────────────────────────────────────────────────
+export const DayTimelineLegend = () => (
+    <div className="flex items-center gap-4 text-[11px] text-gray-500">
+        <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-sm bg-brand-primary/70 inline-block" />
+            1–5 משתתפים (חדר אחד)
+        </span>
+        <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-sm bg-cyan-500/70 inline-block" />
+            6–8 משתתפים (שני החדרים)
+        </span>
+    </div>
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
 //  DayTimeline — public component
 //
 //  Props:
 //    bookings      — full bookings array already loaded in TabBookings (no extra fetch)
 //    selectedDate  — JS Date from the form's date picker
 //    onEditBooking — optional; shows an "edit" button in the details window
+//    title         — optional header text (default: "תפוסה יומית — dd/MM/yyyy")
+//    showLegend    — optional; false hides the colour legend (weekly calendar shows it once)
 // ─────────────────────────────────────────────────────────────────────────────
-const DayTimeline = ({ bookings = [], selectedDate, onEditBooking }) => {
+const DayTimeline = ({ bookings = [], selectedDate, onEditBooking, title, showLegend = true }) => {
     const [detailsBooking, setDetailsBooking] = useState(null);
 
     // Filter to the selected date, excluding cancelled bookings
@@ -342,18 +360,9 @@ const DayTimeline = ({ bookings = [], selectedDate, onEditBooking }) => {
             {/* ── Header ── */}
             <div className="flex items-center justify-between flex-wrap gap-2">
                 <p className="text-gray-400 text-xs font-bold uppercase tracking-wide">
-                    תפוסה יומית — {dateLabel}
+                    {title || `תפוסה יומית — ${dateLabel}`}
                 </p>
-                <div className="flex items-center gap-4 text-[11px] text-gray-500">
-                    <span className="flex items-center gap-1.5">
-                        <span className="w-2.5 h-2.5 rounded-sm bg-brand-primary/70 inline-block" />
-                        1–5 משתתפים (חדר אחד)
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                        <span className="w-2.5 h-2.5 rounded-sm bg-cyan-500/70 inline-block" />
-                        6–8 משתתפים (שני החדרים)
-                    </span>
-                </div>
+                {showLegend && <DayTimelineLegend />}
             </div>
 
             {/* ── Hour axis labels ── */}
