@@ -20,8 +20,13 @@ const bookingService = {
   },
 
   // כל שעות היום עם מספר המשתתפים המקסימלי שאפשר להזמין בכל שעה: [{ time, maxPlayers }]
-  getSlotsWithCapacity: async (roomId, date) => {
-    const response = await httpService.get(`${ENDPOINT}/slots`, { roomId, date, withCapacity: 'true' });
+  // excludeId - בעריכת הזמנה: ההזמנה עצמה לא נספרת כתופסת מקום
+  getSlotsWithCapacity: async (roomId, date, { admin = false, excludeId } = {}) => {
+    const response = await httpService.get(`${ENDPOINT}/slots`, {
+      roomId, date, withCapacity: 'true',
+      ...(admin && { admin: 'true' }),
+      ...(excludeId && { excludeId })
+    });
     return response.data;
   },
 

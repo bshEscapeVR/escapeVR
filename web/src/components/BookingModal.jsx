@@ -10,6 +10,7 @@ import { useBooking } from '../context/BookingContext';
 import { useSettings } from '../context/SettingsContext';
 import NeonButton from './ui/NeonButton';
 import BookingModalSkeleton from './ui/BookingModalSkeleton';
+import BookingConfirmation from './BookingConfirmation';
 import { bookingService, roomService, pricingService } from '../services';
 import { calcTotalPrice, findPlanForPlayers } from '../utils/pricing';
 
@@ -55,6 +56,7 @@ const BookingModal = () => {
   const [availableSlots, setAvailableSlots] = useState([]); // [{ time, maxPlayers }]
   const [slotNotice, setSlotNotice] = useState(null);       // הסבר כשבוחרים שעה שלא מתאימה
   const [bookingStatus, setBookingStatus] = useState('idle');
+  const [confirmedBooking, setConfirmedBooking] = useState(null); // פרטי ההזמנה שנקלטה (תצוגת אישור בפאנל הניהול)
   const [totalPrice, setTotalPrice] = useState(0);
 
   // 2. הגדרת סכמת הולידציה (Rules)
@@ -101,6 +103,7 @@ const BookingModal = () => {
   useEffect(() => {
     if (isOpen) {
         setBookingStatus('idle');
+        setConfirmedBooking(null);
         Promise.all([
             roomService.getAll(),
             pricingService.getAll()
@@ -214,6 +217,17 @@ const BookingModal = () => {
               return;
           }
 
+          // בפאנל הניהול - נשארים בחלון ומציגים את אותו אישור עם כל הפרטים
+          setConfirmedBooking({
+              bookingId: newBooking?.bookingId,
+              date: newBooking?.date || data.date,
+              timeSlot: newBooking?.timeSlot || data.timeSlot,
+              roomTitle: rooms.find(r => r._id === data.roomId)?.title || null,
+              participantsCount: newBooking?.details?.participantsCount ?? data.participants,
+              totalPrice: newBooking?.details?.totalPrice ?? totalPrice,
+              paymentStatus: newBooking?.payment?.status || 'unpaid',
+              customerName: newBooking?.customer?.fullName || data.fullName,
+          });
           setBookingStatus('success');
           handleSuccess(); // קריאה ל-callback אם קיים (לרענון רשימת הזמנות באדמין)
       } catch (err) {
@@ -243,11 +257,19 @@ const BookingModal = () => {
         </button>
 
         {bookingStatus === 'success' ? (
-             <div className="w-full p-12 flex flex-col items-center justify-center text-center text-white bg-brand-card">
-                <CheckCircle size={80} className="text-green-400 mb-6" />
-                <h2 className="text-3xl font-bold mb-2">{t('booking_modal.success_title')}</h2>
-                <p className="text-gray-300 mb-6">{t('booking_modal.success_desc')}</p>
-                <NeonButton onClick={handleClose}>{t('booking_modal.btn_close')}</NeonButton>
+             <div className="w-full p-6 md:p-10 flex flex-col text-white bg-brand-card">
+                {confirmedBooking ? (
+                    <BookingConfirmation booking={confirmedBooking} />
+                ) : (
+                    <div className="text-center mb-6">
+                        <CheckCircle size={80} className="text-green-400 mb-6 mx-auto" />
+                        <h2 className="text-3xl font-bold mb-2">{t('booking_modal.success_title')}</h2>
+                        <p className="text-gray-300">{t('booking_modal.success_desc')}</p>
+                    </div>
+                )}
+                <div className="flex justify-center">
+                    <NeonButton onClick={handleClose}>{t('booking_modal.btn_close')}</NeonButton>
+                </div>
              </div>
         ) : rooms.length === 0 ? (
             <BookingModalSkeleton />

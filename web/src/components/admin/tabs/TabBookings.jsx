@@ -70,6 +70,7 @@ const TabBookings = () => {
     const [editFormData, setEditFormData] = useState(null);
     const [editAvailableSlots, setEditAvailableSlots] = useState([]);
     const [loadingEditSlots, setLoadingEditSlots] = useState(false);
+    const [editSlotNotice, setEditSlotNotice] = useState(null); // הסבר כשבוחרים שעה שלא מתאימה (עריכה)
     const [editCalculatedPrice, setEditCalculatedPrice] = useState(0);
     const [savingEdit, setSavingEdit] = useState(false);
 
@@ -118,21 +119,10 @@ const TabBookings = () => {
         return rooms.find(r => r._id === selectedRoomId);
     }, [rooms, selectedRoomId]);
 
-    // האם קיימת הזמנה פעילה בשעה הנבחרת ביום הנבחר — בדיקה בזיכרון ללא API נוסף
+    // כמה משתתפים אפשר עוד להזמין בשעה הנבחרת (מהשרת: חדרים, משקפות, חדר גדול) — null = לא נבחרה שעה
     const selectedTimeSlot = watch('timeSlot');
-    const conflictAtSlot = useMemo(() => {
-        if (!selectedTimeSlot || !selectedDate || !bookings.length) return false;
-        const dateStr = format(new Date(selectedDate), 'yyyy-MM-dd');
-        return bookings.some((b) => {
-            if (!b.date || b.status === 'cancelled') return false;
-            try {
-                return (
-                    format(new Date(b.date), 'yyyy-MM-dd') === dateStr &&
-                    b.timeSlot === selectedTimeSlot
-                );
-            } catch { return false; }
-        });
-    }, [bookings, selectedDate, selectedTimeSlot]);
+    const selectedSlotMax = availableSlots.find((s) => s.time === selectedTimeSlot)?.maxPlayers ?? null;
+    const [slotNotice, setSlotNotice] = useState(null); // הסבר כשבוחרים שעה שלא מתאימה למספר המשתתפים
 
     // כמויות משתתפים תקינות — לפי כרטיסי מחיר פעילים (מקור האמת, כולל קבוצות גדולות 5–8)
     // fallback לטווח החדר אם המחירון עדיין לא נטען
@@ -171,19 +161,22 @@ const TabBookings = () => {
     }, [selectedRoom, participantOptions, setValue, watch]);
 
     // טעינת שעות פנויות כשמשנים חדר או תאריך
+    // כל שעות היום עם מספר המשתתפים המקסימלי בכל שעה (שעות לא נעלמות - מוצגות באפור עם הסבר)
+    // השעות לא תלויות בעולם שנבחר (החדרים והמשקפות משותפים) - מספיק תאריך
     useEffect(() => {
         const fetchSlots = async () => {
-            if (!selectedRoomId || !selectedDate) {
+            if (!selectedDate) {
                 setAvailableSlots([]);
                 return;
             }
 
             setLoadingSlots(true);
             setValue('timeSlot', ''); // איפוס שעה נבחרת
+            setSlotNotice(null);
 
             try {
                 const dateStr = format(selectedDate, 'yyyy-MM-dd');
-                const slots = await bookingService.getAvailableSlots(selectedRoomId, dateStr, { admin: true, participantsCount: participants });
+                const slots = await bookingService.getSlotsWithCapacity(selectedRoomId, dateStr, { admin: true });
                 setAvailableSlots(slots || []);
             } catch (err) {
                 console.error("Error fetching slots:", err);
@@ -194,7 +187,21 @@ const TabBookings = () => {
         };
 
         fetchSlots();
-    }, [selectedRoomId, selectedDate, participants, setValue]);
+    }, [selectedDate, setValue]);
+
+    // לחיצה על שעה: בוחרים אם מספר המשתתפים נכנס בה, אחרת מסבירים כמה אפשר להזמין בה
+    const handleSlotClick = (slot) => {
+        if (slot.maxPlayers === 0) {
+            setSlotNotice(`השעה ${slot.time} מלאה - בחר שעה אחרת`);
+            return;
+        }
+        if (participants && slot.maxPlayers < participants) {
+            setSlotNotice(`בשעה ${slot.time} ניתן להזמין עד ${slot.maxPlayers} משתתפים - הקטן את מספר המשתתפים או בחר שעה אחרת`);
+            return;
+        }
+        setSlotNotice(null);
+        setValue('timeSlot', slot.time, { shouldValidate: true });
+    };
 
     useEffect(() => {
         fetchAllData();
@@ -307,11 +314,12 @@ const TabBookings = () => {
         });
         setEditCalculatedPrice(autoPrice);
         // טעינת שעות פנויות לתאריך הנוכחי
-        fetchEditSlots(roomId, new Date(booking.date), booking.timeSlot);
+        setEditSlotNotice(null);
+        fetchEditSlots(roomId, new Date(booking.date), booking.timeSlot, booking._id);
     };
 
-    // טעינת שעות פנויות לעריכה
-    const fetchEditSlots = async (roomId, date, currentSlot = null) => {
+    // טעינת שעות לעריכה - כל שעה עם מספר המשתתפים המקסימלי בה, בלי לספור את ההזמנה הנערכת עצמה
+    const fetchEditSlots = async (roomId, date, currentSlot = null, excludeId = editingBooking?._id) => {
         if (!roomId || !date) {
             setEditAvailableSlots([]);
             return;
@@ -319,11 +327,11 @@ const TabBookings = () => {
         setLoadingEditSlots(true);
         try {
             const dateStr = format(date, 'yyyy-MM-dd');
-            const slots = await bookingService.getAvailableSlots(roomId, dateStr, { admin: true });
-            // מוסיפים את השעה הנוכחית אם היא לא קיימת (כי היא תפוסה ע"י ההזמנה הנוכחית)
+            const slots = await bookingService.getSlotsWithCapacity(roomId, dateStr, { admin: true, excludeId });
+            // השעה הנוכחית של ההזמנה תמיד מוצגת (גם אם היא מחוץ לשעות / חסומה) - maxPlayers לא ידוע
             let allSlots = slots || [];
-            if (currentSlot && !allSlots.includes(currentSlot)) {
-                allSlots = [...allSlots, currentSlot].sort();
+            if (currentSlot && !allSlots.some(s => s.time === currentSlot)) {
+                allSlots = [...allSlots, { time: currentSlot, maxPlayers: null }].sort((a, b) => a.time.localeCompare(b.time));
             }
             setEditAvailableSlots(allSlots);
         } catch (err) {
@@ -332,6 +340,23 @@ const TabBookings = () => {
         } finally {
             setLoadingEditSlots(false);
         }
+    };
+
+    // כמה משתתפים אפשר בשעה שנבחרה בעריכה (null = לא נבחרה / לא ידוע)
+    const editSlotMax = editAvailableSlots.find(s => s.time === editFormData?.timeSlot)?.maxPlayers ?? null;
+
+    // לחיצה על שעה בעריכה: בוחרים אם מספר המשתתפים נכנס, אחרת מסבירים
+    const handleEditSlotClick = (slot) => {
+        if (slot.maxPlayers === 0) {
+            setEditSlotNotice(`השעה ${slot.time} מלאה - בחר שעה אחרת`);
+            return;
+        }
+        if (slot.maxPlayers !== null && slot.maxPlayers < editFormData.participants) {
+            setEditSlotNotice(`בשעה ${slot.time} ניתן להזמין עד ${slot.maxPlayers} משתתפים - הקטן את מספר המשתתפים או בחר שעה אחרת`);
+            return;
+        }
+        setEditSlotNotice(null);
+        updateEditField('timeSlot', slot.time);
     };
 
     // עדכון שדה בטופס העריכה
@@ -580,23 +605,43 @@ const TabBookings = () => {
                                         </div>
                                     ) : editAvailableSlots.length > 0 ? (
                                         <div className="grid grid-cols-4 gap-2 max-h-[120px] overflow-y-auto custom-scrollbar">
-                                            {editAvailableSlots.map(slot => (
-                                                <button
-                                                    key={slot}
-                                                    type="button"
-                                                    onClick={() => updateEditField('timeSlot', slot)}
-                                                    className={`py-2 px-1 text-sm rounded-lg border transition-all
-                                                        ${editFormData.timeSlot === slot
-                                                            ? 'bg-brand-primary border-brand-primary text-white shadow-[0_0_10px_#a855f7]'
-                                                            : 'bg-white/5 border-white/10 hover:bg-white/10 text-gray-300'
-                                                        }`}
-                                                >
-                                                    {slot}
-                                                </button>
-                                            ))}
+                                            {editAvailableSlots.map(slot => {
+                                                const isFull = slot.maxPlayers === 0;
+                                                const tooSmall = !isFull && slot.maxPlayers !== null && slot.maxPlayers < editFormData.participants;
+                                                const isSelected = editFormData.timeSlot === slot.time;
+                                                return (
+                                                    <button
+                                                        key={slot.time}
+                                                        type="button"
+                                                        onClick={() => handleEditSlotClick(slot)}
+                                                        aria-disabled={isFull || tooSmall}
+                                                        className={`py-1.5 px-1 text-sm rounded-lg border transition-all flex flex-col items-center leading-tight
+                                                            ${isSelected
+                                                                ? 'bg-brand-primary border-brand-primary text-white shadow-[0_0_10px_#a855f7]'
+                                                                : isFull || tooSmall
+                                                                    ? 'bg-white/[0.02] border-white/5 text-gray-600 cursor-not-allowed'
+                                                                    : 'bg-white/5 border-white/10 hover:bg-white/10 text-gray-300'
+                                                            }`}
+                                                    >
+                                                        <span dir="ltr">{slot.time}</span>
+                                                        {isFull ? (
+                                                            <span className="text-[10px]">מלא</span>
+                                                        ) : slot.maxPlayers !== null && slot.maxPlayers < 8 && (
+                                                            <span className={`text-[10px] ${isSelected ? 'text-white/80' : tooSmall ? '' : 'text-yellow-300/80'}`}>
+                                                                עד {slot.maxPlayers}
+                                                            </span>
+                                                        )}
+                                                    </button>
+                                                );
+                                            })}
                                         </div>
                                     ) : (
                                         <p className="text-gray-500 text-sm py-4">אין שעות פנויות בתאריך זה</p>
+                                    )}
+                                    {editSlotNotice && (
+                                        <p className="text-yellow-300 text-xs mt-1 flex items-center gap-1">
+                                            <AlertCircle size={10}/> {editSlotNotice}
+                                        </p>
                                     )}
                                 </div>
                             </div>
@@ -634,15 +679,21 @@ const TabBookings = () => {
                                     <div className="flex gap-2 flex-wrap">
                                         {editSelectedRoom && [...Array((editSelectedRoom.features?.maxPlayers || 10) - (editSelectedRoom.features?.minPlayers || 1) + 1).keys()].map(i => {
                                             const num = i + (editSelectedRoom.features?.minPlayers || 1);
+                                            // כמויות שלא נכנסות בשעה שנבחרה - באפור
+                                            const notAvailable = editSlotMax !== null && num > editSlotMax;
                                             return (
                                                 <button
                                                     key={num}
                                                     type="button"
-                                                    onClick={() => updateEditField('participants', num)}
+                                                    disabled={notAvailable}
+                                                    onClick={() => { updateEditField('participants', num); setEditSlotNotice(null); }}
+                                                    title={notAvailable ? `בשעה ${editFormData.timeSlot} ניתן להזמין עד ${editSlotMax} משתתפים` : undefined}
                                                     className={`w-10 h-10 rounded-xl border flex items-center justify-center font-bold transition-all
                                                         ${editFormData.participants === num
                                                             ? 'bg-brand-primary border-brand-primary text-white shadow-lg shadow-brand-primary/30'
-                                                            : 'border-white/10 bg-white/5 text-gray-400 hover:bg-white/10'
+                                                            : notAvailable
+                                                                ? 'opacity-30 cursor-not-allowed border-white/5 bg-white/5 text-gray-600'
+                                                                : 'border-white/10 bg-white/5 text-gray-400 hover:bg-white/10'
                                                         }`}
                                                 >
                                                     {num}
@@ -650,6 +701,11 @@ const TabBookings = () => {
                                             );
                                         })}
                                     </div>
+                                    {editSlotMax !== null && editSlotMax < 8 && (
+                                        <p className="text-amber-400 text-xs mt-2 flex items-center gap-1">
+                                            <AlertCircle size={10}/> בשעה {editFormData.timeSlot} ניתן להזמין עד {editSlotMax} משתתפים
+                                        </p>
+                                    )}
                                 </div>
 
                                 {/* סטטוס - רק פעיל והושלם */}
@@ -869,24 +925,45 @@ const TabBookings = () => {
                                     </div>
                                 ) : availableSlots.length > 0 ? (
                                     <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 max-h-[120px] overflow-y-auto custom-scrollbar pr-1">
-                                        {availableSlots.map(slot => (
-                                            <button
-                                                key={slot}
-                                                type="button"
-                                                onClick={() => setValue('timeSlot', slot, { shouldValidate: true })}
-                                                className={`py-2 px-1 text-sm rounded-lg border transition-all
-                                                    ${watch('timeSlot') === slot
-                                                        ? 'bg-brand-primary border-brand-primary text-white shadow-[0_0_10px_#a855f7]'
-                                                        : 'bg-white/5 border-white/10 hover:bg-white/10 text-gray-300'
-                                                    }`}
-                                            >
-                                                {slot}
-                                            </button>
-                                        ))}
+                                        {availableSlots.map(slot => {
+                                            const isFull = slot.maxPlayers === 0;
+                                            const tooSmall = !isFull && participants && slot.maxPlayers < participants;
+                                            const isSelected = selectedTimeSlot === slot.time;
+                                            return (
+                                                <button
+                                                    key={slot.time}
+                                                    type="button"
+                                                    onClick={() => handleSlotClick(slot)}
+                                                    aria-disabled={isFull || tooSmall}
+                                                    className={`py-1.5 px-1 text-sm rounded-lg border transition-all flex flex-col items-center leading-tight
+                                                        ${isSelected
+                                                            ? 'bg-brand-primary border-brand-primary text-white shadow-[0_0_10px_#a855f7]'
+                                                            : isFull || tooSmall
+                                                                ? 'bg-white/[0.02] border-white/5 text-gray-600 cursor-not-allowed'
+                                                                : 'bg-white/5 border-white/10 hover:bg-white/10 text-gray-300'
+                                                        }`}
+                                                >
+                                                    <span dir="ltr">{slot.time}</span>
+                                                    {/* כמה משתתפים אפשר עוד להזמין בשעה הזו (רק כשיש הגבלה) */}
+                                                    {isFull ? (
+                                                        <span className="text-[10px]">מלא</span>
+                                                    ) : slot.maxPlayers < 8 && (
+                                                        <span className={`text-[10px] ${isSelected ? 'text-white/80' : tooSmall ? '' : 'text-yellow-300/80'}`}>
+                                                            עד {slot.maxPlayers}
+                                                        </span>
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 ) : (
                                     <p className="text-gray-500 text-sm py-4">
-                                        {selectedRoomId ? 'אין שעות פנויות בתאריך זה' : 'בחר חדר ותאריך כדי לראות שעות'}
+                                        {selectedDate ? 'אין שעות פנויות בתאריך זה' : 'בחר תאריך כדי לראות שעות'}
+                                    </p>
+                                )}
+                                {slotNotice && (
+                                    <p className="text-yellow-300 text-xs mt-1 flex items-center gap-1">
+                                        <AlertCircle size={10}/> {slotNotice}
                                     </p>
                                 )}
                                 {errors.timeSlot && (
@@ -898,7 +975,7 @@ const TabBookings = () => {
 
                             {/* ציר תפוסה יומית */}
                             <div className="md:col-span-2">
-                                <DayTimeline bookings={bookings} selectedDate={selectedDate} />
+                                <DayTimeline bookings={bookings} selectedDate={selectedDate} onEditBooking={handleEditBooking} />
                             </div>
 
                             {/* בחירת משתתפים דינמית */}
@@ -907,15 +984,16 @@ const TabBookings = () => {
                                     כמות משתתפים ({minPlayers}-{maxPlayers})
                                 </label>
                                 <div className="flex gap-2 flex-wrap">
-                                    {selectedRoom && participantOptions.map(num => {
-                                        const isBlockedLarge = conflictAtSlot && num > 4;
+                                    {participantOptions.map(num => {
+                                        // אחרי בחירת שעה - כמויות שלא נכנסות בשעה הזו באפור
+                                        const isBlockedLarge = selectedSlotMax !== null && num > selectedSlotMax;
                                         return (
                                             <button
                                                 key={num}
                                                 type="button"
                                                 disabled={isBlockedLarge}
-                                                onClick={() => !isBlockedLarge && setValue('participants', num)}
-                                                title={isBlockedLarge ? 'שעה זו כבר תפוסה — לא ניתן להזמין קבוצה גדולה' : undefined}
+                                                onClick={() => { if (!isBlockedLarge) { setValue('participants', num); setSlotNotice(null); } }}
+                                                title={isBlockedLarge ? `בשעה ${selectedTimeSlot} ניתן להזמין עד ${selectedSlotMax} משתתפים` : undefined}
                                                 className={`w-10 h-10 rounded-xl border flex items-center justify-center font-bold transition-all
                                                     ${isBlockedLarge
                                                         ? 'opacity-30 cursor-not-allowed border-white/5 bg-white/5 text-gray-600'
@@ -929,9 +1007,9 @@ const TabBookings = () => {
                                         );
                                     })}
                                 </div>
-                                {conflictAtSlot && (
+                                {selectedSlotMax !== null && selectedSlotMax < 8 && (
                                     <p className="text-amber-400 text-xs mt-2 flex items-center gap-1">
-                                        <AlertCircle size={10}/> שעה זו כבר תפוסה — קבוצה גדולה (5+) אינה זמינה
+                                        <AlertCircle size={10}/> בשעה {selectedTimeSlot} ניתן להזמין עד {selectedSlotMax} משתתפים
                                     </p>
                                 )}
                                 {errors.participants && (

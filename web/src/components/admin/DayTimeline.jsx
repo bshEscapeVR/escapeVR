@@ -3,7 +3,7 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { format } from 'date-fns';
-import { Users, Clock } from 'lucide-react';
+import { Users, Clock, X, Phone, Mail, Calendar, CreditCard, Hash, MapPin, Pencil, MessageSquare } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Constants
@@ -12,6 +12,10 @@ const DAY_START_MIN = 10 * 60; // 10:00
 const DAY_END_MIN   = 26 * 60; // 02:00 next night (last start 24:00 + 75 min)
 const DAY_SPAN_MIN  = DAY_END_MIN - DAY_START_MIN; // 960 min = 100%
 const SESSION_MIN   = 75; // 1h 15m per session
+const BIG_ROOM_MAX   = 5; // Room 1 (big) holds up to 5 — groups of 6–8 use both rooms
+const SMALL_ROOM_MAX = 4; // Room 2 (small) holds up to 4 — a group of 5 must be in room 1
+
+const ROOM_LABELS = { 1: 'חדר 1 (גדול)', 2: 'חדר 2 (קטן)', both: 'שני החדרים' };
 const HOUR_LABELS   = Array.from({ length: 17 }, (_, i) => i + 10); // [10…26] — shown as hour % 24
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -36,40 +40,45 @@ const minToTimeStr = (min) => {
 };
 
 /**
- * Greedy lane assignment — places each booking in bar 1 or bar 2.
- * Large-group bookings (roomIds.length >= 2) are painted on both bars.
- * Bookings are processed in chronological order.
+ * Room assignment — bar 1 = big room (up to 5), bar 2 = small room (up to 4).
+ * Same rule as the server (isRoomAssignmentFeasible in bookingController):
+ * overlapping groups alternate rooms along each chain of overlaps, and the
+ * chain is oriented so its group of 5 lands in the big room. A chain without
+ * a group of 5 starts in the big room. Groups of 6–8 are painted on both bars.
  */
 const assignLanes = (dayBookings) => {
-    const sorted = [...dayBookings].sort(
-        (a, b) => parseTimeMin(a.timeSlot) - parseTimeMin(b.timeSlot)
-    );
+    const items = dayBookings
+        .map((booking) => {
+            const start = parseTimeMin(booking.timeSlot);
+            return { booking, start, end: start + SESSION_MIN, p: booking.details?.participantsCount || 1 };
+        })
+        .sort((a, b) => a.start - b.start);
 
-    let bar1EndMin = 0;
-    let bar2EndMin = 0;
+    const single   = items.filter((i) => i.p <= BIG_ROOM_MAX);
+    const overlaps = (a, b) => a.start < b.end && b.start < a.end;
+    const color    = new Map();
 
-    return sorted.map((booking) => {
-        const startMin     = parseTimeMin(booking.timeSlot);
-        const endMin       = startMin + SESSION_MIN;
-        const stationsUsed = booking.roomIds?.length || 1;
+    for (const seed of single) {
+        if (color.has(seed)) continue;
+        color.set(seed, 0);
+        const queue = [seed];
+        const chain = [seed];
+        while (queue.length) {
+            const i = queue.shift();
+            for (const j of single) {
+                if (j !== i && overlaps(i, j) && !color.has(j)) {
+                    color.set(j, 1 - color.get(i));
+                    queue.push(j);
+                    chain.push(j);
+                }
+            }
+        }
+        const groupOfFive = chain.find((i) => i.p > SMALL_ROOM_MAX);
+        const bigColor = color.get(groupOfFive || seed); // seed = earliest in the chain
+        chain.forEach((i) => { i.bar = color.get(i) === bigColor ? 1 : 2; });
+    }
 
-        if (stationsUsed >= 2) {
-            // Large group — occupies both physical stations simultaneously
-            bar1EndMin = endMin;
-            bar2EndMin = endMin;
-            return { ...booking, _bar: 'both' };
-        }
-        if (startMin >= bar1EndMin) {
-            bar1EndMin = endMin;
-            return { ...booking, _bar: 1 };
-        }
-        if (startMin >= bar2EndMin) {
-            bar2EndMin = endMin;
-            return { ...booking, _bar: 2 };
-        }
-        // Both bars full — data inconsistency, show on bar 1 as fallback
-        return { ...booking, _bar: 1 };
-    });
+    return items.map((i) => ({ ...i.booking, _bar: i.p > BIG_ROOM_MAX ? 'both' : i.bar }));
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -83,7 +92,7 @@ const TooltipPortal = ({ booking, anchorRect }) => {
     const startMin = parseTimeMin(booking.timeSlot);
     const endTime  = minToTimeStr(startMin + SESSION_MIN);
     const pCount   = booking.details?.participantsCount ?? 0;
-    const isLarge  = (booking.roomIds?.length || 1) >= 2;
+    const isLarge  = booking._bar === 'both';
 
     // Position the tooltip centred above the hovered booking block.
     // 8 px gap between tooltip bottom edge and block top edge.
@@ -111,9 +120,11 @@ const TooltipPortal = ({ booking, anchorRect }) => {
                         <span>{pCount} משתתפים</span>
                         <Users size={10} className="text-brand-primary flex-shrink-0" />
                     </p>
+                    <p className="text-gray-400 text-xs">{ROOM_LABELS[booking._bar]}</p>
                     {isLarge && (
                         <p className="text-cyan-400 text-xs mt-1">★ קבוצה גדולה · 2 חדרים</p>
                     )}
+                    <p className="text-brand-primary text-[10px] mt-1">לחצו לפרטים המלאים</p>
                 </div>
             </div>
             {/* Arrow pointing down toward the bar */}
@@ -132,15 +143,92 @@ const TooltipPortal = ({ booking, anchorRect }) => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+//  BookingDetailsModal — full booking details, opened by clicking a block
+// ─────────────────────────────────────────────────────────────────────────────
+const STATUS_LABELS  = { pending: 'ממתין', confirmed: 'מאושר', cancelled: 'בוטל', completed: 'הושלם', 'no-show': 'לא הגיע' };
+const SOURCE_LABELS  = { website: 'אתר', phone: 'טלפון', 'walk-in': 'הגיע במקום', whatsapp: 'וואטסאפ' };
+const PAYMENT_LABELS = { paid: 'שולם', unpaid: 'לא שולם', failed: 'נכשל' };
+
+const DetailRow = ({ icon: Icon, label, children }) => (
+    <div className="flex items-start justify-between gap-4 py-2 border-b border-white/5 last:border-0">
+        <span className="flex items-center gap-2 text-gray-400 text-sm flex-shrink-0"><Icon size={14} className="text-brand-primary" /> {label}</span>
+        <span className="text-white text-sm font-medium text-end break-all">{children}</span>
+    </div>
+);
+
+const BookingDetailsModal = ({ booking, onClose, onEdit }) => {
+    if (typeof document === 'undefined') return null;
+
+    const startMin = parseTimeMin(booking.timeSlot);
+    const phone    = booking.customer?.phone;
+    const email    = booking.customer?.email;
+    const world    = booking.roomId?.title?.he || booking.roomId?.title?.en;
+
+    return createPortal(
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" dir="rtl">
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+            <div className="relative w-full max-w-md bg-[#1a0b2e] border border-white/10 rounded-2xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
+                <button type="button" onClick={onClose} className="absolute top-4 left-4 p-1.5 rounded-full text-gray-400 hover:text-white hover:bg-white/10">
+                    <X size={18} />
+                </button>
+
+                <h3 className="text-xl font-bold text-white mb-1">{booking.customer?.fullName || 'לא ידוע'}</h3>
+                <p className="text-sm text-gray-400 mb-4">
+                    {STATUS_LABELS[booking.status] || booking.status}
+                    {booking.source && <> · {SOURCE_LABELS[booking.source] || booking.source}</>}
+                </p>
+
+                <div className="bg-black/20 rounded-xl px-4 py-1 mb-5">
+                    <DetailRow icon={Phone} label="טלפון">
+                        {phone ? <a href={`tel:${phone.replace(/[^\d+]/g, '')}`} dir="ltr" className="text-brand-primary hover:underline">{phone}</a> : '—'}
+                    </DetailRow>
+                    <DetailRow icon={Mail} label="אימייל">
+                        {email ? <a href={`mailto:${email}`} dir="ltr" className="text-brand-primary hover:underline">{email}</a> : '—'}
+                    </DetailRow>
+                    <DetailRow icon={MapPin} label="עולם">{world || '—'}</DetailRow>
+                    <DetailRow icon={MapPin} label="חדר">{ROOM_LABELS[booking._bar]}</DetailRow>
+                    <DetailRow icon={Calendar} label="תאריך">{booking.date ? format(new Date(booking.date), 'dd/MM/yyyy') : '—'}</DetailRow>
+                    <DetailRow icon={Clock} label="שעה"><span dir="ltr">{booking.timeSlot} – {minToTimeStr(startMin + SESSION_MIN)}</span></DetailRow>
+                    <DetailRow icon={Users} label="משתתפים">{booking.details?.participantsCount ?? '—'}</DetailRow>
+                    <DetailRow icon={CreditCard} label="מחיר">₪{booking.details?.totalPrice ?? 0}</DetailRow>
+                    <DetailRow icon={CreditCard} label="תשלום">{PAYMENT_LABELS[booking.payment?.status] || 'לא שולם'}</DetailRow>
+                    {booking.customer?.notes && <DetailRow icon={MessageSquare} label="הערות">{booking.customer.notes}</DetailRow>}
+                    <DetailRow icon={Hash} label="מספר הזמנה"><span dir="ltr">{booking.bookingId || '—'}</span></DetailRow>
+                    {booking.createdAt && (
+                        <DetailRow icon={Calendar} label="נוצרה">{format(new Date(booking.createdAt), 'dd/MM/yyyy HH:mm')}</DetailRow>
+                    )}
+                </div>
+
+                <div className="flex gap-3">
+                    {onEdit && (
+                        <button
+                            type="button"
+                            onClick={() => { onClose(); onEdit(booking); }}
+                            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-brand-primary/20 border border-brand-primary/40 text-white font-bold hover:bg-brand-primary/30"
+                        >
+                            <Pencil size={16} /> עריכת הזמנה
+                        </button>
+                    )}
+                    <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-white/10 text-gray-300 hover:bg-white/5">
+                        סגור
+                    </button>
+                </div>
+            </div>
+        </div>,
+        document.body
+    );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 //  BookingBlock — a single coloured segment on a timeline bar
 // ─────────────────────────────────────────────────────────────────────────────
-const BookingBlock = ({ booking }) => {
+const BookingBlock = ({ booking, onSelect }) => {
     const [anchorRect, setAnchorRect] = useState(null);
 
     const startMin = parseTimeMin(booking.timeSlot);
     const leftPct  = toPercent(startMin);
     const widthPct = (SESSION_MIN / DAY_SPAN_MIN) * 100;
-    const isLarge  = (booking.roomIds?.length || 1) >= 2;
+    const isLarge  = booking._bar === 'both';
 
     // Purple for normal groups, cyan for large groups (matches brand palette)
     const blockCls = isLarge
@@ -161,6 +249,7 @@ const BookingBlock = ({ booking }) => {
             style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
+            onClick={() => { setAnchorRect(null); onSelect(booking); }}
         >
             {/* Coloured booking block */}
             <div
@@ -186,10 +275,10 @@ const BookingBlock = ({ booking }) => {
 // ─────────────────────────────────────────────────────────────────────────────
 //  TimelineBar — one horizontal track (Room 1 or Room 2)
 // ─────────────────────────────────────────────────────────────────────────────
-const TimelineBar = ({ label, bookings: barBookings }) => (
+const TimelineBar = ({ label, bookings: barBookings, onSelect }) => (
     <div className="flex items-center gap-3">
         {/* Label */}
-        <span className="text-gray-500 text-xs w-12 text-left flex-shrink-0 font-medium">
+        <span className="text-gray-500 text-xs w-20 text-left flex-shrink-0 font-medium">
             {label}
         </span>
 
@@ -209,7 +298,7 @@ const TimelineBar = ({ label, bookings: barBookings }) => (
 
             {/* Booking blocks */}
             {barBookings.map((booking) => (
-                <BookingBlock key={booking._id} booking={booking} />
+                <BookingBlock key={booking._id} booking={booking} onSelect={onSelect} />
             ))}
         </div>
     </div>
@@ -219,10 +308,13 @@ const TimelineBar = ({ label, bookings: barBookings }) => (
 //  DayTimeline — public component
 //
 //  Props:
-//    bookings     — full bookings array already loaded in TabBookings (no extra fetch)
-//    selectedDate — JS Date from the form's date picker
+//    bookings      — full bookings array already loaded in TabBookings (no extra fetch)
+//    selectedDate  — JS Date from the form's date picker
+//    onEditBooking — optional; shows an "edit" button in the details window
 // ─────────────────────────────────────────────────────────────────────────────
-const DayTimeline = ({ bookings = [], selectedDate }) => {
+const DayTimeline = ({ bookings = [], selectedDate, onEditBooking }) => {
+    const [detailsBooking, setDetailsBooking] = useState(null);
+
     // Filter to the selected date, excluding cancelled bookings
     const dayBookings = useMemo(() => {
         if (!selectedDate || !bookings.length) return [];
@@ -255,18 +347,18 @@ const DayTimeline = ({ bookings = [], selectedDate }) => {
                 <div className="flex items-center gap-4 text-[11px] text-gray-500">
                     <span className="flex items-center gap-1.5">
                         <span className="w-2.5 h-2.5 rounded-sm bg-brand-primary/70 inline-block" />
-                        1–4 משתתפים
+                        1–5 משתתפים (חדר אחד)
                     </span>
                     <span className="flex items-center gap-1.5">
                         <span className="w-2.5 h-2.5 rounded-sm bg-cyan-500/70 inline-block" />
-                        5–8 משתתפים
+                        6–8 משתתפים (שני החדרים)
                     </span>
                 </div>
             </div>
 
             {/* ── Hour axis labels ── */}
             <div className="flex items-center gap-3">
-                <div className="w-12 flex-shrink-0" /> {/* spacer aligns with bar labels */}
+                <div className="w-20 flex-shrink-0" /> {/* spacer aligns with bar labels */}
                 <div className="relative flex-1 h-4">
                     {HOUR_LABELS.map((hour) => (
                         <span
@@ -281,14 +373,22 @@ const DayTimeline = ({ bookings = [], selectedDate }) => {
             </div>
 
             {/* ── Two parallel bars ── */}
-            <TimelineBar label="חדר 1" bookings={bar1} />
-            <TimelineBar label="חדר 2" bookings={bar2} />
+            <TimelineBar label={ROOM_LABELS[1]} bookings={bar1} onSelect={setDetailsBooking} />
+            <TimelineBar label={ROOM_LABELS[2]} bookings={bar2} onSelect={setDetailsBooking} />
 
             {/* ── Empty state ── */}
             {dayBookings.length === 0 && (
                 <p className="text-center text-gray-600 text-[11px] pt-1">
                     אין הזמנות פעילות ביום זה
                 </p>
+            )}
+
+            {detailsBooking && (
+                <BookingDetailsModal
+                    booking={detailsBooking}
+                    onClose={() => setDetailsBooking(null)}
+                    onEdit={onEditBooking}
+                />
             )}
         </div>
     );
