@@ -4,23 +4,27 @@ const Booking     = require('../models/Booking');
 const Room        = require('../models/Room');
 const BlockedDate = require('../models/BlockedDate');
 const SiteSettings = require('../models/SiteSettings');
+const PricingPlan  = require('../models/PricingPlan');
 const asyncHandler = require('../utils/asyncHandler');
 const AppError     = require('../utils/AppError');
-const { HebrewCalendar, Location } = require('@hebcal/core');
+const { getDayHoursKey, resolveDayRange } = require('../utils/openingHours');
+const { calcTotalPrice } = require('../utils/pricing');
 const { sendNewBookingAdminNotification, sendBookingConfirmationToCustomer } = require('../utils/emailService');
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Constants
 // ─────────────────────────────────────────────────────────────────────────────
 const ISRAEL_TZ             = 'Asia/Jerusalem';
-const TOTAL_STATIONS        = 2;    // Physical VR stations / rooms in the venue
-const BOOKING_DURATION_MIN  = 75;   // Every session lasts exactly 75 minutes (1h 15m)
+const TOTAL_STATIONS        = 2;    // Physical VR rooms in the venue
+const TOTAL_HEADSETS        = 8;    // VR headsets shared by both rooms at any moment
+const BOOKING_DURATION_MIN  = 75;   // A room is occupied 75 minutes per session (1h 15m)
 const BOOKING_DURATION_MS   = BOOKING_DURATION_MIN * 60 * 1000;
 const SLOT_INTERVAL_MIN     = 15;   // Time-picker increments (every 15 minutes)
-const LARGE_GROUP_THRESHOLD = 4;    // Groups > 4 require both physical stations
-const MOTZASH_MIN_HOUR      = 19;   // Saturday: only slots starting at 19:00+
+const LARGE_GROUP_THRESHOLD = 5;    // Max players per room — larger groups split across both rooms
+const MIN_START_GAP_MIN     = 15;   // Different groups never start within 15 min (private briefing)
+const MIN_START_GAP_MS      = MIN_START_GAP_MIN * 60 * 1000;
 
-// Default operating window — used when a day has no entry in SiteSettings.weeklyHours.
+// Fallback window for admin bookings on a closed day.
 const DEFAULT_OPEN  = '10:00';
 const DEFAULT_CLOSE = '22:00';
 
@@ -83,42 +87,26 @@ const minutesToTimeStr = (mins) => {
 };
 
 /**
- * Generate every 15-minute slot string from `openStr` through `closeStr` (inclusive).
+ * Generate every 15-minute slot string from `openMin` through `closeMin` (inclusive).
  *
  * `open`  = first slot start time.
  * `close` = last  slot start time — a session starting here ends at close + 75 min.
+ * Minutes past midnight produce "24:00", "24:15"… so the slot stays on the same
+ * business day (israelTimeToUTC rolls it over to the next calendar day).
  *
- * Example: open="10:00", close="22:00" → ["10:00","10:15", … ,"22:00"] (49 slots)
+ * Example: 10:00 → 22:00 → ["10:00","10:15", … ,"22:00"] (49 slots)
  */
-const generateIntervals = (openStr = DEFAULT_OPEN, closeStr = DEFAULT_CLOSE) => {
-    const openMin  = parseMinutes(openStr);
-    const closeMin = parseMinutes(closeStr);
-    const slots    = [];
+const generateIntervals = (openMin, closeMin) => {
+    const slots = [];
     for (let t = openMin; t <= closeMin; t += SLOT_INTERVAL_MIN) {
         slots.push(minutesToTimeStr(t));
     }
     return slots;
 };
 
-/**
- * Return true if `jsDate` falls on a Jewish holiday (CHAG — no-work day).
- * Fails open (returns false) on any calendar library error so we never
- * accidentally block the entire day due to a library glitch.
- */
-const isJewishHoliday = (jsDate) => {
-    try {
-        const events = HebrewCalendar.calendar({
-            start: jsDate, end: jsDate,
-            isHebrewYear: false, candlelighting: false,
-            location: Location.lookup('Jerusalem'),
-            il: true, sedrot: false, omer: false,
-        });
-        return events.some(ev => (ev.getFlags() & 32) !== 0); // 32 = CHAG flag
-    } catch (e) {
-        console.error('Hebcal error:', e);
-        return false;
-    }
-};
+/** Rooms a group occupies: up to 5 players → 1 room, 6–8 → both rooms. */
+const stationsFor = (participantsCount) =>
+    participantsCount > LARGE_GROUP_THRESHOLD ? 2 : 1;
 
 /**
  * Ensure a booking has `startTime` and `endTime` properties for the overlap query.
@@ -139,20 +127,165 @@ const normalizeBookingTimes = (booking, israelDateStr) => {
 };
 
 /**
- * Count total physical station slots consumed by bookings overlapping [start, end).
+ * Peak rooms and headsets in use by existing bookings at any moment inside [start, end).
  *
- * Classic interval-overlap condition: existing.start < newEnd AND existing.end > newStart
+ * Usage only changes when a booking starts, so it is enough to sample the window
+ * start and every booking start inside the window. This is exact (unlike summing
+ * every overlapping booking): two back-to-back groups in the same room never
+ * count against each other.
  *
- * We use SUM of roomIds.length — NOT Set cardinality — so that two simultaneous
- * small-group bookings that happen to carry the same experience Room ID are
- * still counted as 2 distinct station slots.
- *
- * v1 documents without roomIds default to 1 station each (safe assumption).
+ * Rooms per booking come from its participant count (stationsFor), not from the
+ * stored roomIds, so older bookings follow the current room rules too.
  */
-const countStationsUsed = (normalizedBookings, windowStart, windowEnd) =>
-    normalizedBookings
-        .filter(b => b.startTime < windowEnd && b.endTime > windowStart)
-        .reduce((total, b) => total + (b.roomIds?.length || 1), 0);
+const getPeakUsage = (normalizedBookings, windowStart, windowEnd) => {
+    const overlapping = normalizedBookings.filter(
+        b => b.startTime < windowEnd && b.endTime > windowStart
+    );
+    const samplePoints = [
+        windowStart,
+        ...overlapping.map(b => b.startTime).filter(t => t > windowStart),
+    ];
+
+    let stations = 0;
+    let headsets = 0;
+    for (const t of samplePoints) {
+        const active = overlapping.filter(b => b.startTime <= t && b.endTime > t);
+        const pCounts = active.map(b => b.details?.participantsCount || 1);
+        stations = Math.max(stations, pCounts.reduce((sum, p) => sum + stationsFor(p), 0));
+        headsets = Math.max(headsets, pCounts.reduce((sum, p) => sum + p, 0));
+    }
+    return { stations, headsets };
+};
+
+/**
+ * Why a group of `pCount` cannot start in [windowStart, windowEnd), or null if it can.
+ *
+ *   1. Another group already starts within 15 minutes (each group gets a private briefing).
+ *   2. Not enough free rooms (1 room for up to 5 players, both rooms for 6–8).
+ *   3. Not enough free headsets (8 in total across both rooms).
+ */
+const getCapacityError = (normalizedBookings, windowStart, windowEnd, pCount) => {
+    const tooClose = normalizedBookings.some(
+        b => Math.abs(b.startTime - windowStart) < MIN_START_GAP_MS
+    );
+    if (tooClose) return 'Another group starts within 15 minutes of this time';
+
+    const { stations, headsets } = getPeakUsage(normalizedBookings, windowStart, windowEnd);
+    if (TOTAL_STATIONS - stations < stationsFor(pCount)) {
+        return 'Not enough rooms available at this time';
+    }
+    if (TOTAL_HEADSETS - headsets < pCount) {
+        return 'Not enough VR headsets available at this time';
+    }
+    return null;
+};
+
+/**
+ * Largest group (0–8) that can still start in [windowStart, windowEnd).
+ * Capacity only shrinks as the group grows, so the first fit from the top wins.
+ */
+const getMaxPlayers = (normalizedBookings, windowStart, windowEnd) => {
+    for (let p = TOTAL_HEADSETS; p >= 1; p--) {
+        if (!getCapacityError(normalizedBookings, windowStart, windowEnd, p)) return p;
+    }
+    return 0;
+};
+
+/**
+ * Pick `stationsNeeded` room IDs for a new booking. roomIds.length is what the
+ * admin timeline uses to draw a group on one bar or both, so the length must
+ * always match stationsNeeded — prefer IDs not used by overlapping bookings,
+ * then fall back to any active room.
+ */
+const assignStationIds = (allRooms, normalizedBookings, windowStart, windowEnd, stationsNeeded) => {
+    const roomIdsInUse = new Set(
+        normalizedBookings
+            .filter(b => b.startTime < windowEnd && b.endTime > windowStart)
+            .flatMap(b => (b.roomIds || []).map(id => id.toString()))
+    );
+    const allIds  = allRooms.map(r => r._id);
+    const freeIds = allIds.filter(id => !roomIdsInUse.has(id.toString()));
+    const usedIds = allIds.filter(id => roomIdsInUse.has(id.toString()));
+    return [...freeIds, ...usedIds].slice(0, stationsNeeded);
+};
+
+/**
+ * Candidate start times for an Israel calendar date, before capacity checks.
+ *
+ * Customers: the day's opening hours (weekday / Friday / Motzash / holiday eve /
+ * motzei chag — see utils/openingHours), minus closed days, admin-blocked dates
+ * and slots, and slots that already passed today.
+ * Admin (isAdmin): skips closures and the past-time filter so phone bookings
+ * stay flexible; a closed day falls back to its weekday hours or 10:00–22:00.
+ *
+ * Returns { candidates, reason } — reason explains an empty list for customers.
+ */
+const getDayCandidates = async (israelDateStr, isAdmin) => {
+    const startOfDay = new Date(israelDateStr + 'T00:00:00Z');
+    const endOfDay   = new Date(israelDateStr + 'T23:59:59.999Z');
+
+    // ── Admin-blocked dates ──────────────────────────────────────────────────
+    // Use the Israel calendar date boundaries (UTC-anchored) for the query
+    // so the server's local timezone never affects the lookup.
+    let blockedRecord = null;
+    try {
+        blockedRecord = await BlockedDate.findOne({
+            date: { $gte: startOfDay, $lte: endOfDay },
+        }).lean();
+    } catch (_) { /* collection may not exist on a fresh install */ }
+
+    if (!isAdmin && blockedRecord?.isFullDay) {
+        return { candidates: [], reason: 'admin_blocked' };
+    }
+
+    // ── Opening hours for this kind of day ───────────────────────────────────
+    let settings = null;
+    try {
+        settings = await SiteSettings.findOne().lean();
+    } catch (err) {
+        console.error('Error fetching SiteSettings:', err);
+    }
+    // .lean() returns Maps as plain objects — access by string key directly.
+    const openingHours = settings?.openingHours;
+
+    const dayKey = getDayHoursKey(israelDateStr);
+    let range = dayKey ? resolveDayRange(openingHours, dayKey) : null;
+
+    if (!range) {
+        if (!isAdmin) return { candidates: [], reason: 'closed' };
+        const [y, m, d] = israelDateStr.split('-').map(Number);
+        const weekdayKey = String(new Date(Date.UTC(y, m - 1, d)).getUTCDay());
+        range = resolveDayRange(openingHours, weekdayKey)
+            || { openMin: parseMinutes(DEFAULT_OPEN), closeMin: parseMinutes(DEFAULT_CLOSE) };
+    }
+
+    let candidates = generateIntervals(range.openMin, range.closeMin);
+
+    // Legacy per-day start-time lists (SiteSettings.booking.weeklyHours), if an
+    // admin ever saved one, still narrow the day down to those exact times.
+    const [y, m, d] = israelDateStr.split('-').map(Number);
+    const legacyDay = settings?.booking?.weeklyHours?.[String(new Date(Date.UTC(y, m - 1, d)).getUTCDay())];
+    if (Array.isArray(legacyDay) && legacyDay.length > 0) {
+        const allowed = new Set(legacyDay);
+        candidates = candidates.filter(s => allowed.has(s));
+    }
+
+    // ── Past-time filter — only for today, non-admin ─────────────────────────
+    if (!isAdmin && toIsraelDateStr(new Date()) === israelDateStr) {
+        const israelNow = toIsraelDate(new Date());
+        const nowMins   = israelNow.getHours() * 60 + israelNow.getMinutes();
+        // A slot is "past" if its start time ≤ now. Keep only future slots.
+        candidates = candidates.filter(s => parseMinutes(s) > nowMins);
+    }
+
+    // ── Admin partial-block slots ────────────────────────────────────────────
+    if (blockedRecord?.blockedSlots?.length > 0) {
+        const blocked = new Set(blockedRecord.blockedSlots);
+        candidates = candidates.filter(s => !blocked.has(s));
+    }
+
+    return { candidates, reason: null };
+};
 
 /**
  * Return true if a MongoServerError means the driver is connected to a
@@ -216,35 +349,13 @@ async function _reserveBooking({
         .map(b => normalizeBookingTimes(b, israelDateStr))
         .filter(Boolean);
 
-    const stationsUsed = countStationsUsed(normalised, startTime, endTime);
-
-    if (TOTAL_STATIONS - stationsUsed < stationsNeeded) {
-        throw new AppError(
-            stationsNeeded === 2
-                ? 'Not enough rooms available for a large group at this time'
-                : 'Slot is no longer available',
-            409
-        );
+    const capacityError = getCapacityError(normalised, startTime, endTime, pCount);
+    if (capacityError) {
+        throw new AppError(capacityError, 409);
     }
 
-    // ── Assign physical station IDs ────────────────────────────────────────────
-    //
-    // Build the set of room IDs already committed to the overlapping window,
-    // then pick free ones for this booking. Using Set<string> for O(1) lookup.
-    const roomIdsInUse = new Set(
-        normalised
-            .filter(b => b.startTime < endTime && b.endTime > startTime)
-            .flatMap(b => (b.roomIds || []).map(id => id.toString()))
-    );
-
-    const freeRoomIds = allRooms
-        .map(r => r._id)
-        .filter(id => !roomIdsInUse.has(id.toString()));
-
-    // Slice exactly `stationsNeeded` IDs.
-    // For small groups: freeRoomIds[0] is guaranteed (we verified stationsUsed < 2).
-    // For large groups: stationsUsed must be 0, so freeRoomIds = all allRooms.
-    const assignedRoomIds = freeRoomIds.slice(0, stationsNeeded);
+    // ── Assign station IDs (length = rooms the group occupies) ────────────────
+    const assignedRoomIds = assignStationIds(allRooms, normalised, startTime, endTime, stationsNeeded);
 
     // ── Persist ────────────────────────────────────────────────────────────────
     const doc = new Booking({
@@ -269,7 +380,7 @@ async function _reserveBooking({
 //  getAvailableSlots
 // ─────────────────────────────────────────────────────────────────────────────
 exports.getAvailableSlots = asyncHandler(async (req, res, next) => {
-    const { date, participantsCount, admin } = req.query;
+    const { date, participantsCount, admin, withCapacity } = req.query;
     const isAdmin = admin === 'true';
     const pCount  = parseInt(participantsCount, 10) || 1;
 
@@ -281,89 +392,23 @@ exports.getAvailableSlots = asyncHandler(async (req, res, next) => {
     }
 
     // ── 1. Calendar context ──────────────────────────────────────────────────
-    const requestedDate = new Date(date);
-    const israelDate    = toIsraelDate(requestedDate);
-    const israelDateStr = toIsraelDateStr(requestedDate); // "YYYY-MM-DD"
-    const dayOfWeek     = israelDate.getDay();            // 0 Sun … 6 Sat
-    const isSaturday    = dayOfWeek === 6;
+    const israelDateStr = toIsraelDateStr(new Date(date)); // "YYYY-MM-DD"
+    const startOfDay    = new Date(israelDateStr + 'T00:00:00Z');
+    const endOfDay      = new Date(israelDateStr + 'T23:59:59.999Z');
 
-    // ── 2. Day-level gates (cheap — return early, no more DB calls) ──────────
-    if (!isAdmin && dayOfWeek === 5) {
-        return res.json({ status: 'success', data: [], reason: 'friday' });
-    }
-    if (!isAdmin && isJewishHoliday(requestedDate)) {
-        return res.json({ status: 'success', data: [], reason: 'holiday' });
-    }
-
-    // ── 3. Admin-blocked dates ───────────────────────────────────────────────
-    // Use the Israel calendar date boundaries (UTC-anchored) for the query
-    // so the server's local timezone never affects the lookup.
-    const startOfDay = new Date(israelDateStr + 'T00:00:00Z');
-    const endOfDay   = new Date(israelDateStr + 'T23:59:59.999Z');
-
-    let blockedRecord = null;
-    try {
-        blockedRecord = await BlockedDate.findOne({
-            date: { $gte: startOfDay, $lte: endOfDay },
-        }).lean();
-    } catch (_) { /* collection may not exist on a fresh install */ }
-
-    if (!isAdmin && blockedRecord?.isFullDay) {
-        return res.json({ status: 'success', data: [], reason: 'admin_blocked' });
-    }
-
-    // ── 4. Load allowed slots for this day ───────────────────────────────────
-    let candidates;
-
-    try {
-        const settings = await SiteSettings.findOne().lean();
-        // .lean() returns the Map as a plain object — access by string key directly.
-        const dayCfg = settings?.booking?.weeklyHours?.[String(dayOfWeek)];
-
-        if (Array.isArray(dayCfg) && dayCfg.length > 0) {
-            // Primary format: admin-defined array of "HH:MM" slot strings.
-            candidates = [...dayCfg].sort();
-        } else if (dayCfg && dayCfg.open && dayCfg.close) {
-            // Backwards-compat: legacy { open, close } objects still in DB.
-            candidates = generateIntervals(dayCfg.open, dayCfg.close);
-        } else {
-            // No config for this day → 15-min grid from DEFAULT_OPEN to DEFAULT_CLOSE.
-            candidates = generateIntervals(DEFAULT_OPEN, DEFAULT_CLOSE);
-        }
-    } catch (err) {
-        console.error('Error fetching SiteSettings:', err);
-        candidates = generateIntervals(DEFAULT_OPEN, DEFAULT_CLOSE);
-    }
-
-    // ── 5. Cheap in-memory filters (no extra DB calls needed) ────────────────
-
-    // 5a. Past-time filter — only for today, non-admin
-    if (!isAdmin) {
-        const israelNowStr = toIsraelDateStr(new Date());
-        if (israelNowStr === israelDateStr) {
-            const israelNow = toIsraelDate(new Date());
-            const nowMins   = israelNow.getHours() * 60 + israelNow.getMinutes();
-            // A slot is "past" if its start time ≤ now. Keep only future slots.
-            candidates = candidates.filter(s => parseMinutes(s) > nowMins);
-        }
-    }
-
-    // 5b. Admin partial-block slots
-    if (blockedRecord?.blockedSlots?.length > 0) {
-        const blocked = new Set(blockedRecord.blockedSlots);
-        candidates = candidates.filter(s => !blocked.has(s));
-    }
+    // ── 2. Allowed start times: opening hours, closures, blocks, past time ───
+    let { candidates, reason } = await getDayCandidates(israelDateStr, isAdmin);
 
     // Short-circuit — no point running a DB query for an empty list
     if (candidates.length === 0) {
-        return res.json({ status: 'success', data: [] });
+        return res.json({ status: 'success', data: [], ...(reason && { reason }) });
     }
 
-    // ── 6. ONE DB query: all active bookings for this day ────────────────────
+    // ── 3. ONE DB query: all active bookings for this day ────────────────────
     //
     // We deliberately fetch ALL bookings (any experience/roomId) because the
-    // two physical stations are a shared pool. A booking for any experience
-    // consumes a station and reduces capacity for everyone else.
+    // two physical rooms and the headsets are a shared pool. A booking for any
+    // experience consumes them and reduces capacity for everyone else.
     const dayBookings = await Booking.find({
         date:      { $gte: startOfDay, $lte: endOfDay },
         status:    { $ne: 'cancelled' },
@@ -376,27 +421,29 @@ exports.getAvailableSlots = asyncHandler(async (req, res, next) => {
         .map(b => normalizeBookingTimes(b, israelDateStr))
         .filter(Boolean);
 
-    // ── 7. Per-slot availability (in-memory, O(candidates × bookings)) ───────
-    //
-    // Stations needed:
-    //   1–4 participants → 1 station  (needs at least 1 of 2 free)
-    //   5–8 participants → 2 stations (needs both free)
-    const stationsNeeded = pCount > LARGE_GROUP_THRESHOLD ? 2 : 1;
+    // ── 4a. withCapacity=true: every start time with the largest group it fits ─
+    //   [{ time: "10:30", maxPlayers: 3 }, …] — maxPlayers 0 = full.
+    //   Lets the booking form grey out times / player counts and explain why,
+    //   instead of hiding them. The default response (plain strings) is unchanged.
+    if (withCapacity === 'true') {
+        const slots = candidates.map(slotStr => {
+            const windowStart = israelTimeToUTC(israelDateStr, slotStr);
+            const windowEnd   = new Date(windowStart.getTime() + BOOKING_DURATION_MS);
+            return { time: slotStr, maxPlayers: getMaxPlayers(normalised, windowStart, windowEnd) };
+        });
+        return res.json({ status: 'success', data: slots });
+    }
 
+    // ── 4. Per-slot availability (in-memory, O(candidates × bookings)) ───────
+    //
+    //   1–5 participants → 1 room,  6–8 → both rooms (entering together)
+    //   at most 8 headsets in use at any moment
+    //   no other group starting within 15 minutes
     candidates = candidates.filter(slotStr => {
         const windowStart = israelTimeToUTC(israelDateStr, slotStr);
         const windowEnd   = new Date(windowStart.getTime() + BOOKING_DURATION_MS);
-        const used        = countStationsUsed(normalised, windowStart, windowEnd);
-        return (TOTAL_STATIONS - used) >= stationsNeeded;
+        return !getCapacityError(normalised, windowStart, windowEnd, pCount);
     });
-
-    // ── 8. Saturday (Motzash) evening-only filter ─────────────────────────────
-    // Applied last because it depends on nothing else and rarely fires.
-    if (!isAdmin && isSaturday) {
-        candidates = candidates.filter(
-            s => parseMinutes(s) >= MOTZASH_MIN_HOUR * 60
-        );
-    }
 
     res.json({ status: 'success', data: candidates });
 });
@@ -426,13 +473,30 @@ exports.createBooking = asyncHandler(async (req, res, next) => {
     const endTime       = new Date(startTime.getTime() + BOOKING_DURATION_MS);
     const startOfDay    = new Date(israelDateStr + 'T00:00:00Z');
     const endOfDay      = new Date(israelDateStr + 'T23:59:59.999Z');
-    const stationsNeeded = pCount > LARGE_GROUP_THRESHOLD ? 2 : 1;
+    const stationsNeeded = stationsFor(pCount);
+
+    // Admin (valid token via optionalAuth) may book any time, set a manual price
+    // and a source; customers are limited to opening hours and the price list.
+    const isAdmin = Boolean(req.user);
+
+    if (!isAdmin) {
+        const { candidates } = await getDayCandidates(israelDateStr, false);
+        if (!candidates.includes(timeSlot)) {
+            return next(new AppError('This time is outside opening hours or no longer available', 409));
+        }
+    }
 
     // ── Load experience room for price calculation + email content ────────────
     const experienceRoomId = roomId || null;
     const room = experienceRoomId ? await Room.findById(experienceRoomId) : null;
 
-    let finalPrice = totalPrice;
+    // Price: admin's manual price if given, otherwise the price list (never the
+    // customer's browser), then the legacy per-room pricing as a last resort.
+    let finalPrice = isAdmin ? Number(totalPrice) || 0 : 0;
+    if (!finalPrice) {
+        const plans = await PricingPlan.find({ isActive: true }).lean();
+        finalPrice = calcTotalPrice(plans, pCount);
+    }
     if (!finalPrice && room) {
         const pKey = pCount.toString();
         const override = room.pricing.overrides?.get?.(pKey);
@@ -456,7 +520,9 @@ exports.createBooking = asyncHandler(async (req, res, next) => {
         startTime, endTime, startOfDay, endOfDay,
         israelDateStr, stationsNeeded, allRooms,
         experienceRoomId, pCount,
-        date, timeSlot, customer, source, finalPrice,
+        date, timeSlot, customer,
+        source: isAdmin ? source : 'website',
+        finalPrice,
     };
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -528,6 +594,36 @@ exports.createBooking = asyncHandler(async (req, res, next) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+//  getPublicBooking — confirmation page after booking / payment (public)
+//
+//  Looked up by the random bookingId (not the Mongo _id). Returns only what the
+//  confirmation page shows — no phone, email or notes.
+// ─────────────────────────────────────────────────────────────────────────────
+exports.getPublicBooking = asyncHandler(async (req, res, next) => {
+    const booking = await Booking.findOne({
+        bookingId: req.params.bookingId,
+        isDeleted: { $ne: true },
+    }).populate('roomId', 'title');
+
+    if (!booking) return next(new AppError('Booking not found', 404));
+
+    res.status(200).json({
+        status: 'success',
+        data: {
+            bookingId:         booking.bookingId,
+            date:              booking.date,
+            timeSlot:          booking.timeSlot,
+            roomTitle:         booking.roomId?.title || null,
+            participantsCount: booking.details?.participantsCount,
+            totalPrice:        booking.details?.totalPrice,
+            status:            booking.status,
+            paymentStatus:     booking.payment?.status || 'unpaid',
+            customerName:      booking.customer?.fullName,
+        },
+    });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 //  Admin CRUD — unchanged logic, updated populate() calls
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -582,7 +678,7 @@ exports.updateBooking = asyncHandler(async (req, res, next) => {
         const israelDateStr  = toIsraelDateStr(newDate);
         const newStartTime   = israelTimeToUTC(israelDateStr, newTimeSlot);
         const newEndTime     = new Date(newStartTime.getTime() + BOOKING_DURATION_MS);
-        const stationsNeeded = newPCount > LARGE_GROUP_THRESHOLD ? 2 : 1;
+        const stationsNeeded = stationsFor(newPCount);
 
         const startOfDay = new Date(israelDateStr + 'T00:00:00Z');
         const endOfDay   = new Date(israelDateStr + 'T23:59:59.999Z');
@@ -598,28 +694,14 @@ exports.updateBooking = asyncHandler(async (req, res, next) => {
         const normalised   = dayBookings
             .map(b => normalizeBookingTimes(b, israelDateStr))
             .filter(Boolean);
-        const stationsUsed = countStationsUsed(normalised, newStartTime, newEndTime);
-
-        if (TOTAL_STATIONS - stationsUsed < stationsNeeded) {
-            return next(new AppError(
-                stationsNeeded === 2
-                    ? 'Not enough rooms available for a large group at this time'
-                    : 'Slot is no longer available',
-                409
-            ));
+        const capacityError = getCapacityError(normalised, newStartTime, newEndTime, newPCount);
+        if (capacityError) {
+            return next(new AppError(capacityError, 409));
         }
 
-        // Re-assign physical station IDs from the shared pool
+        // Re-assign station IDs from the shared pool
         const allRooms = await Room.find({ isActive: true }, '_id').lean();
-        const roomIdsInUse = new Set(
-            normalised
-                .filter(b => b.startTime < newEndTime && b.endTime > newStartTime)
-                .flatMap(b => (b.roomIds || []).map(rid => rid.toString()))
-        );
-        const assignedRoomIds = allRooms
-            .map(r => r._id)
-            .filter(id => !roomIdsInUse.has(id.toString()))
-            .slice(0, stationsNeeded);
+        const assignedRoomIds = assignStationIds(allRooms, normalised, newStartTime, newEndTime, stationsNeeded);
 
         updateData.startTime = newStartTime;
         updateData.endTime   = newEndTime;
@@ -719,8 +801,9 @@ exports.emptyTrash = asyncHandler(async (_req, res, _next) => {
 
 exports.blockDate = asyncHandler(async (req, res, _next) => {
     const { date, reason, isFullDay, blockedSlots } = req.body;
-    const dateObj = new Date(date);
-    dateObj.setHours(0, 0, 0, 0);
+    // UTC midnight of the Israel calendar date — the same anchor getDayCandidates
+    // queries, regardless of the server's own timezone.
+    const dateObj = new Date(toIsraelDateStr(new Date(date)) + 'T00:00:00Z');
 
     const block = await BlockedDate.findOneAndUpdate(
         { date: dateObj },
@@ -731,8 +814,7 @@ exports.blockDate = asyncHandler(async (req, res, _next) => {
 });
 
 exports.getBlockedDates = asyncHandler(async (_req, res, _next) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = new Date(toIsraelDateStr(new Date()) + 'T00:00:00Z');
     const blocks = await BlockedDate.find({ date: { $gte: today } }).sort({ date: 1 });
     res.status(200).json({ status: 'success', data: blocks });
 });

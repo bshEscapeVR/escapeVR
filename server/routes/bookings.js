@@ -3,10 +3,13 @@ const express = require('express');
 const router = express.Router();
 const bookingController = require('../controllers/bookingController');
 const auth = require('../middleware/auth');
+const optionalAuth = require('../middleware/optionalAuth');
 
 // Public routes
 router.get('/slots', bookingController.getAvailableSlots);
-router.post('/', bookingController.createBooking);
+router.get('/public/:bookingId', bookingController.getPublicBooking);
+// optionalAuth: an admin token unlocks manual price / any time / source
+router.post('/', optionalAuth, bookingController.createBooking);
 
 // Protected routes (require auth)
 router.get('/all', auth, bookingController.getAllBookings);

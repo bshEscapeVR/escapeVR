@@ -1,11 +1,19 @@
 const mongoose = require('mongoose');
 const BilingualSchema = require('./Schemas/BilingualSchema');
+const { DEFAULT_OPENING_HOURS } = require('../utils/openingHours');
 
 const PageSeoSchema = new mongoose.Schema({
     title: BilingualSchema,
     description: BilingualSchema,
     keywords: BilingualSchema,
     ogImage: String
+}, { _id: false });
+
+// שעות פעילות ליום: open = התחלה ראשונה, close = התחלה אחרונה
+const DayHoursSchema = new mongoose.Schema({
+    open: String,   // "HH:MM"
+    close: String,  // "HH:MM" ("00:00" = חצות)
+    closed: { type: Boolean, default: false }
 }, { _id: false });
 
 // שאלה ותשובה בודדת בשאלות הנפוצות
@@ -119,6 +127,19 @@ const SiteSettingsSchema = new mongoose.Schema({
         icon: { type: String, default: 'sparkles' },
         title: BilingualSchema,
         content: BilingualSchema
+    },
+
+    // שעות פעילות - מוצגות באתר וקובעות את שעות ההזמנה.
+    // מפתחות: "0".."4" ראשון-חמישי, "5" שישי, "6" מוצאי שבת, holidayEve ערב חג, holidayEnd מוצאי חג
+    openingHours: {
+        type: Map,
+        of: DayHoursSchema,
+        default: () => DEFAULT_OPENING_HOURS
+    },
+
+    // הזמנה אונליין: כבוי = כפתורי "הזמן" פותחים את טופס יצירת הקשר (כמו קודם)
+    onlineBooking: {
+        enabled: { type: Boolean, default: false }
     },
 
     // שאלות נפוצות (סקשן בדף הבית + קישור בתפריט)
