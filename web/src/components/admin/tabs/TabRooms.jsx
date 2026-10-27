@@ -25,7 +25,7 @@ const TabRooms = () => {
             durationMinutes: 60,
             difficultyLevel: 3,
             minPlayers: 2,
-            maxPlayers: 6,
+            maxPlayers: 8,
             isVr: true
         },
         images: { main: '' },

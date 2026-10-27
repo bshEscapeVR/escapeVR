@@ -2,6 +2,7 @@
 
 import Navbar from '../../../components/Navbar';
 import ContactPopup from '../../../components/ContactPopup';
+import BookingModal from '../../../components/BookingModal';
 import WelcomePopup from '../../../components/WelcomePopup';
 import CookieBanner from '../../../components/CookieBanner';
 import FloatingContactButton from '../../../components/FloatingContactButton';
@@ -13,6 +14,7 @@ export default function SiteLayout({ children }) {
     <>
       <Navbar />
       <ContactPopup />
+      <BookingModal />
       <WelcomePopup />
       {children}
       <FloatingContactButton />

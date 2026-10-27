@@ -9,9 +9,25 @@ const bookingService = {
     return response.data;
   },
 
-  // בדיקת זמינות (סלוטים פנויים - עכשיו כולל גם שבת וחגים!)
-  getAvailableSlots: async (roomId, date, { admin = false } = {}) => {
-    const response = await httpService.get(`${ENDPOINT}/slots`, { roomId, date, ...(admin && { admin: 'true' }) });
+  // בדיקת זמינות (סלוטים פנויים לפי שעות הפעילות, חדרים ומשקפות פנויות לגודל הקבוצה)
+  getAvailableSlots: async (roomId, date, { admin = false, participantsCount } = {}) => {
+    const response = await httpService.get(`${ENDPOINT}/slots`, {
+      roomId, date,
+      ...(admin && { admin: 'true' }),
+      ...(participantsCount && { participantsCount })
+    });
+    return response.data;
+  },
+
+  // כל שעות היום עם מספר המשתתפים המקסימלי שאפשר להזמין בכל שעה: [{ time, maxPlayers }]
+  getSlotsWithCapacity: async (roomId, date) => {
+    const response = await httpService.get(`${ENDPOINT}/slots`, { roomId, date, withCapacity: 'true' });
+    return response.data;
+  },
+
+  // פרטי הזמנה לדף האישור (ציבורי, לפי מזהה ההזמנה)
+  getPublic: async (bookingId) => {
+    const response = await httpService.get(`${ENDPOINT}/public/${encodeURIComponent(bookingId)}`);
     return response.data;
   },
 

@@ -9,10 +9,10 @@ import { Users, Clock } from 'lucide-react';
 //  Constants
 // ─────────────────────────────────────────────────────────────────────────────
 const DAY_START_MIN = 10 * 60; // 10:00
-const DAY_END_MIN   = 22 * 60; // 22:00
-const DAY_SPAN_MIN  = DAY_END_MIN - DAY_START_MIN; // 720 min = 100%
+const DAY_END_MIN   = 26 * 60; // 02:00 next night (last start 24:00 + 75 min)
+const DAY_SPAN_MIN  = DAY_END_MIN - DAY_START_MIN; // 960 min = 100%
 const SESSION_MIN   = 75; // 1h 15m per session
-const HOUR_LABELS   = Array.from({ length: 13 }, (_, i) => i + 10); // [10…22]
+const HOUR_LABELS   = Array.from({ length: 17 }, (_, i) => i + 10); // [10…26] — shown as hour % 24
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Pure helpers
@@ -30,7 +30,7 @@ const toPercent = (minutes) =>
 
 /** Total minutes → "HH:MM" display string */
 const minToTimeStr = (min) => {
-    const h = Math.floor(min / 60);
+    const h = Math.floor(min / 60) % 24;
     const m = min % 60;
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 };
@@ -274,7 +274,7 @@ const DayTimeline = ({ bookings = [], selectedDate }) => {
                             className="absolute text-[10px] text-gray-600 -translate-x-1/2 select-none"
                             style={{ left: `${toPercent(hour * 60)}%` }}
                         >
-                            {hour}
+                            {hour % 24}
                         </span>
                     ))}
                 </div>

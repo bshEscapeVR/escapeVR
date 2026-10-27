@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Users, Tag, Check, MessageCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useContact } from '../context/ContactContext';
+import useBookingAction from '../hooks/useBookingAction';
 import { useSettings } from '../context/SettingsContext';
 import SectionTitle from './ui/SectionTitle';
 import { formatPlanPlayers, isRangePlan } from '../utils/pricing';
@@ -108,7 +108,7 @@ const PricingCard = ({ players, isRange, oldPrice, newPrice, totalPrice, discoun
 
 const PricingSection = () => {
     const { t } = useTranslation();
-    const { openContact } = useContact();
+    const openBookingOrContact = useBookingAction();
     const { language, settings, t: tDB } = useSettings();
     const [pricingPlans, setPricingPlans] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -200,7 +200,7 @@ const PricingSection = () => {
                                 totalPrice={plan.totalPrice || plan.newPrice * plan.players}
                                 discount={plan.discount || plan.calculatedDiscount || 0}
                                 features={defaultFeatures}
-                                onBook={() => openContact()}
+                                onBook={() => openBookingOrContact()}
                                 t={t}
                             />
                         ))}

@@ -5,14 +5,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, X, Globe, LayoutDashboard } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useContact } from '../context/ContactContext';
+import useBookingAction from '../hooks/useBookingAction';
 import { useSettings } from '../context/SettingsContext';
 import { authService } from '../services';
 import { getVisibleFaqItems } from './FaqSection';
 
 const Navbar = () => {
   const { t, i18n } = useTranslation();
-  const { openContact } = useContact();
+  const openBookingOrContact = useBookingAction();
   const { settings, getImg, t: tDB, language, toggleLanguage } = useSettings();
   const pathname = usePathname();
 
@@ -112,7 +112,7 @@ const Navbar = () => {
             </button>
 
             <button 
-                onClick={() => openContact()} 
+                onClick={() => openBookingOrContact()}
                 className="bg-brand-neon hover:bg-purple-600 text-white px-6 py-2 rounded-full font-bold shadow-lg shadow-purple-500/30 transition-all hover:scale-105 hover:shadow-purple-500/50"
             >
               {t('navbar.book_btn')}
@@ -174,7 +174,7 @@ const Navbar = () => {
         
         <div className="mt-8">
             <button 
-                onClick={() => { openContact(); setIsOpen(false); }}
+                onClick={() => { openBookingOrContact(); setIsOpen(false); }}
                 className="w-full bg-brand-neon text-white px-6 py-4 rounded-xl font-bold text-lg shadow-lg"
             >
             {t('navbar.book_btn')}

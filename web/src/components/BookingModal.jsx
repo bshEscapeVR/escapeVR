@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import Calendar from 'react-calendar';
 import { format } from 'date-fns';
 import { X, Clock, Users, CheckCircle, AlertCircle } from 'lucide-react';
@@ -35,11 +36,14 @@ const FormInput = ({ placeholder, error, ...props }) => (
 const BookingModal = () => {
   const { isOpen, closeBooking, preSelectedRoomId, handleSuccess } = useBooking();
   const { t } = useTranslation();
-  const { t: tDB, getImg } = useSettings();
-  
+  const { t: tDB, getImg, language } = useSettings();
+  const router = useRouter();
+  const pathname = usePathname();
+
   const [rooms, setRooms] = useState([]);
   const [pricingPlans, setPricingPlans] = useState([]);
-  const [availableSlots, setAvailableSlots] = useState([]);
+  const [availableSlots, setAvailableSlots] = useState([]); // [{ time, maxPlayers }]
+  const [slotNotice, setSlotNotice] = useState(null);       // הסבר כשבוחרים שעה שלא מתאימה
   const [bookingStatus, setBookingStatus] = useState('idle');
   const [totalPrice, setTotalPrice] = useState(0);
 
@@ -123,15 +127,21 @@ const BookingModal = () => {
     setTotalPrice(calcTotalPrice(pricingPlans, participants));
   }, [participants, pricingPlans]);
 
-  // טעינת שעות פנויות
+  // טעינת שעות היום, כל שעה עם מספר המשתתפים המקסימלי שאפשר להזמין בה
+  // (שעות לא נעלמות - שעה שלא מתאימה לגודל הקבוצה מוצגת באפור עם הסבר)
   useEffect(() => {
     if (!selectedRoomId || !selectedDate) return;
 
     const fetchSlots = async () => {
         const dateStr = format(selectedDate, 'yyyy-MM-dd');
         try {
-            const slots = await bookingService.getAvailableSlots(selectedRoomId, dateStr);
+            const slots = await bookingService.getSlotsWithCapacity(selectedRoomId, dateStr);
             setAvailableSlots(slots || []);
+            setSlotNotice(null);
+            // שעה שנבחרה ואינה קיימת ביום החדש - מאפסים
+            if (selectedSlot && !(slots || []).some(s => s.time === selectedSlot)) {
+                setValue('timeSlot', '');
+            }
         } catch (err) {
             console.error("Error fetching slots:", err);
         }
@@ -140,11 +150,32 @@ const BookingModal = () => {
     fetchSlots();
   }, [selectedRoomId, selectedDate]);
 
+  // מינימום ומקסימום משתתפים של העולם שנבחר
+  const roomMin = selectedRoom?.features?.minPlayers || 1;
+  const roomMax = selectedRoom?.features?.maxPlayers || 8;
+
+  // המקסימום בשעה שנבחרה (null = לא נבחרה שעה)
+  const selectedSlotMax = availableSlots.find(s => s.time === selectedSlot)?.maxPlayers ?? null;
+
+  // לחיצה על שעה: אם מספר המשתתפים מתאים - בוחרים, אחרת מסבירים כמה אפשר להזמין בה
+  const handleSlotClick = (slot) => {
+      if (slot.maxPlayers < roomMin) {
+          setSlotNotice(t('booking_modal.slot_full', { time: slot.time }));
+          return;
+      }
+      if (slot.maxPlayers < participants) {
+          setSlotNotice(t('booking_modal.slot_limited', { time: slot.time, max: slot.maxPlayers }));
+          return;
+      }
+      setSlotNotice(null);
+      setValue('timeSlot', slot.time, { shouldValidate: true });
+  };
+
   // שליחת הטופס (נקרא רק אם הולידציה עברה)
   const onSubmit = async (data) => {
       setBookingStatus('loading');
       try {
-          await bookingService.create({
+          const newBooking = await bookingService.create({
               roomId: data.roomId,
               date: format(data.date, 'yyyy-MM-dd'),
               timeSlot: data.timeSlot,
@@ -154,8 +185,17 @@ const BookingModal = () => {
                   phone: data.phone,
                   email: data.email
               },
-              totalPrice: totalPrice
+              totalPrice: totalPrice // לתצוגה בלבד - השרת מחשב את המחיר לפי המחירון
           });
+
+          // לקוח באתר - מעבר לדף אישור ההזמנה עם הפרטים
+          if (!pathname?.includes('/admin/') && newBooking?.bookingId) {
+              reset();
+              closeBooking();
+              router.push(`/${language}/booking/success?id=${encodeURIComponent(newBooking.bookingId)}`);
+              return;
+          }
+
           setBookingStatus('success');
           handleSuccess(); // קריאה ל-callback אם קיים (לרענון רשימת הזמנות באדמין)
       } catch (err) {
@@ -247,21 +287,38 @@ const BookingModal = () => {
 
                         <div className="w-full">
                             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-[150px] overflow-y-auto custom-scrollbar pr-1">
-                                {availableSlots.length > 0 ? availableSlots.map(slot => (
-                                    <button
-                                        key={slot}
-                                        type="button" // חשוב כדי לא לשלוח טופס
-                                        onClick={() => setValue('timeSlot', slot, { shouldValidate: true })}
-                                        className={`py-2 px-1 text-sm rounded-lg border transition-all 
-                                            ${selectedSlot === slot 
-                                                ? 'bg-brand-primary border-brand-primary text-white shadow-[0_0_10px_#a855f7]' 
-                                                : 'bg-white/5 border-white/10 hover:bg-white/10 text-gray-300'
-                                            }`}
-                                    >
-                                        {slot}
-                                    </button>
-                                )) : <p className="text-xs text-gray-500 col-span-3 text-center py-4">{t('booking_modal.no_slots')}</p>}
+                                {availableSlots.length > 0 ? availableSlots.map(slot => {
+                                    const isFull = slot.maxPlayers < roomMin;
+                                    const tooSmall = !isFull && slot.maxPlayers < participants;
+                                    const isSelected = selectedSlot === slot.time;
+                                    return (
+                                        <button
+                                            key={slot.time}
+                                            type="button" // חשוב כדי לא לשלוח טופס
+                                            onClick={() => handleSlotClick(slot)}
+                                            aria-disabled={isFull || tooSmall}
+                                            className={`py-1.5 px-1 text-sm rounded-lg border transition-all flex flex-col items-center leading-tight
+                                                ${isSelected
+                                                    ? 'bg-brand-primary border-brand-primary text-white shadow-[0_0_10px_#a855f7]'
+                                                    : isFull || tooSmall
+                                                        ? 'bg-white/[0.02] border-white/5 text-gray-600 cursor-not-allowed'
+                                                        : 'bg-white/5 border-white/10 hover:bg-white/10 text-gray-300'
+                                                }`}
+                                        >
+                                            <span dir="ltr">{slot.time}</span>
+                                            {/* כמה משתתפים אפשר עוד להזמין בשעה הזו (רק כשיש הגבלה) */}
+                                            {isFull ? (
+                                                <span className="text-[10px]">{t('booking_modal.slot_full_short')}</span>
+                                            ) : slot.maxPlayers < roomMax && (
+                                                <span className={`text-[10px] ${isSelected ? 'text-white/80' : tooSmall ? '' : 'text-yellow-300/80'}`}>
+                                                    {t('booking_modal.slot_up_to', { max: slot.maxPlayers })}
+                                                </span>
+                                            )}
+                                        </button>
+                                    );
+                                }) : <p className="text-xs text-gray-500 col-span-3 text-center py-4">{t('booking_modal.no_slots')}</p>}
                             </div>
+                            {slotNotice && <p className="text-yellow-300 text-xs mt-2 flex items-center gap-1"><AlertCircle size={12}/> {slotNotice}</p>}
                             {errors.timeSlot && <p className="text-red-400 text-xs mt-2 flex items-center gap-1"><AlertCircle size={10}/> {errors.timeSlot.message}</p>}
                         </div>
                     </div>
@@ -273,20 +330,30 @@ const BookingModal = () => {
                     <div className="flex gap-2 flex-wrap">
                          {[...Array(selectedRoom.features.maxPlayers - selectedRoom.features.minPlayers + 1).keys()].map(i => {
                             const num = i + selectedRoom.features.minPlayers;
+                            // אחרי בחירת שעה - כמויות שלא נכנסות בשעה הזו באפור
+                            const notAvailable = selectedSlotMax !== null && num > selectedSlotMax;
                             return (
-                                <button 
-                                    key={num} 
+                                <button
+                                    key={num}
                                     type="button"
-                                    onClick={() => setValue('participants', num)}
-                                    className={`w-10 h-10 rounded-xl border flex items-center justify-center font-bold transition-all 
-                                        ${participants === num 
-                                            ? 'bg-brand-primary border-brand-primary text-white shadow-lg shadow-brand-primary/30' 
-                                            : 'border-white/10 bg-white/5 text-gray-400 hover:bg-white/10'
+                                    disabled={notAvailable}
+                                    onClick={() => { setValue('participants', num); setSlotNotice(null); }}
+                                    className={`w-10 h-10 rounded-xl border flex items-center justify-center font-bold transition-all
+                                        ${participants === num
+                                            ? 'bg-brand-primary border-brand-primary text-white shadow-lg shadow-brand-primary/30'
+                                            : notAvailable
+                                                ? 'border-white/5 bg-white/[0.02] text-gray-700 cursor-not-allowed'
+                                                : 'border-white/10 bg-white/5 text-gray-400 hover:bg-white/10'
                                         }`}
                                 >{num}</button>
                             );
                         })}
                     </div>
+                    {selectedSlotMax !== null && selectedSlotMax < roomMax && (
+                        <p className="text-yellow-300/90 text-xs mt-2 flex items-center gap-1">
+                            <AlertCircle size={12}/> {t('booking_modal.slot_limited_selected', { time: selectedSlot, max: selectedSlotMax })}
+                        </p>
+                    )}
                 </div>
                 )}
 

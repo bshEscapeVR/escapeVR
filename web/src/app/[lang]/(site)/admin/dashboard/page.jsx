@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Settings, Save, Image, FileText, Youtube, BarChart, LogOut, Calendar, MessageSquare, TrendingUp, ExternalLink, Layout, DollarSign, Sparkles, HelpCircle } from 'lucide-react';
+import { Settings, Save, Image, FileText, Youtube, BarChart, LogOut, Calendar, MessageSquare, TrendingUp, ExternalLink, Layout, DollarSign, Sparkles, HelpCircle, Clock } from 'lucide-react';
 import { settingsService, authService } from '../../../../../services';
 import NeonButton from '../../../../../components/ui/NeonButton';
 import Spinner from '../../../../../components/ui/Spinner';
@@ -19,6 +19,7 @@ import TabRooms from '../../../../../components/admin/tabs/TabRooms';
 import TabPricing from '../../../../../components/admin/tabs/TabPricing';
 import TabWelcomePopup from '../../../../../components/admin/tabs/TabWelcomePopup';
 import TabFaq from '../../../../../components/admin/tabs/TabFaq';
+import TabHours from '../../../../../components/admin/tabs/TabHours';
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -32,6 +33,7 @@ export default function DashboardPage() {
 
     const tabs = [
         { id: 'bookings', label: 'הזמנות', icon: <Calendar size={15} /> },
+        { id: 'hours', label: 'שעות והזמנה', icon: <Clock size={15} /> },
         { id: 'rooms', label: 'חדרים', icon: <Layout size={15} /> },
         { id: 'pricing', label: 'מחירון', icon: <DollarSign size={15} /> },
         { id: 'leads', label: 'לידים', icon: <TrendingUp size={15} /> },
@@ -168,12 +170,13 @@ export default function DashboardPage() {
                     {activeTab === 'seo' && <TabSEO settings={settings} update={updateSettingsState} />}
                     {activeTab === 'content' && <TabContent settings={settings} update={updateSettingsState} />}
                     {activeTab === 'faq' && <TabFaq settings={settings} update={updateSettingsState} />}
+                    {activeTab === 'hours' && <TabHours settings={settings} update={updateSettingsState} />}
                     {activeTab === 'images' && <TabImages settings={settings} update={updateSettingsState} />}
                     {activeTab === 'trailer' && <TabTrailer settings={settings} update={updateSettingsState} />}
                     {activeTab === 'welcome' && <TabWelcomePopup />}
 
                     {/* Global save button (only for settings tabs) */}
-                    {['seo', 'images', 'content', 'faq', 'trailer'].includes(activeTab) && (
+                    {['seo', 'images', 'content', 'faq', 'hours', 'trailer'].includes(activeTab) && (
                         <div className="mt-12 pt-8 border-t border-white/5 flex justify-end sticky bottom-0 bg-[#1a0b2e]/95 py-4 -mb-4 z-20 rounded-b-2xl">
                             <NeonButton onClick={handleSave} disabled={isSaving} icon={Save}>
                                 {isSaving ? 'שומר...' : 'שמור שינויים'}

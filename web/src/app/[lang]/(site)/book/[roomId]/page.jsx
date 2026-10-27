@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Clock, Users, Zap, ArrowRight, CalendarCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { useContact } from '../../../../../context/ContactContext';
+import useBookingAction from '../../../../../hooks/useBookingAction';
 import { useSettings } from '../../../../../context/SettingsContext';
 import NeonButton from '../../../../../components/ui/NeonButton';
 import BookingPageSkeleton from '../../../../../components/ui/BookingPageSkeleton';
@@ -26,7 +26,7 @@ export default function BookingPage() {
     const roomId = params.roomId;
     const lang = params.lang || 'he';
     const router = useRouter();
-    const { openContact } = useContact();
+    const openBookingOrContact = useBookingAction();
 
     const { t } = useTranslation();
     const { t: tDB, getImg } = useSettings();
@@ -140,7 +140,7 @@ export default function BookingPage() {
 
                                 {/* CTA Button - at the bottom of text column */}
                                 <NeonButton
-                                    onClick={() => openContact()}
+                                    onClick={() => openBookingOrContact(roomId)}
                                     variant="primary"
                                     icon={CalendarCheck}
                                     className="text-lg py-4 px-8 w-full mt-auto"

@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { MapPin, Bus, Car } from 'lucide-react';
+import { MapPin, Bus, Car, Clock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../context/SettingsContext';
 import SectionTitle from './ui/SectionTitle';
+import OpeningHours from './ui/OpeningHours';
 
 // Fallback SVG icons (used if /icons/*.png don't load)
 const WazeFallbackIcon = ({ size = 20, className = "" }) => (
@@ -84,7 +85,13 @@ const LocationSection = () => {
                         </div>
 
                         <div className="p-8 bg-[#150822]">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 text-start">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8 text-start">
+                                <div>
+                                    <h4 className="text-brand-primary font-bold flex items-center gap-2 mb-2">
+                                        <Clock size={18} /> {t('hours.title')}
+                                    </h4>
+                                    <OpeningHours className="text-sm" labelClassName="text-gray-400" valueClassName="text-gray-300 font-medium" />
+                                </div>
                                 <div>
                                     <h4 className="text-brand-secondary font-bold flex items-center gap-2 mb-2">
                                         <Bus size={18} /> {t('location.label_transport')}

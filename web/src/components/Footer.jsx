@@ -2,16 +2,17 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Facebook, Instagram, Phone, Mail, MapPin } from 'lucide-react'; // הוספתי אייקונים של טיקטוק/וואטסאפ אם צריך
+import { Facebook, Instagram, Phone, Mail, MapPin, Clock } from 'lucide-react'; // הוספתי אייקונים של טיקטוק/וואטסאפ אם צריך
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../context/SettingsContext';
-import { useContact } from '../context/ContactContext';
+import useBookingAction from '../hooks/useBookingAction';
 import EmailLink from './ui/EmailLink';
+import OpeningHours from './ui/OpeningHours';
 
 const Footer = () => {
     const { t } = useTranslation();
     const { settings, getImg, t: tDB, loading, language } = useSettings();
-    const { openContact } = useContact();
+    const openBookingOrContact = useBookingAction();
     const currentYear = new Date().getFullYear();
 
     // שליפת נתונים דינמיים עם פולבק ל-JSON
@@ -71,7 +72,7 @@ const Footer = () => {
                         <ul className="space-y-3 text-sm">
                             <li><Link href={`/${language}`} className="hover:text-brand-primary transition-colors">{t('footer.link_home')}</Link></li>
                             <li><a href="#rooms" className="hover:text-brand-primary transition-colors">{t('footer.link_rooms')}</a></li>
-                            <li><button onClick={() => openContact()} className="hover:text-brand-primary transition-colors">{t('footer.link_book')}</button></li>
+                            <li><button onClick={() => openBookingOrContact()} className="hover:text-brand-primary transition-colors">{t('footer.link_book')}</button></li>
                             <li><Link href={`/${language}/contact`} className="hover:text-brand-primary transition-colors">{t('footer.link_contact')}</Link></li>
                             <li><Link href={`/${language}/privacy`} className="hover:text-brand-primary transition-colors">{t('footer.link_privacy')}</Link></li>
                         </ul>
@@ -104,6 +105,10 @@ const Footer = () => {
                             <li className="flex items-center gap-3">
                                 <Mail size={18} className="text-brand-secondary" />
                                 <EmailLink email={contactEmail} className="hover:text-white transition-colors" />
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <Clock size={18} className="text-brand-secondary mt-0.5 shrink-0" />
+                                <OpeningHours className="flex-1" />
                             </li>
                         </ul>
                     </div>

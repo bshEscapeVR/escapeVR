@@ -11,8 +11,6 @@ import { useBooking } from '../../../context/BookingContext';
 import { useSettings } from '../../../context/SettingsContext';
 import NeonButton from '../../../components/ui/NeonButton';
 import Spinner from '../../../components/ui/Spinner';
-import BookingModal from '../../../components/BookingModal';
-import WeeklyScheduleEditor from '../../../components/admin/WeeklyScheduleEditor';
 import DayTimeline from '../../../components/admin/DayTimeline';
 import PaymentButton from '../../../components/admin/PaymentButton';
 import 'react-calendar/dist/Calendar.css';
@@ -185,7 +183,7 @@ const TabBookings = () => {
 
             try {
                 const dateStr = format(selectedDate, 'yyyy-MM-dd');
-                const slots = await bookingService.getAvailableSlots(selectedRoomId, dateStr, { admin: true });
+                const slots = await bookingService.getAvailableSlots(selectedRoomId, dateStr, { admin: true, participantsCount: participants });
                 setAvailableSlots(slots || []);
             } catch (err) {
                 console.error("Error fetching slots:", err);
@@ -196,7 +194,7 @@ const TabBookings = () => {
         };
 
         fetchSlots();
-    }, [selectedRoomId, selectedDate, setValue]);
+    }, [selectedRoomId, selectedDate, participants, setValue]);
 
     useEffect(() => {
         fetchAllData();
@@ -534,8 +532,7 @@ const TabBookings = () => {
     return (
         <div className="animate-fade-in space-y-6">
 
-            {/* BookingModal - פופאפ הזמנה ללקוחות */}
-            <BookingModal />
+            {/* פופאפ ההזמנה ללקוחות (BookingModal) מוצג גלובלית ב-layout של האתר */}
 
             {/* מודל עריכת הזמנה */}
             {editFormData && (
@@ -723,8 +720,10 @@ const TabBookings = () => {
                 </div>
             )}
 
-            {/* קומפוננטת ניהול שעות פעילות */}
-            <WeeklyScheduleEditor />
+            {/* שעות ההזמנה נקבעות לפי שעות הפעילות (לשונית "שעות והזמנה") */}
+            <p className="text-sm text-gray-400 bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+                שעות ההזמנה נקבעות לפי שעות הפעילות - לעריכה: לשונית &quot;שעות והזמנה&quot; בלוח הניהול.
+            </p>
 
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 sm:gap-0">
                 <div>

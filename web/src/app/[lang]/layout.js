@@ -4,8 +4,8 @@ import Providers from "./providers";
 // Force dynamic rendering (required for fetch with no-store)
 export const dynamic = 'force-dynamic';
 
-// API URL from environment variable
-const API_URL = 'https://escapevr-server.onrender.com';
+// API URL from environment variable (trimmed - same guard as api/axios.js), Render API as fallback
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || '').trim() || 'https://escapevr-server.onrender.com';
 // --- Server Side Data Fetching ---
 async function getSettingsFromServer() {
   try {
