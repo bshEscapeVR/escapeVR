@@ -20,7 +20,8 @@ const TOTAL_HEADSETS        = 8;    // VR headsets shared by both rooms at any m
 const BOOKING_DURATION_MIN  = 75;   // A room is occupied 75 minutes per session (1h 15m)
 const BOOKING_DURATION_MS   = BOOKING_DURATION_MIN * 60 * 1000;
 const SLOT_INTERVAL_MIN     = 15;   // Time-picker increments (every 15 minutes)
-const LARGE_GROUP_THRESHOLD = 5;    // Max players per room — larger groups split across both rooms
+const LARGE_GROUP_THRESHOLD = 5;    // Max players in the big room — larger groups split across both rooms
+const SMALL_ROOM_MAX        = 4;    // The second room holds up to 4 — a group of 5 must get the big room
 const MIN_START_GAP_MIN     = 15;   // Different groups never start within 15 min (private briefing)
 const MIN_START_GAP_MS      = MIN_START_GAP_MIN * 60 * 1000;
 
@@ -158,11 +159,58 @@ const getPeakUsage = (normalizedBookings, windowStart, windowEnd) => {
 };
 
 /**
+ * Can the day's single-room groups (1–5 players) be split between the big room
+ * and the small room so that no two overlapping groups share a room and every
+ * group of 5 is in the big room?
+ *
+ * Groups that overlap must be in different rooms, so each chain of overlapping
+ * groups alternates big/small — a 2-colouring of the overlap graph (it is always
+ * 2-colourable while at most 2 groups overlap, which getPeakUsage enforces).
+ * Inside a chain the colouring is fixed up to swapping the rooms, so it works
+ * iff all groups of 5 in the chain land on the same colour.
+ * Groups of 6–8 use both rooms and never overlap anyone, so they are skipped.
+ */
+const isRoomAssignmentFeasible = (bookings) => {
+    const items = bookings.filter(b => (b.details?.participantsCount || 1) <= LARGE_GROUP_THRESHOLD);
+    const overlaps = (a, b) => a.startTime < b.endTime && b.startTime < a.endTime;
+    const color = new Array(items.length).fill(null);
+
+    for (let seed = 0; seed < items.length; seed++) {
+        if (color[seed] !== null) continue;
+        color[seed] = 0;
+        const queue = [seed];
+        const chain = [seed];
+        while (queue.length) {
+            const i = queue.shift();
+            for (let j = 0; j < items.length; j++) {
+                if (j === i || !overlaps(items[i], items[j])) continue;
+                if (color[j] === null) {
+                    color[j] = 1 - color[i];
+                    queue.push(j);
+                    chain.push(j);
+                } else if (color[j] === color[i]) {
+                    return false;
+                }
+            }
+        }
+        const bigRoomColors = new Set(
+            chain
+                .filter(i => (items[i].details?.participantsCount || 1) > SMALL_ROOM_MAX)
+                .map(i => color[i])
+        );
+        if (bigRoomColors.size > 1) return false;
+    }
+    return true;
+};
+
+/**
  * Why a group of `pCount` cannot start in [windowStart, windowEnd), or null if it can.
  *
  *   1. Another group already starts within 15 minutes (each group gets a private briefing).
  *   2. Not enough free rooms (1 room for up to 5 players, both rooms for 6–8).
  *   3. Not enough free headsets (8 in total across both rooms).
+ *   4. The rooms can't be split so that every group of 5 gets the big room
+ *      (e.g. a couple already in the big room while the small room can't take 5).
  */
 const getCapacityError = (normalizedBookings, windowStart, windowEnd, pCount) => {
     const tooClose = normalizedBookings.some(
@@ -176,6 +224,15 @@ const getCapacityError = (normalizedBookings, windowStart, windowEnd, pCount) =>
     }
     if (TOTAL_HEADSETS - headsets < pCount) {
         return 'Not enough VR headsets available at this time';
+    }
+
+    // Only reject when this booking is what breaks the big/small split — if the
+    // day was already unsplittable (older bookings), don't block unrelated times.
+    if (pCount <= LARGE_GROUP_THRESHOLD) {
+        const candidate = { startTime: windowStart, endTime: windowEnd, details: { participantsCount: pCount } };
+        if (!isRoomAssignmentFeasible([...normalizedBookings, candidate]) && isRoomAssignmentFeasible(normalizedBookings)) {
+            return 'The large room is not available at this time';
+        }
     }
     return null;
 };
@@ -380,7 +437,8 @@ async function _reserveBooking({
 //  getAvailableSlots
 // ─────────────────────────────────────────────────────────────────────────────
 exports.getAvailableSlots = asyncHandler(async (req, res, next) => {
-    const { date, participantsCount, admin, withCapacity } = req.query;
+    // excludeId (admin edit): the booking being edited doesn't count against its own new time
+    const { date, participantsCount, admin, withCapacity, excludeId } = req.query;
     const isAdmin = admin === 'true';
     const pCount  = parseInt(participantsCount, 10) || 1;
 
@@ -410,6 +468,7 @@ exports.getAvailableSlots = asyncHandler(async (req, res, next) => {
     // two physical rooms and the headsets are a shared pool. A booking for any
     // experience consumes them and reduces capacity for everyone else.
     const dayBookings = await Booking.find({
+        ...(excludeId && mongoose.Types.ObjectId.isValid(excludeId) && { _id: { $ne: excludeId } }),
         date:      { $gte: startOfDay, $lte: endOfDay },
         status:    { $ne: 'cancelled' },
         isDeleted: { $ne: true },
