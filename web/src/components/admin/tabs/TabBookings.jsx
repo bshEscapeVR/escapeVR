@@ -12,7 +12,6 @@ import { useSettings } from '../../../context/SettingsContext';
 import NeonButton from '../../../components/ui/NeonButton';
 import Spinner from '../../../components/ui/Spinner';
 import DayTimeline from '../../../components/admin/DayTimeline';
-import PaymentButton from '../../../components/admin/PaymentButton';
 import 'react-calendar/dist/Calendar.css';
 import '../../../BookingCalendarOverride.css';
 
@@ -1181,7 +1180,6 @@ const TabBookings = () => {
                                                             </button>
                                                         )}
                                                         <button onClick={() => handleEditBooking(booking)} className="p-2 text-gray-500 hover:text-brand-primary hover:bg-brand-primary/10 rounded-lg transition-colors" title="ערוך הזמנה"><Pencil size={18} /></button>
-                                                        <PaymentButton booking={booking} />
                                                         <button onClick={() => handleDelete(booking._id)} className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors" title="העבר לפח"><Trash2 size={18} /></button>
                                                     </div>
                                                 </td>
