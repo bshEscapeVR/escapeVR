@@ -11,6 +11,7 @@ const reviewsRouter = require('./reviews');
 const statsRouter = require('./stats');
 const pricingRouter  = require('./pricing');
 const paymentRouter  = require('./payment');
+const couponsRouter  = require('./coupons');
 
 // Routes
 router.use('/rooms', roomsRouter);
@@ -22,5 +23,6 @@ router.use('/reviews', reviewsRouter);
 router.use('/stats', statsRouter);
 router.use('/pricing', pricingRouter);
 router.use('/payments', paymentRouter);
+router.use('/coupons', couponsRouter);
 
 module.exports = router;

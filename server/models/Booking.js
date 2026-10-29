@@ -55,7 +55,17 @@ const BookingSchema = new mongoose.Schema(
 
         details: {
             participantsCount: { type: Number, required: true },
-            totalPrice:        { type: Number, required: true },
+            totalPrice:        { type: Number, required: true }, // after coupon discount
+        },
+
+        // ── Coupon (optional) ────────────────────────────────────────────────
+        coupon: {
+            code:          { type: String },
+            type:          { type: String }, // 'percent' | 'fixed'
+            value:         { type: Number }, // % or ₪ as defined on the coupon
+            discount:      { type: Number }, // ₪ off
+            originalPrice: { type: Number }, // price before the discount
+            campaign:      { type: String }, // partner / club the code belongs to (if any)
         },
 
         status: {

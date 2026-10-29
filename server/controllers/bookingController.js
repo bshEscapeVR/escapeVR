@@ -9,6 +9,8 @@ const asyncHandler = require('../utils/asyncHandler');
 const AppError     = require('../utils/AppError');
 const { getDayHoursKey, resolveDayRange } = require('../utils/openingHours');
 const { calcTotalPrice } = require('../utils/pricing');
+const { checkCoupon, calcDiscount, reserveCouponUse, releaseCouponUse } = require('../utils/coupons');
+const { callAdminAboutBooking } = require('../utils/voiceNotify');
 const { sendNewBookingAdminNotification, sendBookingConfirmationToCustomer } = require('../utils/emailService');
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -379,7 +381,8 @@ async function _reserveBooking({
     timeSlot,          // "HH:MM" display string
     customer,          // customer sub-document
     source,            // booking source string
-    finalPrice,        // calculated price
+    finalPrice,        // calculated price (after coupon)
+    couponInfo,        // { code, discount, originalPrice } or null
 }) {
     const queryOpts = session ? { session } : {};
 
@@ -426,6 +429,7 @@ async function _reserveBooking({
         endTime,
         customer,
         details: { participantsCount: pCount, totalPrice: finalPrice },
+        ...(couponInfo && { coupon: couponInfo }),
         source:  source || 'website',
     });
     await doc.save(queryOpts);
@@ -515,6 +519,7 @@ exports.createBooking = asyncHandler(async (req, res, next) => {
         date, timeSlot, participantsCount,
         customer, source, totalPrice,
         roomId, // optional — the chosen experience/theme Room
+        couponCode, // optional — discount code from the booking form
     } = req.body;
 
     if (!date || !timeSlot || !participantsCount || !customer) {
@@ -565,6 +570,23 @@ exports.createBooking = asyncHandler(async (req, res, next) => {
     }
     if (!finalPrice) finalPrice = 0;
 
+    // ── Coupon (optional): checked and priced on the server only ─────────────
+    // Errors come back as "COUPON:<reason>" so the booking form can explain them.
+    let coupon = null;
+    let couponInfo = null;
+    if (couponCode) {
+        const result = await checkCoupon(couponCode, { participantsCount: pCount, phone: customer?.phone });
+        if (result.error) return next(new AppError(`COUPON:${result.error}`, 400));
+        coupon = result.coupon;
+        const discount = calcDiscount(coupon, finalPrice);
+        couponInfo = {
+            code: coupon.code, type: coupon.type, value: coupon.value,
+            discount, originalPrice: finalPrice,
+            ...(coupon.campaign && { campaign: coupon.campaign }),
+        };
+        finalPrice -= discount;
+    }
+
     // ── Fetch all active Room IDs (station pool) ─────────────────────────────
     const allRooms = await Room.find({ isActive: true }, '_id').lean();
     if (allRooms.length < TOTAL_STATIONS) {
@@ -582,7 +604,13 @@ exports.createBooking = asyncHandler(async (req, res, next) => {
         date, timeSlot, customer,
         source: isAdmin ? source : 'website',
         finalPrice,
+        couponInfo,
     };
+
+    // Take one coupon use before reserving (atomic - respects maxUses); given back if booking fails
+    if (coupon && !(await reserveCouponUse(coupon))) {
+        return next(new AppError('COUPON:max_uses', 400));
+    }
 
     // ─────────────────────────────────────────────────────────────────────────
     //  Transaction attempt
@@ -597,6 +625,12 @@ exports.createBooking = asyncHandler(async (req, res, next) => {
     // ─────────────────────────────────────────────────────────────────────────
     let newBooking;
     let session = null;
+
+    // Booking failed after a coupon use was taken - give it back, then report the error
+    const failBooking = async (error) => {
+        if (coupon) await releaseCouponUse(coupon).catch(e => console.error('[createBooking] Coupon release error:', e));
+        return next(error);
+    };
 
     try {
         session = await mongoose.startSession();
@@ -624,17 +658,17 @@ exports.createBooking = asyncHandler(async (req, res, next) => {
                 // check and insert, just without transaction isolation.
                 newBooking = await _reserveBooking({ ...reserveArgs, session: null });
             } catch (fallbackErr) {
-                return next(fallbackErr); // could be AppError(409) or system error
+                return failBooking(fallbackErr); // could be AppError(409) or system error
             }
 
         } else if (err instanceof AppError) {
             // Clean domain error (e.g. 409 slot taken) — pass straight to client
-            return next(err);
+            return failBooking(err);
 
         } else {
             // Unexpected database / network error
             console.error('[createBooking] Unexpected error during transaction:', err);
-            return next(new AppError('Booking could not be completed. Please try again.', 500));
+            return failBooking(new AppError('Booking could not be completed. Please try again.', 500));
         }
 
     } finally {
@@ -648,6 +682,13 @@ exports.createBooking = asyncHandler(async (req, res, next) => {
         .catch(err => console.error('[createBooking] Admin email error:', err));
     sendBookingConfirmationToCustomer(newBooking, roomName, roomImage)
         .catch(err => console.error('[createBooking] Customer email error:', err));
+
+    // Recorded phone call to the owner — only for customer bookings (an admin
+    // booking manually already knows), and only when Twilio is configured.
+    if (!isAdmin) {
+        callAdminAboutBooking(newBooking, roomName)
+            .catch(err => console.error('[createBooking] Admin call error:', err.message));
+    }
 
     res.status(201).json({ status: 'success', data: newBooking });
 });
@@ -678,6 +719,10 @@ exports.getPublicBooking = asyncHandler(async (req, res, next) => {
             status:            booking.status,
             paymentStatus:     booking.payment?.status || 'unpaid',
             customerName:      booking.customer?.fullName,
+            couponCode:        booking.coupon?.code || null,
+            couponDiscount:    booking.coupon?.discount || 0,
+            couponType:        booking.coupon?.type || null,
+            couponValue:       booking.coupon?.value ?? null,
         },
     });
 });
