@@ -84,13 +84,27 @@ const BookingSchema = new mongoose.Schema(
         payment: {
             status: {
                 type: String,
-                enum: ['unpaid', 'paid', 'failed'],
+                // expired = the customer didn't pay within the hold time (booking cancelled)
+                enum: ['unpaid', 'paid', 'failed', 'expired'],
                 default: 'unpaid',
             },
             // Unique token embedded in the uPay IPN callback URL for lookup
             ref: { type: String, default: null },
             transactionId: { type: String, default: null },
+
+            // ── Sumit (online payment before the booking is confirmed) ──────
+            provider:  { type: String, default: null },  // 'sumit'
+            paymentId: { type: String, default: null },  // Sumit PaymentID
+            amount:    { type: Number, default: null },  // amount Sumit reports as paid
+            paidAt:    { type: Date,   default: null },
+            // A pending booking holds its slot until this time, then it's released
+            expiresAt: { type: Date,   default: null },
+            // Paid after the hold expired and the slot was taken meanwhile - admin must handle (refund / move)
+            needsAttention: { type: Boolean, default: false },
         },
+
+        // When the customer ticked "I agree to the cancellation policy"
+        policyAcceptedAt: { type: Date, default: null },
 
         isDeleted: { type: Boolean, default: false },
         deletedAt: { type: Date,    default: null  },
@@ -148,5 +162,6 @@ BookingSchema.index({ startTime: 1, endTime: 1 });
 BookingSchema.index({ date: 1, status: 1, isDeleted: 1 });
 BookingSchema.index({ status: 1, isDeleted: 1 });
 BookingSchema.index({ 'payment.ref': 1 }, { sparse: true });
+BookingSchema.index({ status: 1, 'payment.expiresAt': 1 });
 
 module.exports = mongoose.model('Booking', BookingSchema);

@@ -37,9 +37,10 @@ const bookingService = {
   },
 
   // יצירת הזמנה חדשה
+  // מחזיר את ההזמנה; בתשלום מראש מצורף אליה paymentUrl (דף התשלום של Sumit)
   create: async (bookingData) => {
     const response = await httpService.post(ENDPOINT, bookingData);
-    return response.data;
+    return response.paymentUrl ? { ...response.data, paymentUrl: response.paymentUrl } : response.data;
   },
 
   // עדכון הזמנה קיימת

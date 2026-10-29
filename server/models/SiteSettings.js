@@ -142,6 +142,15 @@ const SiteSettingsSchema = new mongoose.Schema({
         enabled: { type: Boolean, default: false }
     },
 
+    // תשלום מראש דרך Sumit: דלוק = לקוח לא יכול להשלים הזמנה בלי לשלם (כבוי = כמו קודם)
+    onlinePayment: {
+        enabled: { type: Boolean, default: false }
+    },
+
+    // מדיניות ביטולים - נפתחת מהצ'קבוקס בחלון ההזמנה ומצורפת למייל האישור.
+    // ריק = נוסח ברירת המחדל (utils/cancellationPolicy.js / קובץ התרגום)
+    cancellationPolicy: BilingualSchema,
+
     // שאלות נפוצות (סקשן בדף הבית + קישור בתפריט)
     faq: {
         enabled: { type: Boolean, default: true },

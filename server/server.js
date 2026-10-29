@@ -8,6 +8,7 @@ const mainRouter = require('./routes/index');
 const errorMiddleware = require('./middleware/errorMiddleware');
 const uploadRouter = require('./routes/upload');
 const { startGoogleReviewsSync } = require('./utils/googleReviewsService');
+const { expireStalePendingBookings } = require('./controllers/bookingController');
 
 // === Verify required environment variables on startup ===
 const requiredEnvVars = ['JWT_SECRET', 'MONGO_URI'];
@@ -95,6 +96,8 @@ mongoose.connect(process.env.MONGO_URI)
     .then(() => {
         console.log('MongoDB Connected');
         startGoogleReviewsSync();
+        // Unpaid online bookings give their slot back once the payment hold expires
+        setInterval(expireStalePendingBookings, 5 * 60 * 1000);
     })
     .catch(err => {
         console.error('MongoDB Connection Error:', err);

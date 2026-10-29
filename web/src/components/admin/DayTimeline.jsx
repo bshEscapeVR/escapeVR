@@ -147,7 +147,9 @@ const TooltipPortal = ({ booking, anchorRect }) => {
 // ─────────────────────────────────────────────────────────────────────────────
 const STATUS_LABELS  = { pending: 'ממתין', confirmed: 'מאושר', cancelled: 'בוטל', completed: 'הושלם', 'no-show': 'לא הגיע' };
 const SOURCE_LABELS  = { website: 'אתר', phone: 'טלפון', 'walk-in': 'הגיע במקום', whatsapp: 'וואטסאפ' };
-const PAYMENT_LABELS = { paid: 'שולם', unpaid: 'לא שולם', failed: 'נכשל' };
+const PAYMENT_LABELS = { paid: 'שולם', unpaid: 'לא שולם', failed: 'נכשל', expired: 'לא שולם בזמן' };
+// הזמנה מהאתר שמחכה לתשלום ב-Sumit (השעה שמורה 15 דקות)
+const isAwaitingPayment = (booking) => booking.payment?.provider === 'sumit' && booking.status === 'pending';
 
 const DetailRow = ({ icon: Icon, label, children }) => (
     <div className="flex items-start justify-between gap-4 py-2 border-b border-white/5 last:border-0">
@@ -174,7 +176,7 @@ const BookingDetailsModal = ({ booking, onClose, onEdit }) => {
 
                 <h3 className="text-xl font-bold text-white mb-1">{booking.customer?.fullName || 'לא ידוע'}</h3>
                 <p className="text-sm text-gray-400 mb-4">
-                    {STATUS_LABELS[booking.status] || booking.status}
+                    {isAwaitingPayment(booking) ? 'ממתין לתשלום' : (STATUS_LABELS[booking.status] || booking.status)}
                     {booking.source && <> · {SOURCE_LABELS[booking.source] || booking.source}</>}
                 </p>
 
@@ -199,7 +201,14 @@ const BookingDetailsModal = ({ booking, onClose, onEdit }) => {
                             {booking.coupon.campaign && <span className="block text-xs text-gray-400">{booking.coupon.campaign}</span>}
                         </DetailRow>
                     )}
-                    <DetailRow icon={CreditCard} label="תשלום">{PAYMENT_LABELS[booking.payment?.status] || 'לא שולם'}</DetailRow>
+                    <DetailRow icon={CreditCard} label="תשלום">
+                        {PAYMENT_LABELS[booking.payment?.status] || 'לא שולם'}
+                        {booking.payment?.status === 'paid' && booking.payment?.amount != null && ` (₪${booking.payment.amount})`}
+                        {booking.payment?.needsAttention && <span className="block text-xs text-red-400">⚠️ שולם אחרי שהשעה נתפסה - לתאם שעה אחרת או להחזיר ב-Sumit</span>}
+                    </DetailRow>
+                    {booking.policyAcceptedAt && (
+                        <DetailRow icon={Calendar} label="אישר מדיניות ביטולים">{format(new Date(booking.policyAcceptedAt), 'dd/MM/yyyy HH:mm')}</DetailRow>
+                    )}
                     {booking.customer?.notes && <DetailRow icon={MessageSquare} label="הערות">{booking.customer.notes}</DetailRow>}
                     <DetailRow icon={Hash} label="מספר הזמנה"><span dir="ltr">{booking.bookingId || '—'}</span></DetailRow>
                     {booking.createdAt && (

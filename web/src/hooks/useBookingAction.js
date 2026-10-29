@@ -8,7 +8,9 @@ const useBookingAction = () => {
     const { settings } = useSettings();
     const { openContact } = useContact();
     const { openBooking } = useBooking();
-    const onlineEnabled = Boolean(settings?.onlineBooking?.enabled);
+    // NEXT_PUBLIC_PREVIEW_ONLINE_BOOKING=true (רק ב-.env.local) - בדיקת ההזמנה במחשב בלי להדליק את המתג באתר החי
+    const onlineEnabled = Boolean(settings?.onlineBooking?.enabled)
+        || process.env.NEXT_PUBLIC_PREVIEW_ONLINE_BOOKING === 'true';
 
     return useCallback(
         (roomId = null) => (onlineEnabled ? openBooking(roomId) : openContact()),

@@ -170,7 +170,20 @@
         "email_note": "A confirmation with your booking details was sent to your email.",
         "phone_note": "For changes and questions:",
         "not_found": "We couldn't find this booking",
-        "btn_home": "Back to home"
+        "btn_home": "Back to home",
+        "verifying": "Checking your payment...",
+        "pending_title": "Your booking isn't paid yet",
+        "pending_text": "Your time is held for you until {{time}}. Please complete the payment to confirm the booking.",
+        "btn_pay_again": "Back to payment",
+        "retry_error": "We couldn't open the payment page - the payment time may have passed. Please book again.",
+        "expired_title": "The payment time has passed",
+        "expired_text": "The booking wasn't paid in time and the slot was released. You can book again from the home page.",
+        "cancelled_title": "The booking was cancelled",
+        "cancelled_text": "No payment was made and the time was released. You're welcome to book again anytime.",
+        "label_requested_time": "Requested time",
+        "label_paid": "Paid",
+        "attention_title": "Payment received",
+        "attention_text": "Your payment went through, but the time you chose was taken meanwhile. We'll contact you shortly to arrange another time or a full refund."
     },
     "pricing": {
         "title": "Pricing",
@@ -257,7 +270,18 @@
         "err_time_required": "Please select a time slot",
         "err_name_short": "Name must be at least 2 characters",
         "err_phone_invalid": "Invalid phone number",
-        "err_email_invalid": "Invalid email address"
+        "err_email_invalid": "Invalid email address",
+        "btn_pay": "Continue to payment",
+        "btn_pay_amount": "Continue to payment ₪{{total}}",
+        "btn_redirecting": "Taking you to the payment page...",
+        "payment_note": "Secure payment page by Sumit. Your time is held for 15 minutes.",
+        "payment_unavailable": "Payment is unavailable right now. Please try again in a few minutes or call us.",
+        "policy_agree": "I have read and agree to the",
+        "policy_link": "cancellation policy",
+        "policy_required": "Please accept the cancellation policy",
+        "policy_title": "Cancellation Policy",
+        "policy_accept_btn": "I agree",
+        "policy_default": "Cancellation or rescheduling up to 24 hours before the booking – full refund.\nCancellation within 24 hours of the booking or no-show – no refund.\nTo cancel or reschedule, please contact us by phone.\nYour chosen time is held for 15 minutes to complete the payment. If the payment isn't completed within that time, the time is released and the booking is not placed.\nIf the payment is completed after the time was already taken, we'll contact you to arrange another time or a full refund.\nWe may cancel a confirmed booking with at least 24 hours' notice, in which case a full refund will be given."
     },
     "cookie_banner": {
         "message": "This website uses cookies to improve your browsing experience.",

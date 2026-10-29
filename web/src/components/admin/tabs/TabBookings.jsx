@@ -20,6 +20,22 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 
 // --- רכיבי UI פנימיים ---
+
+// מצב תשלום אונליין (Sumit) מתחת למחיר: שולם / ממתין לתשלום / שולם אך השעה נתפסה
+const PaymentBadge = ({ booking }) => {
+    const payment = booking.payment || {};
+    if (payment.needsAttention) {
+        return <span className="block text-[11px] text-red-400 font-sans font-normal">⚠️ שולם אחרי שהשעה נתפסה - לתאם / להחזיר</span>;
+    }
+    if (payment.status === 'paid') {
+        return <span className="block text-[11px] text-green-400 font-sans font-normal">✓ שולם</span>;
+    }
+    if (payment.provider === 'sumit' && booking.status === 'pending') {
+        return <span className="block text-[11px] text-yellow-300 font-sans font-normal">ממתין לתשלום</span>;
+    }
+    return null;
+};
+
 const AdminInput = ({ label, error, ...props }) => (
     <div className="w-full">
         {label && <label className="text-gray-400 text-xs font-bold uppercase mb-1 block">{label}</label>}
@@ -1157,7 +1173,10 @@ const TabBookings = () => {
                                                     </div>
                                                 </td>
                                                 <td className="p-4 text-center"><span className="bg-white/5 px-2 py-1 rounded-md">{booking.details?.participantsCount}</span></td>
-                                                <td className="p-4 text-green-400 font-bold font-mono">₪{booking.details?.totalPrice}</td>
+                                                <td className="p-4 text-green-400 font-bold font-mono">
+                                                    ₪{booking.details?.totalPrice}
+                                                    <PaymentBadge booking={booking} />
+                                                </td>
                                                 <td className="p-4"><StatusBadge status={calculateDynamicStatus(booking)} /></td>
                                                 <td className="p-4 text-center">
                                                     <div className="flex items-center justify-center gap-1">

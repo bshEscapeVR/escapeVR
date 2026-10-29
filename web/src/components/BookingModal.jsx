@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Calendar from 'react-calendar';
 import { format } from 'date-fns';
-import { X, Clock, Users, CheckCircle, AlertCircle } from 'lucide-react';
+import { X, Clock, Users, CheckCircle, AlertCircle, Lock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useBooking } from '../context/BookingContext';
 import { useSettings } from '../context/SettingsContext';
@@ -47,9 +47,10 @@ const FormInput = ({ placeholder, error, ...props }) => (
 const BookingModal = () => {
   const { isOpen, closeBooking, preSelectedRoomId, handleSuccess } = useBooking();
   const { t } = useTranslation();
-  const { t: tDB, getImg, language } = useSettings();
+  const { t: tDB, getImg, language, settings } = useSettings();
   const router = useRouter();
   const pathname = usePathname();
+  const isAdminPage = Boolean(pathname?.includes('/admin/'));
 
   const [rooms, setRooms] = useState([]);
   const [pricingPlans, setPricingPlans] = useState([]);
@@ -65,6 +66,12 @@ const BookingModal = () => {
   const [couponMessage, setCouponMessage] = useState(null);
   const [checkingCoupon, setCheckingCoupon] = useState(false);
   const [totalPrice, setTotalPrice] = useState(0);
+
+  // מדיניות ביטולים (בתשלום מראש): צ'קבוקס חובה + חלון לקריאת הנוסח
+  const [policyAccepted, setPolicyAccepted] = useState(false);
+  const [policyError, setPolicyError] = useState(false);
+  const [showPolicy, setShowPolicy] = useState(false);
+  const policyText = tDB(settings?.cancellationPolicy).trim() || t('booking_modal.policy_default');
 
   // 2. הגדרת סכמת הולידציה (Rules)
   const schema = z.object({
@@ -115,6 +122,9 @@ const BookingModal = () => {
         setCouponInput('');
         setAppliedCoupon(null);
         setCouponMessage(null);
+        setPolicyAccepted(false);
+        setPolicyError(false);
+        setShowPolicy(false);
         Promise.all([
             roomService.getAll(),
             pricingService.getAll()
@@ -247,7 +257,15 @@ const BookingModal = () => {
   const couponDiscount = appliedCoupon?.discount || 0;
   const priceToPay = Math.max(0, totalPrice - couponDiscount);
 
+  // תשלום מראש (מתג בפאנל הניהול): לקוח באתר עובר לדף התשלום של Sumit לפני שההזמנה מאושרת.
+  // הזמנה מפאנל הניהול לא דורשת תשלום. הזמנה בחינם (קופון 100%) מאושרת מיד.
+  const paymentRequired = !isAdminPage && Boolean(settings?.onlinePayment?.enabled) && !(participants && totalPrice && priceToPay === 0);
+
   const onSubmit = async (data) => {
+      if (paymentRequired && !policyAccepted) {
+          setPolicyError(true);
+          return;
+      }
       setBookingStatus('loading');
       setSubmitError(null);
       try {
@@ -262,11 +280,22 @@ const BookingModal = () => {
                   email: data.email
               },
               totalPrice: totalPrice, // לתצוגה בלבד - השרת מחשב את המחיר לפי המחירון
-              ...(appliedCoupon && { couponCode: appliedCoupon.code }) // השרת בודק ומחשב את ההנחה בעצמו
+              ...(appliedCoupon && { couponCode: appliedCoupon.code }), // השרת בודק ומחשב את ההנחה בעצמו
+              ...(paymentRequired && { acceptedPolicy: policyAccepted }),
+              // באתר (לא בפאנל) - תמיד כמו לקוח, גם כשהמנהל מחובר באותו דפדפן
+              ...(!isAdminPage && { asCustomer: true }),
+              lang: language
           });
 
+          // תשלום מראש - השעה שמורה ללקוח, עוברים לדף התשלום המאובטח
+          if (newBooking?.paymentUrl) {
+              setBookingStatus('redirecting');
+              window.location.href = newBooking.paymentUrl;
+              return;
+          }
+
           // לקוח באתר - מעבר לדף אישור ההזמנה עם הפרטים
-          if (!pathname?.includes('/admin/') && newBooking?.bookingId) {
+          if (!isAdminPage && newBooking?.bookingId) {
               reset();
               closeBooking();
               router.push(`/${language}/booking/success?id=${encodeURIComponent(newBooking.bookingId)}`);
@@ -298,6 +327,10 @@ const BookingModal = () => {
               setAppliedCoupon(null);
               setCouponMessage({ ok: false, text });
               setSubmitError(text);
+          } else if (message.startsWith('POLICY:')) {
+              setPolicyError(true);
+          } else if (message.startsWith('PAYMENT:')) {
+              setSubmitError(t('booking_modal.payment_unavailable'));
           }
           setBookingStatus('error');
       }
@@ -551,15 +584,79 @@ const BookingModal = () => {
                         )}
                     </div>
 
+                    {/* מדיניות ביטולים - צ'קבוקס חובה, הנוסח נפתח בחלון */}
+                    {paymentRequired && (
+                        <div>
+                            <label className="flex items-start gap-3 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={policyAccepted}
+                                    onChange={(e) => { setPolicyAccepted(e.target.checked); setPolicyError(false); }}
+                                    className={`mt-0.5 shrink-0 w-5 h-5 cursor-pointer accent-brand-primary ${policyError ? 'outline outline-2 outline-red-500 rounded' : ''}`}
+                                />
+                                <span className="text-sm text-gray-300 leading-relaxed">
+                                    {t('booking_modal.policy_agree')}{' '}
+                                    <button
+                                        type="button"
+                                        onClick={(e) => { e.preventDefault(); setShowPolicy(true); }}
+                                        className="text-brand-primary hover:text-purple-300 underline underline-offset-2 transition-colors"
+                                    >
+                                        {t('booking_modal.policy_link')}
+                                    </button>
+                                </span>
+                            </label>
+                            {policyError && (
+                                <p className="text-red-400 text-xs mt-1 ms-8 flex items-center gap-1"><AlertCircle size={10}/> {t('booking_modal.policy_required')}</p>
+                            )}
+                        </div>
+                    )}
+
                     <div className="mt-2">
-                        <NeonButton type="submit" disabled={bookingStatus === 'loading'} className="w-full">
-                            {bookingStatus === 'loading' ? t('booking_modal.btn_sending') : t('booking_modal.btn_confirm')}
+                        <NeonButton type="submit" disabled={bookingStatus === 'loading' || bookingStatus === 'redirecting'} className="w-full">
+                            {bookingStatus === 'loading'
+                                ? t('booking_modal.btn_sending')
+                                : bookingStatus === 'redirecting'
+                                    ? t('booking_modal.btn_redirecting')
+                                    : paymentRequired
+                                        ? (participants && totalPrice ? t('booking_modal.btn_pay_amount', { total: priceToPay }) : t('booking_modal.btn_pay'))
+                                        : t('booking_modal.btn_confirm')}
                         </NeonButton>
+                        {paymentRequired && (
+                            <p className="text-xs text-gray-500 text-center mt-2 flex items-center justify-center gap-1">
+                                <Lock size={11}/> {t('booking_modal.payment_note')}
+                            </p>
+                        )}
                         {bookingStatus === 'error' && <p className="text-red-400 text-center text-sm mt-2">{submitError || t('booking_modal.error_create')}</p>}
                     </div>
                 </form>
             </div>
         </>
+        )}
+
+        {/* חלון מדיניות הביטולים */}
+        {showPolicy && (
+            <div className="absolute inset-0 z-30 flex items-center justify-center p-4 bg-black/70" onClick={() => setShowPolicy(false)}>
+                <div className="bg-[#1a0b2e] border border-brand-primary/30 rounded-2xl p-6 max-w-md w-full text-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                    <h3 className="text-lg font-bold mb-3 text-brand-primary">{t('booking_modal.policy_title')}</h3>
+                    <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-line mb-5">{policyText}</p>
+                    <div className="flex gap-2 justify-end">
+                        <button
+                            type="button"
+                            onClick={() => { setPolicyAccepted(true); setPolicyError(false); setShowPolicy(false); }}
+                            className="px-4 py-2 rounded-xl bg-brand-primary text-white text-sm font-bold hover:opacity-90"
+                        >
+                            {t('booking_modal.policy_accept_btn')}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setShowPolicy(false)}
+                            className="px-4 py-2 rounded-xl border border-white/10 text-gray-300 text-sm hover:bg-white/5"
+                        >
+                            {t('booking_modal.btn_close')}
+                        </button>
+                    </div>
+                </div>
+            </div>
         )}
       </div>
     </div>

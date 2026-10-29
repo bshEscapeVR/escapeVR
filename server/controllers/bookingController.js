@@ -5,13 +5,16 @@ const Room        = require('../models/Room');
 const BlockedDate = require('../models/BlockedDate');
 const SiteSettings = require('../models/SiteSettings');
 const PricingPlan  = require('../models/PricingPlan');
+const Coupon       = require('../models/Coupon');
 const asyncHandler = require('../utils/asyncHandler');
 const AppError     = require('../utils/AppError');
 const { getDayHoursKey, resolveDayRange } = require('../utils/openingHours');
 const { calcTotalPrice } = require('../utils/pricing');
 const { checkCoupon, calcDiscount, reserveCouponUse, releaseCouponUse } = require('../utils/coupons');
 const { callAdminAboutBooking } = require('../utils/voiceNotify');
-const { sendNewBookingAdminNotification, sendBookingConfirmationToCustomer } = require('../utils/emailService');
+const { sendEmail, sendNewBookingAdminNotification, sendBookingConfirmationToCustomer, sendLatePaymentNoticeToCustomer } = require('../utils/emailService');
+const { isSumitConfigured, beginRedirect, findPaymentForBooking } = require('../utils/sumit');
+const { getCancellationPolicy } = require('../utils/cancellationPolicy');
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Constants
@@ -26,6 +29,8 @@ const LARGE_GROUP_THRESHOLD = 5;    // Max players in the big room — larger gr
 const SMALL_ROOM_MAX        = 4;    // The second room holds up to 4 — a group of 5 must get the big room
 const MIN_START_GAP_MIN     = 15;   // Different groups never start within 15 min (private briefing)
 const MIN_START_GAP_MS      = MIN_START_GAP_MIN * 60 * 1000;
+const PAYMENT_HOLD_MIN      = 15;   // An unpaid online booking holds its slot this long
+const PAYMENT_HOLD_MS       = PAYMENT_HOLD_MIN * 60 * 1000;
 
 // Fallback window for admin bookings on a closed day.
 const DEFAULT_OPEN  = '10:00';
@@ -383,6 +388,7 @@ async function _reserveBooking({
     source,            // booking source string
     finalPrice,        // calculated price (after coupon)
     couponInfo,        // { code, discount, originalPrice } or null
+    extra,             // optional extra fields (pending-payment status, payment hold, policy consent)
 }) {
     const queryOpts = session ? { session } : {};
 
@@ -431,6 +437,7 @@ async function _reserveBooking({
         details: { participantsCount: pCount, totalPrice: finalPrice },
         ...(couponInfo && { coupon: couponInfo }),
         source:  source || 'website',
+        ...extra,
     });
     await doc.save(queryOpts);
 
@@ -457,6 +464,9 @@ exports.getAvailableSlots = asyncHandler(async (req, res, next) => {
     const israelDateStr = toIsraelDateStr(new Date(date)); // "YYYY-MM-DD"
     const startOfDay    = new Date(israelDateStr + 'T00:00:00Z');
     const endOfDay      = new Date(israelDateStr + 'T23:59:59.999Z');
+
+    // Unpaid online bookings past their hold time give their slot back first
+    await expireStalePendingBookings();
 
     // ── 2. Allowed start times: opening hours, closures, blocks, past time ───
     let { candidates, reason } = await getDayCandidates(israelDateStr, isAdmin);
@@ -520,6 +530,9 @@ exports.createBooking = asyncHandler(async (req, res, next) => {
         customer, source, totalPrice,
         roomId, // optional — the chosen experience/theme Room
         couponCode, // optional — discount code from the booking form
+        acceptedPolicy, // true when the customer ticked the cancellation-policy checkbox
+        lang,           // 'he' | 'en' — payment page language and return URL
+        asCustomer,     // true from the public site — customer rules even if an admin is logged in
     } = req.body;
 
     if (!date || !timeSlot || !participantsCount || !customer) {
@@ -541,7 +554,23 @@ exports.createBooking = asyncHandler(async (req, res, next) => {
 
     // Admin (valid token via optionalAuth) may book any time, set a manual price
     // and a source; customers are limited to opening hours and the price list.
-    const isAdmin = Boolean(req.user);
+    // A booking made on the public site follows customer rules (hours, price list,
+    // payment) even when the admin is logged in in the same browser.
+    const isAdmin = Boolean(req.user) && asCustomer !== true;
+
+    // Online payment (admin switch): a customer booking is held as "pending"
+    // until Sumit confirms the payment. Admin bookings never require it.
+    const settings = await SiteSettings.findOne().lean();
+    const paymentRequired = !isAdmin && Boolean(settings?.onlinePayment?.enabled);
+    if (paymentRequired && !isSumitConfigured()) {
+        return next(new AppError('PAYMENT:unavailable', 503));
+    }
+    if (paymentRequired && acceptedPolicy !== true) {
+        return next(new AppError('POLICY:required', 400));
+    }
+
+    // Unpaid bookings past their hold time give their slot back first
+    await expireStalePendingBookings();
 
     if (!isAdmin) {
         const { candidates } = await getDayCandidates(israelDateStr, false);
@@ -605,6 +634,14 @@ exports.createBooking = asyncHandler(async (req, res, next) => {
         source: isAdmin ? source : 'website',
         finalPrice,
         couponInfo,
+        extra: {
+            ...(acceptedPolicy === true && { policyAcceptedAt: new Date() }),
+            // Nothing to charge (e.g. a 100% coupon) → confirmed right away
+            ...(paymentRequired && finalPrice > 0 && {
+                status:  'pending',
+                payment: { status: 'unpaid', provider: 'sumit', expiresAt: new Date(Date.now() + PAYMENT_HOLD_MS) },
+            }),
+        },
     };
 
     // Take one coupon use before reserving (atomic - respects maxUses); given back if booking fails
@@ -675,23 +712,230 @@ exports.createBooking = asyncHandler(async (req, res, next) => {
         if (session) session.endSession();
     }
 
-    // ── Async emails (do not block the response) ─────────────────────────────
-    const roomName  = room?.title?.he || room?.title?.en || 'חדר בריחה';
-    const roomImage = room?.images?.main || null;
-    sendNewBookingAdminNotification(newBooking, roomName, roomImage)
-        .catch(err => console.error('[createBooking] Admin email error:', err));
-    sendBookingConfirmationToCustomer(newBooking, roomName, roomImage)
-        .catch(err => console.error('[createBooking] Customer email error:', err));
+    // ── Waiting for payment: send the customer to Sumit; emails go out once paid ─
+    if (newBooking.status === 'pending') {
+        try {
+            const paymentUrl = await createPaymentPage(newBooking, room, lang);
+            return res.status(201).json({ status: 'success', data: newBooking, paymentUrl });
+        } catch (err) {
+            console.error('[createBooking] Sumit payment page error:', err.message);
+            await cancelUnpaidBooking(newBooking, 'failed');
+            return next(new AppError('PAYMENT:unavailable', 502));
+        }
+    }
 
+    // ── Async emails (do not block the response) ─────────────────────────────
     // Recorded phone call to the owner — only for customer bookings (an admin
     // booking manually already knows), and only when Twilio is configured.
-    if (!isAdmin) {
-        callAdminAboutBooking(newBooking, roomName)
-            .catch(err => console.error('[createBooking] Admin call error:', err.message));
-    }
+    notifyNewBooking(newBooking, { room, callAdmin: !isAdmin, settings });
 
     res.status(201).json({ status: 'success', data: newBooking });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Online payment helpers (used by createBooking and paymentController)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const roomNameOf = (room) => room?.title?.he || room?.title?.en || 'חדר בריחה';
+
+/** Emails (admin + customer) and the owner's phone call for a confirmed booking. */
+const notifyNewBooking = async (booking, { room, callAdmin = true, settings } = {}) => {
+    try {
+        if (room === undefined) room = booking.roomId ? await Room.findById(booking.roomId).lean() : null;
+        if (settings === undefined) settings = await SiteSettings.findOne().lean();
+    } catch (err) {
+        console.error('[notifyNewBooking] Lookup error:', err.message);
+    }
+    const roomName  = roomNameOf(room);
+    const roomImage = room?.images?.main || null;
+    // The policy the customer agreed to goes into their confirmation email
+    const policyText = booking.policyAcceptedAt ? getCancellationPolicy(settings, 'he') : null;
+
+    sendNewBookingAdminNotification(booking, roomName, roomImage)
+        .catch(err => console.error('[notifyNewBooking] Admin email error:', err));
+    sendBookingConfirmationToCustomer(booking, roomName, roomImage, { policyText })
+        .catch(err => console.error('[notifyNewBooking] Customer email error:', err));
+
+    if (callAdmin) {
+        callAdminAboutBooking(booking, roomName)
+            .catch(err => console.error('[notifyNewBooking] Admin call error:', err.message));
+    }
+};
+
+/** Sumit payment page for a pending booking; Sumit sends the customer back to the confirmation page. */
+const createPaymentPage = async (booking, room, lang) => {
+    if (room === undefined) room = booking.roomId ? await Room.findById(booking.roomId).lean() : null;
+    const l = lang === 'en' ? 'en' : 'he';
+    const clientUrl = process.env.CLIENT_BASE_URL || 'https://www.escapevr.co.il';
+    const backUrl = `${clientUrl}/${l}/booking/success?id=${encodeURIComponent(booking.bookingId)}`;
+    return beginRedirect({
+        booking,
+        roomName: roomNameOf(room),
+        redirectUrl: backUrl,
+        cancelUrl: `${backUrl}&cancelled=1`,
+        lang: l,
+    });
+};
+
+/** Releases an unpaid booking's slot (and its coupon use). No-op if it was paid meanwhile. */
+const cancelUnpaidBooking = async (booking, paymentStatus) => {
+    const updated = await Booking.findOneAndUpdate(
+        { _id: booking._id, status: 'pending', 'payment.status': 'unpaid' },
+        { status: 'cancelled', 'payment.status': paymentStatus },
+        { new: true }
+    );
+    if (updated?.coupon?.code) {
+        const coupon = await Coupon.findOne({ code: updated.coupon.code });
+        if (coupon) await releaseCouponUse(coupon).catch(e => console.error('[cancelUnpaidBooking] Coupon release error:', e));
+    }
+    return updated;
+};
+
+/** Paid after the hold expired: confirm again if the slot is still free. */
+const tryReinstateBooking = async (booking) => {
+    const israelDateStr = toIsraelDateStr(new Date(booking.date));
+    const dayBookings = await Booking.find({
+        _id:       { $ne: booking._id },
+        date:      { $gte: new Date(israelDateStr + 'T00:00:00Z'), $lte: new Date(israelDateStr + 'T23:59:59.999Z') },
+        status:    { $ne: 'cancelled' },
+        isDeleted: { $ne: true },
+    }).lean();
+    const normalised = dayBookings.map(b => normalizeBookingTimes(b, israelDateStr)).filter(Boolean);
+    const pCount = booking.details.participantsCount;
+    if (getCapacityError(normalised, booking.startTime, booking.endTime, pCount)) return null;
+
+    const allRooms = await Room.find({ isActive: true }, '_id').lean();
+    const roomIds = assignStationIds(allRooms, normalised, booking.startTime, booking.endTime, stationsFor(pCount));
+    const updated = await Booking.findOneAndUpdate(
+        { _id: booking._id, status: 'cancelled' },
+        { status: 'confirmed', roomIds },
+        { new: true }
+    );
+    // The coupon use was given back when the hold expired - take it again
+    if (updated?.coupon?.code) await Coupon.updateOne({ code: updated.coupon.code }, { $inc: { usedCount: 1 } });
+    return updated;
+};
+
+const alertAdminLatePayment = (booking) => sendEmail({
+    to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
+    subject: `⚠️ תשלום התקבל אך השעה כבר נתפסה - הזמנה ${booking.bookingId}`,
+    html: `
+        <div dir="rtl" style="font-family: Arial, sans-serif; line-height: 1.7;">
+            <h2>תשלום התקבל אחרי שהשעה שוחררה</h2>
+            <p>הלקוח שילם אחרי שעברו ${PAYMENT_HOLD_MIN} הדקות, ובינתיים השעה נתפסה בהזמנה אחרת.
+               צריך ליצור קשר עם הלקוח ולתאם שעה אחרת או לבצע החזר ב-Sumit.</p>
+            <p><b>הזמנה:</b> ${booking.bookingId}<br>
+               <b>לקוח:</b> ${booking.customer.fullName} - ${booking.customer.phone}<br>
+               <b>תאריך ושעה:</b> ${new Date(booking.date).toLocaleDateString('he-IL')} ${booking.timeSlot}<br>
+               <b>משתתפים:</b> ${booking.details.participantsCount}<br>
+               <b>שולם:</b> ₪${booking.payment?.amount ?? booking.details.totalPrice}</p>
+        </div>`,
+});
+
+/**
+ * Confirms a booking after Sumit reports a valid payment for it. Safe to call
+ * more than once (return page + expiry check) - only the first call confirms
+ * and sends the emails.
+ * @param payment - Sumit Payment object (from getPayment / findPaymentForBooking)
+ * @returns the up-to-date booking
+ */
+const finalizePaidBooking = async (booking, payment) => {
+    if (!payment?.ValidPayment) return booking;
+    // The payment must belong to this booking and cover its full price
+    if (payment.ExternalIdentifier !== booking.bookingId) {
+        console.error('[finalizePaidBooking] Payment', payment.ID, 'belongs to', payment.ExternalIdentifier, 'not', booking.bookingId);
+        return booking;
+    }
+    if (Number(payment.Amount) + 0.01 < booking.details.totalPrice) {
+        console.error('[finalizePaidBooking] Amount', payment.Amount, '<', booking.details.totalPrice, 'for', booking.bookingId);
+        return booking;
+    }
+
+    const paidFields = {
+        'payment.status':        'paid',
+        'payment.paymentId':     String(payment.ID),
+        'payment.amount':        Number(payment.Amount),
+        'payment.paidAt':        new Date(),
+        'payment.transactionId': payment.AuthNumber || null,
+    };
+
+    // Normal case: paid within the hold time
+    let updated = await Booking.findOneAndUpdate(
+        { _id: booking._id, status: 'pending', 'payment.status': 'unpaid' },
+        { ...paidFields, status: 'confirmed' },
+        { new: true }
+    );
+    if (updated) {
+        notifyNewBooking(updated);
+        return updated;
+    }
+
+    // Late payment: the hold already expired and the booking was cancelled
+    updated = await Booking.findOneAndUpdate(
+        { _id: booking._id, 'payment.status': 'expired' },
+        paidFields,
+        { new: true }
+    );
+    if (!updated) return Booking.findById(booking._id); // already handled by another call
+
+    const reinstated = await tryReinstateBooking(updated);
+    if (reinstated) {
+        notifyNewBooking(reinstated);
+        return reinstated;
+    }
+
+    const flagged = await Booking.findByIdAndUpdate(updated._id, { 'payment.needsAttention': true }, { new: true });
+    alertAdminLatePayment(flagged).catch(err => console.error('[finalizePaidBooking] Alert email error:', err));
+    sendLatePaymentNoticeToCustomer(flagged).catch(err => console.error('[finalizePaidBooking] Customer notice error:', err));
+    return flagged;
+};
+
+/**
+ * Releases unpaid bookings whose hold time passed. Before releasing, asks Sumit
+ * whether the customer paid but never returned to the site. Throttled - called
+ * from the slots / booking endpoints and from a timer in server.js.
+ */
+let lastExpiryRun = 0;
+const EXPIRY_THROTTLE_MS = 30 * 1000;
+const PAYMENT_PAGE_LIFETIME_MS = 2 * 60 * 60 * 1000; // Sumit page lives 1h - after 2h no payment can arrive
+
+const expireStalePendingBookings = async () => {
+    if (Date.now() - lastExpiryRun < EXPIRY_THROTTLE_MS) return;
+    lastExpiryRun = Date.now();
+
+    try {
+        const stale = await Booking.find({
+            status:              'pending',
+            'payment.status':    'unpaid',
+            'payment.expiresAt': { $lte: new Date() },
+            isDeleted:           { $ne: true },
+        });
+
+        for (const booking of stale) {
+            if (isSumitConfigured()) {
+                try {
+                    const payment = await findPaymentForBooking(booking.bookingId, booking.createdAt);
+                    if (payment) {
+                        await finalizePaidBooking(booking, payment);
+                        continue;
+                    }
+                } catch (err) {
+                    console.error('[expireStalePendingBookings] Sumit lookup error:', err.message);
+                    // Can't tell right now - keep holding, unless no payment can still arrive
+                    if (Date.now() - booking.createdAt.getTime() < PAYMENT_PAGE_LIFETIME_MS) continue;
+                }
+            }
+            await cancelUnpaidBooking(booking, 'expired');
+        }
+    } catch (err) {
+        console.error('[expireStalePendingBookings] Error:', err);
+    }
+};
+
+exports.createPaymentPage          = createPaymentPage;
+exports.cancelUnpaidBooking        = cancelUnpaidBooking;
+exports.finalizePaidBooking        = finalizePaidBooking;
+exports.expireStalePendingBookings = expireStalePendingBookings;
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  getPublicBooking — confirmation page after booking / payment (public)
@@ -718,6 +962,9 @@ exports.getPublicBooking = asyncHandler(async (req, res, next) => {
             totalPrice:        booking.details?.totalPrice,
             status:            booking.status,
             paymentStatus:     booking.payment?.status || 'unpaid',
+            paymentExpiresAt:  booking.payment?.expiresAt || null,
+            paymentNeedsAttention: Boolean(booking.payment?.needsAttention),
+            paidAmount:        booking.payment?.status === 'paid' ? booking.payment?.amount ?? null : null,
             customerName:      booking.customer?.fullName,
             couponCode:        booking.coupon?.code || null,
             couponDiscount:    booking.coupon?.discount || 0,
@@ -733,7 +980,11 @@ exports.getPublicBooking = asyncHandler(async (req, res, next) => {
 
 // קבלת כל ההזמנות (לא כולל מחוקות)
 exports.getAllBookings = asyncHandler(async (_req, res, _next) => {
-    const bookings = await Booking.find({ isDeleted: { $ne: true } })
+    const bookings = await Booking.find({
+        isDeleted: { $ne: true },
+        // Online bookings abandoned before payment (slot released) aren't real bookings - keep them out of the list
+        $nor: [{ status: 'cancelled', 'payment.status': { $in: ['expired', 'failed'] }, 'payment.needsAttention': { $ne: true } }],
+    })
         // populate both fields: roomId (deprecated, still set on new bookings for compat)
         // and roomIds (the new array). Admin panel can use either.
         .populate('roomId',  'title')

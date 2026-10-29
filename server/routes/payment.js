@@ -2,12 +2,18 @@
 const express = require('express');
 const router  = express.Router();
 const auth    = require('../middleware/auth');
-const { initiatePayment, handleIPN } = require('../controllers/paymentController');
+const { getPaymentStatus, verifySumitPayment, cancelSumitPayment, retrySumitPayment } = require('../controllers/paymentController');
 
-// Admin creates a payment session for a specific booking
-router.post('/initiate/:bookingId', auth, initiatePayment);
+// Admin: are the Sumit keys configured on the server?
+router.get('/status', auth, getPaymentStatus);
 
-// uPay IPN callback — no auth, called server-to-server by uPay
-router.post('/ipn', handleIPN);
+// Confirmation page: check with Sumit whether the booking was paid
+router.post('/sumit/verify', verifySumitPayment);
+
+// Customer pressed "cancel" on the payment page - release the slot right away
+router.post('/sumit/cancel', cancelSumitPayment);
+
+// Customer left the payment page - open a new one while the slot is still held
+router.post('/sumit/retry', retrySumitPayment);
 
 module.exports = router;

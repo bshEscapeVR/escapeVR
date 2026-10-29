@@ -220,12 +220,22 @@ const sendNewBookingAdminNotification = async (booking, roomName, roomImage) => 
 };
 
 // מייל ללקוח - אישור הזמנה
-const sendBookingConfirmationToCustomer = async (booking, roomName, roomImage) => {
+// policyText: מדיניות הביטולים שהלקוח אישר בחלון ההזמנה (אם אישר)
+const sendBookingConfirmationToCustomer = async (booking, roomName, roomImage, { policyText } = {}) => {
     if (!booking.customer.email) return; // אין מייל ללקוח - לא שולחים
 
     const date = new Date(booking.date).toLocaleDateString('he-IL');
     const contactPhone = process.env.BUSINESS_PHONE || '000-0000000';
     const logoUrl = await getLogoUrl();
+    const isPaid = booking.payment?.status === 'paid';
+
+    const escapeHtml = (text) => String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const policyHtml = policyText
+        ? `<div style="background: rgba(168,85,247,0.05); border: 1px solid rgba(168,85,247,0.15); border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+                    <p style="margin: 0 0 6px; color: #c084fc; font-size: 14px; font-weight: 600;">מדיניות ביטולים</p>
+                    <p style="margin: 0; color: #9ca3af; font-size: 13px; line-height: 1.7;">${escapeHtml(policyText).replace(/\n/g, '<br>')}</p>
+                </div>`
+        : '';
 
     const roomImageHtml = roomImage
         ? `<img src="${roomImage}" alt="${roomName}" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 10px; margin-bottom: 20px; border: 1px solid rgba(168,85,247,0.3);" />`
@@ -282,10 +292,12 @@ const sendBookingConfirmationToCustomer = async (booking, roomName, roomImage) =
                     <div style="width: 100%; height: 1px; background: linear-gradient(90deg, transparent, rgba(168,85,247,0.4), transparent); margin: 15px 0;"></div>
 
                     <div style="text-align: center;">
-                        <span style="color: #9ca3af; font-size: 13px;">סה"כ לתשלום</span>
+                        <span style="color: #9ca3af; font-size: 13px;">${isPaid ? 'שולם' : 'סה"כ לתשלום'}</span>
                         <div style="color: #a855f7; font-size: 26px; font-weight: 700; margin-top: 4px; text-shadow: 0 0 20px rgba(168,85,247,0.4);">₪${booking.details.totalPrice}</div>
                     </div>
                 </div>
+
+                ${policyHtml}
 
                 <!-- Contact -->
                 <div style="background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.15); border-radius: 10px; padding: 15px; text-align: center;">
@@ -303,10 +315,59 @@ const sendBookingConfirmationToCustomer = async (booking, roomName, roomImage) =
         `
     });
 };
+// מייל ללקוח - שילם אחרי שזמן השמירה עבר והשעה נתפסה בינתיים (ההזמנה לא אושרה)
+const sendLatePaymentNoticeToCustomer = async (booking) => {
+    if (!booking.customer.email) return;
+
+    const date = new Date(booking.date).toLocaleDateString('he-IL');
+    const time = String(booking.timeSlot || '').replace(/^24:/, '00:');
+    const paid = booking.payment?.amount ?? booking.details.totalPrice;
+    const contactPhone = process.env.BUSINESS_PHONE || '000-0000000';
+    const logoUrl = await getLogoUrl();
+
+    await sendEmail({
+        to: booking.customer.email,
+        subject: `התשלום התקבל - נחזור אליך לגבי הזמנה ${booking.bookingId} - EscapeVR`,
+        html: `
+        <div dir="rtl" style="font-family: 'Rubik', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background: linear-gradient(135deg, #1a0533 0%, #3e096b 50%, #1a0533 100%); padding: 35px 20px 25px; text-align: center; border-radius: 16px 16px 0 0;">
+                ${buildLogoHtml(logoUrl, 'large')}
+                <div style="width: 70px; height: 2px; background: linear-gradient(90deg, #a855f7, #c084fc); margin: 12px auto;"></div>
+                <p style="margin: 0; color: #f3e8ff; font-size: 20px; font-weight: 600;">התשלום התקבל</p>
+            </div>
+
+            <div style="background: #2d1650; padding: 30px 25px; border-left: 1px solid rgba(168,85,247,0.2); border-right: 1px solid rgba(168,85,247,0.2);">
+                <p style="color: #f3e8ff; font-size: 16px; margin: 0 0 12px;">שלום <strong style="color: #a855f7;">${booking.customer.fullName}</strong>,</p>
+                <p style="color: #e9d5ff; font-size: 15px; line-height: 1.8; margin: 0 0 20px;">
+                    התשלום על סך <strong>₪${paid}</strong> התקבל, אבל השעה <strong>${time}</strong> בתאריך <strong>${date}</strong>
+                    נתפסה רגע לפני שהתשלום הושלם.
+                    ניצור איתך קשר בהקדם לתיאום שעה אחרת, או שנחזיר לך את מלוא הסכום.
+                </p>
+
+                <div style="background: linear-gradient(135deg, #3b1a6e, #2a0f4e); border: 1px solid rgba(168,85,247,0.3); border-radius: 12px; padding: 20px; margin-bottom: 20px; text-align: center;">
+                    <span style="color: #9ca3af; font-size: 12px; letter-spacing: 3px;">מספר הזמנה</span>
+                    <div style="color: #a855f7; font-size: 22px; font-weight: 700; margin-top: 4px;">${booking.bookingId}</div>
+                </div>
+
+                <div style="background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.15); border-radius: 10px; padding: 15px; text-align: center;">
+                    <p style="margin: 0 0 4px; color: #9ca3af; font-size: 13px;">רוצים לדבר איתנו כבר עכשיו?</p>
+                    <a href="tel:${contactPhone}" style="color: #a855f7; font-size: 18px; font-weight: 600; text-decoration: none; letter-spacing: 1px;">${contactPhone}</a>
+                </div>
+            </div>
+
+            <div style="background: #0f0518; padding: 18px; text-align: center; border-radius: 0 0 16px 16px; border-left: 1px solid rgba(168,85,247,0.1); border-right: 1px solid rgba(168,85,247,0.1); border-bottom: 1px solid rgba(168,85,247,0.1);">
+                <a href="https://www.escapevr.co.il" style="display: inline-block; color: #a855f7; font-size: 14px; font-weight: 600; text-decoration: none; margin-bottom: 8px;">www.escapevr.co.il</a>
+                <p style="margin: 0; color: #9ca3af; font-size: 12px;">EscapeVR - חוויית מציאות מדומה בלתי נשכחת</p>
+            </div>
+        </div>
+        `
+    });
+};
 
 module.exports = {
     sendEmail,
     sendNewLeadNotification,
     sendNewBookingAdminNotification,
-    sendBookingConfirmationToCustomer
+    sendBookingConfirmationToCustomer,
+    sendLatePaymentNoticeToCustomer
 };
