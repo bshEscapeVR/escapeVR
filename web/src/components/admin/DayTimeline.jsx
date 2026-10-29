@@ -191,6 +191,14 @@ const BookingDetailsModal = ({ booking, onClose, onEdit }) => {
                     <DetailRow icon={Clock} label="שעה"><span dir="ltr">{booking.timeSlot} – {minToTimeStr(startMin + SESSION_MIN)}</span></DetailRow>
                     <DetailRow icon={Users} label="משתתפים">{booking.details?.participantsCount ?? '—'}</DetailRow>
                     <DetailRow icon={CreditCard} label="מחיר">₪{booking.details?.totalPrice ?? 0}</DetailRow>
+                    {booking.coupon?.code && (
+                        <DetailRow icon={CreditCard} label="קופון">
+                            <span dir="ltr">{booking.coupon.code}</span>
+                            {booking.coupon.type === 'percent' && ` ${booking.coupon.value}%`}
+                            {' '}(-₪{booking.coupon.discount}, במקום ₪{booking.coupon.originalPrice})
+                            {booking.coupon.campaign && <span className="block text-xs text-gray-400">{booking.coupon.campaign}</span>}
+                        </DetailRow>
+                    )}
                     <DetailRow icon={CreditCard} label="תשלום">{PAYMENT_LABELS[booking.payment?.status] || 'לא שולם'}</DetailRow>
                     {booking.customer?.notes && <DetailRow icon={MessageSquare} label="הערות">{booking.customer.notes}</DetailRow>}
                     <DetailRow icon={Hash} label="מספר הזמנה"><span dir="ltr">{booking.bookingId || '—'}</span></DetailRow>

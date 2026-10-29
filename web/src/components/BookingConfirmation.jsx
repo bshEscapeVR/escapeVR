@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { format } from 'date-fns';
-import { CheckCircle, Calendar, Clock, Users, CreditCard, Hash, MapPin } from 'lucide-react';
+import { CheckCircle, Calendar, Clock, Users, CreditCard, Hash, MapPin, Ticket } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../context/SettingsContext';
 
@@ -16,7 +16,8 @@ const DetailRow = ({ icon: Icon, label, value }) => (
 /**
  * אישור הזמנה עם כל הפרטים - משותף לדף האישור של הלקוח ולחלון ההזמנה בפאנל הניהול.
  * booking במבנה של GET /bookings/public/:bookingId:
- * { bookingId, date, timeSlot, roomTitle, participantsCount, totalPrice, paymentStatus, customerName }
+ * { bookingId, date, timeSlot, roomTitle, participantsCount, totalPrice, paymentStatus, customerName,
+ *   couponCode?, couponDiscount?, couponType?, couponValue? }
  */
 const BookingConfirmation = ({ booking }) => {
     const { t } = useTranslation();
@@ -43,6 +44,14 @@ const BookingConfirmation = ({ booking }) => {
                 <DetailRow icon={Calendar} label={t('booking_success.label_date')} value={format(new Date(booking.date), 'dd/MM/yyyy')} />
                 <DetailRow icon={Clock} label={t('booking_success.label_time')} value={<span dir="ltr">{booking.timeSlot}</span>} />
                 <DetailRow icon={Users} label={t('booking_success.label_participants')} value={booking.participantsCount} />
+                {booking.couponCode && (
+                    <DetailRow
+                        icon={Ticket}
+                        label={t('booking_success.label_coupon', { code: booking.couponCode })
+                            + (booking.couponType === 'percent' ? ` (${booking.couponValue}%)` : '')}
+                        value={<span className="text-green-400">-₪{booking.couponDiscount}</span>}
+                    />
+                )}
                 <DetailRow icon={CreditCard} label={t('booking_success.label_total')} value={`₪${booking.totalPrice}`} />
                 <DetailRow
                     icon={CreditCard}

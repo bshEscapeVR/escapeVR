@@ -9,3 +9,4 @@ export { default as uploadService } from './upload.service';
 export { default as statsService } from './stats.service';
 export { default as pricingService } from './pricing.service';
 export { default as paymentService } from './payment.service';
+export { default as couponService } from './coupon.service';

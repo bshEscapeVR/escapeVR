@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Settings, Save, Image, FileText, Youtube, BarChart, LogOut, Calendar, MessageSquare, TrendingUp, ExternalLink, Layout, DollarSign, Sparkles, HelpCircle, Clock, CalendarDays } from 'lucide-react';
+import { Settings, Save, Image, FileText, Youtube, BarChart, LogOut, Calendar, MessageSquare, TrendingUp, ExternalLink, Layout, DollarSign, Sparkles, HelpCircle, Clock, CalendarDays, Ticket } from 'lucide-react';
 import { settingsService, authService } from '../../../../../services';
 import NeonButton from '../../../../../components/ui/NeonButton';
 import Spinner from '../../../../../components/ui/Spinner';
@@ -21,6 +21,7 @@ import TabWelcomePopup from '../../../../../components/admin/tabs/TabWelcomePopu
 import TabFaq from '../../../../../components/admin/tabs/TabFaq';
 import TabHours from '../../../../../components/admin/tabs/TabHours';
 import TabCalendar from '../../../../../components/admin/tabs/TabCalendar';
+import TabCoupons from '../../../../../components/admin/tabs/TabCoupons';
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -38,6 +39,7 @@ export default function DashboardPage() {
         { id: 'hours', label: 'שעות והזמנה', icon: <Clock size={15} /> },
         { id: 'rooms', label: 'חדרים', icon: <Layout size={15} /> },
         { id: 'pricing', label: 'מחירון', icon: <DollarSign size={15} /> },
+        { id: 'coupons', label: 'קופונים', icon: <Ticket size={15} /> },
         { id: 'leads', label: 'לידים', icon: <TrendingUp size={15} /> },
         { id: 'reviews', label: 'ביקורות', icon: <MessageSquare size={15} /> },
         { id: 'seo', label: 'SEO', icon: <BarChart size={15} /> },
@@ -166,6 +168,7 @@ export default function DashboardPage() {
                     {activeTab === 'calendar' && <TabCalendar />}
                     {activeTab === 'rooms' && <TabRooms />}
                     {activeTab === 'pricing' && <TabPricing />}
+                    {activeTab === 'coupons' && <TabCoupons />}
                     {activeTab === 'leads' && <TabLeads />}
                     {activeTab === 'reviews' && <TabReviews />}
 

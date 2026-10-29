@@ -11,7 +11,7 @@ import { useSettings } from '../context/SettingsContext';
 import NeonButton from './ui/NeonButton';
 import BookingModalSkeleton from './ui/BookingModalSkeleton';
 import BookingConfirmation from './BookingConfirmation';
-import { bookingService, roomService, pricingService } from '../services';
+import { bookingService, roomService, pricingService, couponService } from '../services';
 import { calcTotalPrice, findPlanForPlayers } from '../utils/pricing';
 
 // סדר העולמות ברשימת הבחירה בחלון ההזמנה (לפי ה-slug של החדר). עולם שלא ברשימה יופיע אחריהם.
@@ -57,6 +57,13 @@ const BookingModal = () => {
   const [slotNotice, setSlotNotice] = useState(null);       // הסבר כשבוחרים שעה שלא מתאימה
   const [bookingStatus, setBookingStatus] = useState('idle');
   const [confirmedBooking, setConfirmedBooking] = useState(null); // פרטי ההזמנה שנקלטה (תצוגת אישור בפאנל הניהול)
+  const [submitError, setSubmitError] = useState(null);           // הודעת שגיאה מפורטת (למשל קופון שנדחה)
+
+  // קופון: הקוד שהוקלד, הקופון שהוחל ({ code, discount }), והודעה ללקוח
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponMessage, setCouponMessage] = useState(null);
+  const [checkingCoupon, setCheckingCoupon] = useState(false);
   const [totalPrice, setTotalPrice] = useState(0);
 
   // 2. הגדרת סכמת הולידציה (Rules)
@@ -104,6 +111,10 @@ const BookingModal = () => {
     if (isOpen) {
         setBookingStatus('idle');
         setConfirmedBooking(null);
+        setSubmitError(null);
+        setCouponInput('');
+        setAppliedCoupon(null);
+        setCouponMessage(null);
         Promise.all([
             roomService.getAll(),
             pricingService.getAll()
@@ -193,8 +204,52 @@ const BookingModal = () => {
   };
 
   // שליחת הטופס (נקרא רק אם הולידציה עברה)
+  // הסבר ללקוח למה קופון לא תקף (reason מהשרת)
+  const couponErrorText = (reason, minParticipants) =>
+      t(`booking_modal.coupon_err_${reason}`, { min: minParticipants, defaultValue: t('booking_modal.coupon_err_not_found') });
+
+  // בדיקת קוד קופון מול השרת (ההנחה תלויה במספר המשתתפים)
+  const checkCoupon = async (code, count) => {
+      if (!code) return;
+      if (!count) {
+          setCouponMessage({ ok: false, text: t('booking_modal.coupon_need_participants') });
+          return;
+      }
+      setCheckingCoupon(true);
+      try {
+          const result = await couponService.validate({ code, participantsCount: count });
+          if (result.valid) {
+              setAppliedCoupon({ code: result.code, discount: result.discount, type: result.type, value: result.value });
+              setCouponMessage({
+                  ok: true,
+                  text: result.type === 'percent'
+                      ? t('booking_modal.coupon_applied_percent', { code: result.code, percent: result.value, discount: result.discount })
+                      : t('booking_modal.coupon_applied', { code: result.code, discount: result.discount })
+              });
+          } else {
+              setAppliedCoupon(null);
+              setCouponMessage({ ok: false, text: couponErrorText(result.reason, result.minParticipants) });
+          }
+      } catch (err) {
+          console.error('Error checking coupon:', err);
+          setCouponMessage({ ok: false, text: t('booking_modal.coupon_err_not_found') });
+      } finally {
+          setCheckingCoupon(false);
+      }
+  };
+
+  // שינוי מספר המשתתפים משנה את ההנחה - בודקים שוב את הקופון שהוחל
+  useEffect(() => {
+      if (appliedCoupon && participants) checkCoupon(appliedCoupon.code, participants);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [participants]);
+
+  const couponDiscount = appliedCoupon?.discount || 0;
+  const priceToPay = Math.max(0, totalPrice - couponDiscount);
+
   const onSubmit = async (data) => {
       setBookingStatus('loading');
+      setSubmitError(null);
       try {
           const newBooking = await bookingService.create({
               roomId: data.roomId,
@@ -206,7 +261,8 @@ const BookingModal = () => {
                   phone: data.phone,
                   email: data.email
               },
-              totalPrice: totalPrice // לתצוגה בלבד - השרת מחשב את המחיר לפי המחירון
+              totalPrice: totalPrice, // לתצוגה בלבד - השרת מחשב את המחיר לפי המחירון
+              ...(appliedCoupon && { couponCode: appliedCoupon.code }) // השרת בודק ומחשב את ההנחה בעצמו
           });
 
           // לקוח באתר - מעבר לדף אישור ההזמנה עם הפרטים
@@ -227,10 +283,22 @@ const BookingModal = () => {
               totalPrice: newBooking?.details?.totalPrice ?? totalPrice,
               paymentStatus: newBooking?.payment?.status || 'unpaid',
               customerName: newBooking?.customer?.fullName || data.fullName,
+              couponCode: newBooking?.coupon?.code || null,
+              couponDiscount: newBooking?.coupon?.discount || 0,
+              couponType: newBooking?.coupon?.type || null,
+              couponValue: newBooking?.coupon?.value ?? null,
           });
           setBookingStatus('success');
           handleSuccess(); // קריאה ל-callback אם קיים (לרענון רשימת הזמנות באדמין)
       } catch (err) {
+          // קופון שנדחה בשרת (למשל כבר נוצל ע"י הטלפון הזה) - מסבירים ומסירים אותו
+          const message = err.response?.data?.message || '';
+          if (message.startsWith('COUPON:')) {
+              const text = couponErrorText(message.slice('COUPON:'.length));
+              setAppliedCoupon(null);
+              setCouponMessage({ ok: false, text });
+              setSubmitError(text);
+          }
           setBookingStatus('error');
       }
   };
@@ -315,7 +383,16 @@ const BookingModal = () => {
                     <div className="flex justify-between border-b border-white/5 pb-2"><span>{t('booking_modal.label_date')}</span> <span>{selectedDate ? format(selectedDate, 'dd/MM/yyyy') : '—'}</span></div>
                     <div className="flex justify-between border-b border-white/5 pb-2"><span>{t('booking_modal.label_time')}</span> <span className="text-brand-primary font-bold" dir="ltr">{selectedSlot || '--:--'}</span></div>
                     <div className="flex justify-between border-b border-white/5 pb-2"><span>{t('booking_modal.label_per_player')}</span> <span>{participants && pricePerPlayer !== null ? `₪${pricePerPlayer}` : '—'}</span></div>
-                    <div className="flex justify-between text-lg font-bold text-white pt-1"><span>{t('booking_modal.label_total')}</span> <span>{participants && totalPrice ? `₪${totalPrice}` : '—'}</span></div>
+                    {appliedCoupon && participants && (
+                        <div className="flex justify-between border-b border-white/5 pb-2 text-green-400">
+                            <span>
+                                {t('booking_modal.label_coupon', { code: appliedCoupon.code })}
+                                {appliedCoupon.type === 'percent' && ` (${appliedCoupon.value}%)`}
+                            </span>
+                            <span>-₪{couponDiscount}</span>
+                        </div>
+                    )}
+                    <div className="flex justify-between text-lg font-bold text-white pt-1"><span>{t('booking_modal.label_total')}</span> <span>{participants && totalPrice ? `₪${priceToPay}` : '—'}</span></div>
                 </div>
             </div>
 
@@ -407,6 +484,9 @@ const BookingModal = () => {
                     {participants && pricePerPlayer !== null && (
                         <p className="text-sm text-gray-300 mt-3">
                             {t('booking_modal.price_line', { price: pricePerPlayer, total: totalPrice, count: participants })}
+                            {appliedCoupon && (
+                                <span className="text-green-400"> · {t('booking_modal.price_after_coupon', { total: priceToPay })}</span>
+                            )}
                         </p>
                     )}
                     {selectedSlotMax !== null && selectedSlotMax < roomMax && (
@@ -435,12 +515,47 @@ const BookingModal = () => {
                         error={errors.email}
                         {...register('email')}
                     />
-                    
+
+                    {/* קוד קופון (אופציונלי) */}
+                    <div>
+                        <div className="flex gap-2">
+                            <input
+                                dir="ltr"
+                                value={couponInput}
+                                onChange={(e) => { setCouponInput(e.target.value.toUpperCase()); setCouponMessage(null); }}
+                                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); checkCoupon(couponInput.trim(), participants); } }}
+                                placeholder={t('booking_modal.coupon_placeholder')}
+                                className="flex-1 bg-[#0f0518] border border-white/10 rounded-xl p-3 outline-none focus:border-brand-primary text-sm"
+                            />
+                            {appliedCoupon ? (
+                                <button
+                                    type="button"
+                                    onClick={() => { setAppliedCoupon(null); setCouponInput(''); setCouponMessage(null); }}
+                                    className="px-4 rounded-xl border border-white/10 text-gray-300 text-sm hover:bg-white/5"
+                                >
+                                    {t('booking_modal.coupon_remove')}
+                                </button>
+                            ) : (
+                                <button
+                                    type="button"
+                                    disabled={!couponInput.trim() || checkingCoupon}
+                                    onClick={() => checkCoupon(couponInput.trim(), participants)}
+                                    className="px-4 rounded-xl border border-brand-primary/40 text-white text-sm hover:bg-brand-primary/20 disabled:opacity-40"
+                                >
+                                    {checkingCoupon ? '...' : t('booking_modal.coupon_apply')}
+                                </button>
+                            )}
+                        </div>
+                        {couponMessage && (
+                            <p className={`text-xs mt-1 ${couponMessage.ok ? 'text-green-400' : 'text-red-400'}`}>{couponMessage.text}</p>
+                        )}
+                    </div>
+
                     <div className="mt-2">
                         <NeonButton type="submit" disabled={bookingStatus === 'loading'} className="w-full">
                             {bookingStatus === 'loading' ? t('booking_modal.btn_sending') : t('booking_modal.btn_confirm')}
                         </NeonButton>
-                        {bookingStatus === 'error' && <p className="text-red-400 text-center text-sm mt-2">{t('booking_modal.error_create')}</p>}
+                        {bookingStatus === 'error' && <p className="text-red-400 text-center text-sm mt-2">{submitError || t('booking_modal.error_create')}</p>}
                     </div>
                 </form>
             </div>
